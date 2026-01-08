@@ -35,7 +35,7 @@ export function ReportsPage() {
 
   return (
     <div className="p-8 space-y-6">
-      {/* Header */}
+      {}
       <div className="relative">
         <div className="absolute -top-20 -right-20 w-64 h-64 bg-orange-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" />
         
@@ -72,7 +72,7 @@ export function ReportsPage() {
         </div>
       </div>
 
-      {/* Key Metrics */}
+      {}
       <div className="grid grid-cols-4 gap-6 animate-slide-in" style={{ animationDelay: '100ms' }}>
         {[
           { label: 'Total Revenue', value: `$${(totalRevenue / 1000).toFixed(0)}K`, gradient: 'from-green-500 to-emerald-500', icon: DollarSign, change: '+12.5%' },
@@ -99,7 +99,7 @@ export function ReportsPage() {
         })}
       </div>
 
-      {/* Revenue vs Payout Chart */}
+      {}
       <div className="glass rounded-3xl p-8 animate-slide-in shadow-premium" style={{ animationDelay: '200ms' }}>
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -136,9 +136,9 @@ export function ReportsPage() {
         </ResponsiveContainer>
       </div>
 
-      {/* Funnel Chart & Recruiter Performance */}
+      {}
       <div className="grid grid-cols-2 gap-6">
-        {/* Funnel */}
+        {}
         <div className="glass rounded-3xl p-8 animate-slide-in shadow-premium" style={{ animationDelay: '300ms' }}>
           <div className="mb-6">
             <h2 className="text-2xl text-slate-100 mb-1">Conversion Funnel</h2>
@@ -170,7 +170,7 @@ export function ReportsPage() {
           </div>
         </div>
 
-        {/* Top Performers */}
+        {}
         <div className="glass rounded-3xl p-8 animate-slide-in shadow-premium" style={{ animationDelay: '350ms' }}>
           <div className="mb-6">
             <h2 className="text-2xl text-slate-100 mb-1">Top Performers</h2>
@@ -198,7 +198,7 @@ export function ReportsPage() {
         </div>
       </div>
 
-      {/* Recruiter Performance Table */}
+      {}
       <div className="glass rounded-3xl overflow-hidden shadow-premium animate-slide-in" style={{ animationDelay: '400ms' }}>
         <div className="p-6 border-b border-white/10">
           <h2 className="text-2xl text-slate-100 mb-1">Recruiter Performance Breakdown</h2>

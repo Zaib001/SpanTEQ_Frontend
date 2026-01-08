@@ -1,5 +1,11 @@
-import { useState } from 'react';
-import { Calendar, Check, X as XIcon, User, Clock, Sparkles, ChevronDown, MessageSquare } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  Calendar, Search, Filter, CheckCircle, XCircle, Clock,
+  User, Mail, MessageSquare, AlertCircle, Sparkles, ChevronDown,
+  Plane, Stethoscope, Coffee, Shield, MoreHorizontal, Eye, Check, X as XIcon
+} from 'lucide-react';
+import PTOService from '../../services/pto.service';
+import type { PTORequest as BackendPTORequest } from '../../services/pto.service';
 
 interface PTORequest {
   id: string;
@@ -13,65 +19,138 @@ interface PTORequest {
   reason?: string;
 }
 
-const mockPTORequests: PTORequest[] = [
-  { id: '1', user: 'Sarah Johnson', role: 'recruiter', type: 'vacation', startDate: '2024-04-15', endDate: '2024-04-20', totalDays: 6, status: 'pending', reason: 'Family vacation' },
-  { id: '2', user: 'Michael Chen', role: 'recruiter', type: 'sick', startDate: '2024-04-10', endDate: '2024-04-12', totalDays: 3, status: 'approved' },
-  { id: '3', user: 'Emily Davis', role: 'candidate', type: 'personal', startDate: '2024-04-18', endDate: '2024-04-19', totalDays: 2, status: 'pending', reason: 'Personal matter' },
-  { id: '4', user: 'James Wilson', role: 'candidate', type: 'vacation', startDate: '2024-04-05', endDate: '2024-04-07', totalDays: 3, status: 'rejected', reason: 'Weekend trip' },
-  { id: '5', user: 'Lisa Anderson', role: 'recruiter', type: 'vacation', startDate: '2024-05-01', endDate: '2024-05-10', totalDays: 10, status: 'approved', reason: 'Annual leave' },
-];
-
-const typeColors = {
+const typeColors: Record<string, { bg: string, text: string, border: string }> = {
   vacation: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
   sick: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' },
   personal: { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' },
 };
 
-const statusColors = {
+const statusColors: Record<string, { bg: string, text: string, border: string }> = {
   pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30' },
   approved: { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500/30' },
   rejected: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' },
 };
 
 export function PTORequestsPage() {
-  const [requests, setRequests] = useState<PTORequest[]>(mockPTORequests);
-  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [requests, setRequests] = useState<PTORequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<PTORequest | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [showApproveModal, setShowApproveModal] = useState(false);
   const [actionType, setActionType] = useState<'approve' | 'reject'>('approve');
+
+  const fetchRequests = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await PTOService.getAllRequests();
+      const mappedData: PTORequest[] = data.map((r: BackendPTORequest) => ({
+        id: r._id,
+        user: r.requestedBy?.name || 'Unknown',
+        role: (r as any).role || 'recruiter',
+        type: r.type as any,
+        startDate: new Date(r.startDate).toISOString().split('T')[0],
+        endDate: new Date(r.endDate).toISOString().split('T')[0],
+        totalDays: r.totalDays || 0,
+        status: r.status,
+        reason: r.reason
+      }));
+      setRequests(mappedData);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch PTO requests');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
 
   const stats = {
     total: requests.length,
-    pending: requests.filter(r => r.status === 'pending').length,
-    approved: requests.filter(r => r.status === 'approved').length,
-    rejected: requests.filter(r => r.status === 'rejected').length,
+    pending: requests.filter((r: PTORequest) => r.status === 'pending').length,
+    approved: requests.filter((r: PTORequest) => r.status === 'approved').length,
+    rejected: requests.filter((r: PTORequest) => r.status === 'rejected').length,
   };
 
-  const handleAction = (request: PTORequest, action: 'approve' | 'reject') => {
+  const handleAction = async (requestId: string, action: 'approved' | 'rejected') => {
+    try {
+      setActionLoading(true);
+      await PTOService.updateStatus(requestId, action);
+      setRequests(requests.map(req =>
+        req.id === requestId ? { ...req, status: action } : req
+      ));
+      setShowApproveModal(false);
+      setSelectedRequest(null);
+    } catch (err: any) {
+      alert(err.message || `Failed to ${action} request`);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const openActionModal = (request: PTORequest, action: 'approve' | 'reject') => {
     setSelectedRequest(request);
     setActionType(action);
     setShowApproveModal(true);
   };
 
+  if (loading) {
+    return (
+      <div className="p-8 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
+          <p className="text-slate-400 animate-pulse">Loading PTO requests...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="glass-dark border-red-500/20 p-8 rounded-3xl text-center">
+          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-slate-200 mb-2">Failed to Load Requests</h2>
+          <p className="text-slate-400 mb-6">{error}</p>
+          <button
+            onClick={() => fetchRequests()}
+            className="px-6 py-2 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500/30 transition-all border border-red-500/30"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 space-y-6">
-      {/* Header */}
-      <div className="relative">
-        <div className="absolute -top-20 -right-20 w-64 h-64 bg-green-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" />
-        
-        <div className="relative flex items-center justify-between animate-slide-in">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-3 bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 rounded-2xl shadow-glow-green animate-pulse-glow">
-              <Calendar className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-5xl text-gradient-premium">PTO Requests</h1>
-              <p className="text-slate-400 mt-1 text-sm">Approve or reject time-off requests</p>
-            </div>
+      {}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-100 flex items-center gap-3">
+            <span className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-2xl border border-emerald-500/20">
+              <Calendar className="w-8 h-8" />
+            </span>
+            PTO Requests
+          </h1>
+          <p className="text-slate-400 mt-2">Manage and review employee time-off requests</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="glass px-4 py-2 rounded-xl border-emerald-500/20 flex items-center gap-3">
+            <Sparkles className="w-5 h-5 text-emerald-400" />
+            <span className="text-slate-300 font-medium">{stats.pending} Pending Review</span>
           </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {}
       <div className="grid grid-cols-4 gap-6 animate-slide-in" style={{ animationDelay: '100ms' }}>
         {[
           { label: 'Total Requests', value: stats.total, gradient: 'from-purple-500 to-pink-500', icon: Calendar },
@@ -97,7 +176,7 @@ export function PTORequestsPage() {
         })}
       </div>
 
-      {/* PTO Requests Table */}
+      {}
       <div className="glass rounded-3xl overflow-hidden shadow-premium animate-slide-in" style={{ animationDelay: '200ms' }}>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -131,7 +210,7 @@ export function PTORequestsPage() {
             </thead>
             <tbody className="divide-y divide-white/5">
               {requests.map((request, index) => (
-                <tr 
+                <tr
                   key={request.id}
                   className="group hover:bg-gradient-to-r hover:from-green-500/5 hover:via-emerald-500/5 hover:to-green-500/5 transition-all duration-300 animate-slide-in"
                   style={{ animationDelay: `${index * 30}ms` }}
@@ -145,9 +224,8 @@ export function PTORequestsPage() {
                     </div>
                   </td>
                   <td className="px-8 py-5 whitespace-nowrap">
-                    <span className={`px-3 py-1 rounded-lg text-xs font-medium capitalize ${
-                      request.role === 'recruiter' ? 'bg-blue-500/20 text-blue-400' : 'bg-pink-500/20 text-pink-400'
-                    }`}>
+                    <span className={`px-3 py-1 rounded-lg text-xs font-medium capitalize ${request.role === 'recruiter' ? 'bg-blue-500/20 text-blue-400' : 'bg-pink-500/20 text-pink-400'
+                      }`}>
                       {request.role}
                     </span>
                   </td>
@@ -174,15 +252,15 @@ export function PTORequestsPage() {
                   <td className="px-8 py-5 whitespace-nowrap text-right">
                     {request.status === 'pending' && (
                       <div className="flex items-center justify-end gap-2">
-                        <button 
-                          onClick={() => handleAction(request, 'approve')}
+                        <button
+                          onClick={() => openActionModal(request, 'approve')}
                           className="px-4 py-2 bg-green-500/20 text-green-400 border border-green-500/30 rounded-xl hover:bg-green-500/30 hover:shadow-glow-green transition-all duration-300 flex items-center gap-2 text-sm font-medium"
                         >
                           <Check className="w-4 h-4" />
                           Approve
                         </button>
-                        <button 
-                          onClick={() => handleAction(request, 'reject')}
+                        <button
+                          onClick={() => openActionModal(request, 'reject')}
                           className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/30 rounded-xl hover:bg-red-500/30 transition-all duration-300 flex items-center gap-2 text-sm font-medium"
                         >
                           <XIcon className="w-4 h-4" />
@@ -201,7 +279,7 @@ export function PTORequestsPage() {
         </div>
       </div>
 
-      {/* Approve/Reject Modal */}
+      {}
       {showApproveModal && selectedRequest && (
         <PTOActionModal
           request={selectedRequest}
@@ -210,14 +288,8 @@ export function PTORequestsPage() {
             setShowApproveModal(false);
             setSelectedRequest(null);
           }}
-          onConfirm={(comment) => {
-            setRequests(requests.map(r => 
-              r.id === selectedRequest.id 
-                ? { ...r, status: actionType === 'approve' ? 'approved' : 'rejected' }
-                : r
-            ));
-            setShowApproveModal(false);
-            setSelectedRequest(null);
+          onConfirm={() => {
+            handleAction(selectedRequest.id, actionType === 'approve' ? 'approved' : 'rejected');
           }}
         />
       )}
@@ -225,16 +297,16 @@ export function PTORequestsPage() {
   );
 }
 
-function PTOActionModal({ 
-  request, 
-  actionType, 
-  onClose, 
-  onConfirm 
-}: { 
-  request: PTORequest; 
-  actionType: 'approve' | 'reject'; 
-  onClose: () => void; 
-  onConfirm: (comment: string) => void;
+function PTOActionModal({
+  request,
+  actionType,
+  onClose,
+  onConfirm
+}: {
+  request: PTORequest;
+  actionType: 'approve' | 'reject';
+  onClose: () => void;
+  onConfirm: () => void;
 }) {
   const [comment, setComment] = useState('');
 
@@ -308,8 +380,8 @@ function PTOActionModal({
             >
               Cancel
             </button>
-            <button 
-              onClick={() => onConfirm(comment)}
+            <button
+              onClick={() => onConfirm()}
               className={`flex-1 relative px-6 py-4 bg-gradient-to-r ${actionType === 'approve' ? 'from-green-500 to-emerald-500 shadow-glow-green' : 'from-red-500 to-rose-500'} rounded-xl overflow-hidden shadow-premium transition-all duration-500 group`}
             >
               <span className="relative z-10 text-white font-semibold">{actionType === 'approve' ? 'Approve Request' : 'Reject Request'}</span>

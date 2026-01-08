@@ -7,7 +7,7 @@ interface LandingPageProps {
 export function LandingPage({ onLogin }: LandingPageProps) {
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
-      {/* Background Effects */}
+      {}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-aurora" />
         <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-aurora" style={{ animationDelay: '2s' }} />
@@ -15,7 +15,7 @@ export function LandingPage({ onLogin }: LandingPageProps) {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(139,92,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,0.03)_1px,transparent_1px)] bg-[size:72px_72px]" />
       </div>
 
-      {/* Navigation */}
+      {}
       <nav className="glass-dark border-b border-white/5 relative z-20">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
@@ -42,7 +42,7 @@ export function LandingPage({ onLogin }: LandingPageProps) {
         </div>
       </nav>
 
-      {/* Hero Section */}
+      {}
       <section className="relative py-32">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -118,7 +118,7 @@ export function LandingPage({ onLogin }: LandingPageProps) {
         </div>
       </section>
 
-      {/* Features Section */}
+      {}
       <section id="features" className="py-20 relative">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
@@ -154,7 +154,7 @@ export function LandingPage({ onLogin }: LandingPageProps) {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {}
       <section className="py-32 relative">
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-pink-500/10" />
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
@@ -175,7 +175,7 @@ export function LandingPage({ onLogin }: LandingPageProps) {
         </div>
       </section>
 
-      {/* Footer */}
+      {}
       <footer className="glass-dark border-t border-white/5 py-12 relative">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center text-slate-400">

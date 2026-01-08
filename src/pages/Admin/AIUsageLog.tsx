@@ -1,73 +1,60 @@
-import { useState } from 'react';
-import { Bot, Filter, Eye } from 'lucide-react';
-
-interface AISession {
-    id: string;
-    candidateName: string;
-    clientName: string;
-    interviewDate: string;
-    usedOn: string;
-    sessionStatus: 'Completed' | 'Active' | 'Incomplete';
-    purpose: string;
-    duration?: number;
-}
-
-const mockSessions: AISession[] = [
-    {
-        id: '1',
-        candidateName: 'John Doe',
-        clientName: 'TechCorp Inc.',
-        interviewDate: '2025-01-15',
-        usedOn: '2025-01-12 14:30',
-        sessionStatus: 'Completed',
-        purpose: 'Real Client Interview',
-        duration: 45,
-    },
-    {
-        id: '2',
-        candidateName: 'Jane Smith',
-        clientName: 'DataSystems LLC',
-        interviewDate: '2025-01-18',
-        usedOn: '2025-01-14 10:15',
-        sessionStatus: 'Completed',
-        purpose: 'Mock Practice',
-        duration: 30,
-    },
-    {
-        id: '3',
-        candidateName: 'Mike Johnson',
-        clientName: 'CloudServices Co.',
-        interviewDate: '2025-01-20',
-        usedOn: '2025-01-16 16:45',
-        sessionStatus: 'Active',
-        purpose: 'Screening',
-    },
-    {
-        id: '4',
-        candidateName: 'Sarah Williams',
-        clientName: 'InnovateTech',
-        interviewDate: '2025-01-22',
-        usedOn: '2025-01-17 09:00',
-        sessionStatus: 'Incomplete',
-        purpose: 'Behavioral Prep',
-        duration: 15,
-    },
-];
+import { useEffect, useState, useCallback } from 'react';
+import { Bot, Filter, Eye, Loader2, AlertCircle } from 'lucide-react';
+import AIService, { type AISession } from '../../services/ai.service';
 
 export function AIUsageLog() {
-    const [sessions] = useState<AISession[]>(mockSessions);
+    const [sessions, setSessions] = useState<AISession[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [filters, setFilters] = useState({
         candidateName: '',
         fromDate: '',
         toDate: '',
     });
 
-    const filteredSessions = sessions.filter(session => {
-        if (filters.candidateName && !session.candidateName.toLowerCase().includes(filters.candidateName.toLowerCase())) return false;
-        if (filters.fromDate && session.usedOn.split(' ')[0] < filters.fromDate) return false;
-        if (filters.toDate && session.usedOn.split(' ')[0] > filters.toDate) return false;
-        return true;
-    });
+    const fetchSessions = useCallback(async () => {
+        try {
+            setLoading(true);
+            const data = await AIService.getAISessions(filters);
+            setSessions(data);
+            setError(null);
+        } catch (err: any) {
+            setError(err.message || 'Failed to fetch usage logs');
+        } finally {
+            setLoading(false);
+        }
+    }, [filters]);
+
+    useEffect(() => {
+        fetchSessions();
+    }, [fetchSessions]);
+
+    if (loading && sessions.length === 0) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-8">
+                <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-6 flex items-center gap-4 text-red-400">
+                    <AlertCircle className="w-6 h-6" />
+                    <p>{error}</p>
+                    <button
+                        onClick={() => fetchSessions()}
+                        className="ml-auto px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-xl transition-colors"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    const filteredSessions = sessions;
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -88,7 +75,6 @@ export function AIUsageLog() {
         }
     };
 
-    // Calculate stats
     const totalSessions = sessions.length;
     const completedSessions = sessions.filter(s => s.sessionStatus === 'Completed').length;
     const activeSessions = sessions.filter(s => s.sessionStatus === 'Active').length;
@@ -98,7 +84,7 @@ export function AIUsageLog() {
 
     return (
         <div className="p-8 space-y-6">
-            {/* Header */}
+            {}
             <div className="flex items-center gap-4">
                 <div className="w-14 h-14 bg-gradient-to-br from-purple-500 via-blue-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-glow-purple">
                     <Bot className="w-7 h-7 text-white" />
@@ -109,7 +95,7 @@ export function AIUsageLog() {
                 </div>
             </div>
 
-            {/* Stats Cards */}
+            {}
             <div className="grid grid-cols-4 gap-6">
                 <div className="glass rounded-2xl p-6 border border-white/10 hover-lift">
                     <div className="flex items-center justify-between mb-3">
@@ -152,7 +138,7 @@ export function AIUsageLog() {
                 </div>
             </div>
 
-            {/* Filters */}
+            {}
             <div className="glass rounded-2xl p-6 border border-white/10">
                 <div className="flex items-center gap-3 mb-4">
                     <Filter className="w-5 h-5 text-purple-400" />
@@ -183,7 +169,7 @@ export function AIUsageLog() {
                 </div>
             </div>
 
-            {/* Table */}
+            {}
             <div className="glass rounded-2xl border border-white/10 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">

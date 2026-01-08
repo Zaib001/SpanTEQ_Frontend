@@ -1,28 +1,26 @@
-import { useState } from 'react';
-import { 
-  Search, Filter, Plus, Edit, Trash2, Eye, Download, 
-  Settings2, X, Mail, User, Shield, CheckCircle, XCircle, 
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import {
+  Search, Filter, Plus, Edit, Trash2, Eye, Download,
+  Settings2, X, Mail, User, Shield, CheckCircle, XCircle,
   ArrowUpDown, ChevronDown, Sparkles, Users as UsersIcon,
-  Lock, Phone, MapPin, Briefcase, DollarSign, Calendar, Award, 
-  TrendingUp, ChevronRight, ArrowLeft, Save, Clock, Percent
+  Lock, Phone, MapPin, Briefcase, DollarSign, Calendar, Award,
+  TrendingUp, ChevronRight, ArrowLeft, Save, Clock, Percent,
+  Loader2
 } from 'lucide-react';
+import UserService from '../../services/user.service';
+import type { User as ApiUser, UserStats } from '../../services/user.service';
 
 type UserRole = 'admin' | 'recruiter' | 'candidate';
 type PayModel = 'Fixed' | 'Hourly' | 'Percentage' | 'Hybrid';
 type BonusFrequency = 'Monthly' | 'Quarterly' | 'Yearly';
 
-interface UserData {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  status: 'active' | 'inactive';
-  verified: boolean;
-  createdAt: string;
+interface UserData extends ApiUser {
+
 }
 
 interface CompensationFormData {
-  // Step 1: Basic Details
+
   firstName: string;
   lastName: string;
   email: string;
@@ -31,8 +29,7 @@ interface CompensationFormData {
   role: UserRole | '';
   department: string;
   location: string;
-  
-  // Step 2: Recruiter Compensation
+
   recruiterBaseSalary: string;
   recruiterPTO: string;
   recruiterCarryForward: boolean;
@@ -45,8 +42,7 @@ interface CompensationFormData {
   recruiterBonusFrequency: BonusFrequency | '';
   recruiterBonusStartMonth: string;
   recruiterBonusEndMonth: string;
-  
-  // Step 2: Candidate Compensation
+
   candidatePayModel: PayModel | '';
   candidateFixedSalary: string;
   candidateHourlyRate: string;
@@ -58,31 +54,32 @@ interface CompensationFormData {
   candidateHybridPercentage: string;
 }
 
-const mockUsers: UserData[] = [
-  { id: '1', name: 'Sarah Johnson', email: 'sarah@spanteq.com', role: 'recruiter', status: 'active', verified: true, createdAt: '2024-01-15' },
-  { id: '2', name: 'Michael Chen', email: 'michael@spanteq.com', role: 'recruiter', status: 'active', verified: true, createdAt: '2024-01-20' },
-  { id: '3', name: 'Emily Davis', email: 'emily@spanteq.com', role: 'candidate', status: 'active', verified: true, createdAt: '2024-02-01' },
-  { id: '4', name: 'James Wilson', email: 'james@spanteq.com', role: 'candidate', status: 'active', verified: false, createdAt: '2024-02-10' },
-  { id: '5', name: 'Lisa Anderson', email: 'lisa@spanteq.com', role: 'recruiter', status: 'inactive', verified: true, createdAt: '2024-01-25' },
-  { id: '6', name: 'David Brown', email: 'david@spanteq.com', role: 'candidate', status: 'active', verified: true, createdAt: '2024-02-05' },
-  { id: '7', name: 'Jennifer Lee', email: 'jennifer@spanteq.com', role: 'recruiter', status: 'active', verified: true, createdAt: '2024-01-18' },
-];
-
 export function UsersPage() {
-  const [users, setUsers] = useState<UserData[]>(mockUsers);
+  const [users, setUsers] = useState<UserData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [showColumns, setShowColumns] = useState(false);
-  
-  // Filters
+
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [verifiedFilter, setVerifiedFilter] = useState<string>('all');
 
-  // Column visibility
+  const [stats, setStats] = useState<UserStats>({
+    total: 0,
+    recruiters: 0,
+    candidates: 0,
+    active: 0
+  });
+
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
   const [visibleColumns, setVisibleColumns] = useState({
     name: true,
     email: true,
@@ -95,19 +92,87 @@ export function UsersPage() {
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchQuery.toLowerCase());
+      user.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
     const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-    const matchesVerified = verifiedFilter === 'all' || 
-                           (verifiedFilter === 'verified' && user.verified) ||
-                           (verifiedFilter === 'unverified' && !user.verified);
-    
+    const matchesVerified = verifiedFilter === 'all' ||
+      (verifiedFilter === 'verified' && user.isVerified) ||
+      (verifiedFilter === 'unverified' && !user.isVerified);
+
     return matchesSearch && matchesRole && matchesStatus && matchesVerified;
   });
 
-  const handleDeleteUser = (id: string) => {
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const params = {
+        page,
+        limit: 10,
+        search: searchQuery,
+        role: roleFilter !== 'all' ? roleFilter : undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        isVerified: verifiedFilter !== 'all' ? (verifiedFilter === 'verified') : undefined,
+      };
+
+      const response = await UserService.getAllUsers(params);
+      setUsers(response.users);
+      setTotalPages(response.totalPages);
+      setTotalCount(response.total);
+    } catch (err: any) {
+      setError('Failed to load users');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const totalRes = await UserService.getAllUsers({ limit: 1 });
+      const recruiterRes = await UserService.getAllUsers({ role: 'recruiter', limit: 1 });
+      const candidateRes = await UserService.getAllUsers({ role: 'candidate', limit: 1 });
+      const activeRes = await UserService.getAllUsers({ status: 'active', limit: 1 });
+
+      setStats({
+        total: totalRes.total,
+        recruiters: recruiterRes.total,
+        candidates: candidateRes.total,
+        active: activeRes.total
+      });
+    } catch (err) {
+      console.error("Failed to fetch stats", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, [page, searchQuery, roleFilter, statusFilter, verifiedFilter]);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const handleDeleteUser = async (id: string) => {
     if (confirm('Are you sure you want to delete this user?')) {
-      setUsers(users.filter(u => u.id !== id));
+      try {
+        await UserService.deleteUser(id);
+        fetchUsers();
+        fetchStats();
+      } catch (err) {
+        alert('Failed to delete user');
+      }
+    }
+  };
+
+  const handleToggleVerify = async (id: string) => {
+    try {
+      await UserService.toggleVerification(id);
+      fetchUsers();
+
+    } catch (err) {
+      console.error('Failed to toggle verification:', err);
+      alert('Failed to update verification status');
     }
   };
 
@@ -116,21 +181,13 @@ export function UsersPage() {
     setShowEditModal(true);
   };
 
-  // Stats
-  const stats = {
-    total: users.length,
-    recruiters: users.filter(u => u.role === 'recruiter').length,
-    candidates: users.filter(u => u.role === 'candidate').length,
-    active: users.filter(u => u.status === 'active').length,
-  };
-
   return (
     <div className="p-8 space-y-6">
-      {/* Header with Floating Elements */}
+      {}
       <div className="relative">
         <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" />
         <div className="absolute -top-10 -left-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" style={{ animationDelay: '1s' }} />
-        
+
         <div className="relative flex items-center justify-between animate-slide-in">
           <div>
             <div className="flex items-center gap-3 mb-3">
@@ -145,7 +202,7 @@ export function UsersPage() {
               </div>
             </div>
           </div>
-          
+
           <button
             onClick={() => setShowAddModal(true)}
             className="group relative px-8 py-4 bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 rounded-2xl overflow-hidden shadow-premium hover:shadow-glow-purple transition-all duration-500 transform hover:scale-105"
@@ -162,7 +219,7 @@ export function UsersPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {}
       <div className="grid grid-cols-4 gap-6 animate-slide-in" style={{ animationDelay: '100ms' }}>
         {[
           { label: 'Total Users', value: stats.total, icon: UsersIcon, gradient: 'from-purple-500 to-blue-500', color: 'purple' },
@@ -178,7 +235,7 @@ export function UsersPage() {
               style={{ animationDelay: `${index * 50}ms` }}
             >
               <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${stat.gradient} rounded-full blur-3xl opacity-20 group-hover:opacity-30 transition-opacity duration-500`} />
-              
+
               <div className="relative flex items-start justify-between">
                 <div>
                   <p className="text-sm text-slate-400 mb-2">{stat.label}</p>
@@ -193,9 +250,9 @@ export function UsersPage() {
         })}
       </div>
 
-      {/* Controls Panel */}
-      <div className="glass rounded-3xl p-6 space-y-4 animate-slide-in shadow-premium" style={{ animationDelay: '200ms' }}>
-        {/* Search & Action Buttons */}
+      {}
+      <div className="glass rounded-3xl p-6 space-y-4 animate-slide-in shadow-premium relative z-30" style={{ animationDelay: '200ms' }}>
+        {}
         <div className="flex items-center gap-4">
           <div className="flex-1 relative group">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-purple-400 transition-all duration-300" />
@@ -208,7 +265,7 @@ export function UsersPage() {
             />
             <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500/0 via-blue-500/0 to-pink-500/0 group-focus-within:from-purple-500/10 group-focus-within:via-blue-500/10 group-focus-within:to-pink-500/10 transition-all duration-500 pointer-events-none" />
           </div>
-          
+
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`group relative px-6 py-4 glass rounded-2xl hover:bg-white/10 transition-all duration-300 flex items-center gap-3 overflow-hidden ${showFilters ? 'bg-purple-500/20 border-purple-500/30 shadow-glow-purple' : ''}`}
@@ -228,8 +285,8 @@ export function UsersPage() {
               <Settings2 className="w-5 h-5 relative z-10 text-slate-400 group-hover:text-purple-400 transition-colors group-hover:rotate-90 duration-500" />
               <span className="relative z-10 text-slate-300 font-medium">Columns</span>
             </button>
-            
-            {/* Columns Dropdown */}
+
+            {}
             {showColumns && (
               <div className="absolute top-full right-0 mt-3 w-64 glass rounded-2xl border border-white/10 shadow-premium p-4 z-50 animate-slide-in">
                 <div className="flex items-center gap-2 mb-4 pb-3 border-b border-white/10">
@@ -263,26 +320,32 @@ export function UsersPage() {
           </button>
         </div>
 
-        {/* Filters Panel */}
+        {}
         {showFilters && (
           <div className="grid grid-cols-3 gap-6 pt-6 border-t border-white/10 animate-slide-in">
             {[
-              { label: 'Role', value: roleFilter, onChange: setRoleFilter, options: [
-                { value: 'all', label: 'All Roles' },
-                { value: 'admin', label: 'Admin' },
-                { value: 'recruiter', label: 'Recruiter' },
-                { value: 'candidate', label: 'Candidate' },
-              ]},
-              { label: 'Status', value: statusFilter, onChange: setStatusFilter, options: [
-                { value: 'all', label: 'All Status' },
-                { value: 'active', label: 'Active' },
-                { value: 'inactive', label: 'Inactive' },
-              ]},
-              { label: 'Verification', value: verifiedFilter, onChange: setVerifiedFilter, options: [
-                { value: 'all', label: 'All' },
-                { value: 'verified', label: 'Verified' },
-                { value: 'unverified', label: 'Unverified' },
-              ]},
+              {
+                label: 'Role', value: roleFilter, onChange: setRoleFilter, options: [
+                  { value: 'all', label: 'All Roles' },
+                  { value: 'admin', label: 'Admin' },
+                  { value: 'recruiter', label: 'Recruiter' },
+                  { value: 'candidate', label: 'Candidate' },
+                ]
+              },
+              {
+                label: 'Status', value: statusFilter, onChange: setStatusFilter, options: [
+                  { value: 'all', label: 'All Status' },
+                  { value: 'active', label: 'Active' },
+                  { value: 'inactive', label: 'Inactive' },
+                ]
+              },
+              {
+                label: 'Verification', value: verifiedFilter, onChange: setVerifiedFilter, options: [
+                  { value: 'all', label: 'All' },
+                  { value: 'verified', label: 'Verified' },
+                  { value: 'unverified', label: 'Unverified' },
+                ]
+              },
             ].map((filter, index) => (
               <div key={index}>
                 <label className="block text-xs text-slate-400 mb-2 uppercase tracking-wider font-medium">{filter.label}</label>
@@ -301,8 +364,8 @@ export function UsersPage() {
         )}
       </div>
 
-      {/* Users Table */}
-      <div className="glass rounded-3xl overflow-hidden shadow-premium animate-slide-in" style={{ animationDelay: '300ms' }}>
+      {}
+      <div className="glass rounded-3xl overflow-hidden shadow-premium animate-slide-in relative z-20" style={{ animationDelay: '300ms' }}>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="glass-dark border-b border-white/10">
@@ -361,131 +424,156 @@ export function UsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {filteredUsers.map((user, index) => (
-                <tr 
-                  key={user.id} 
-                  className="group hover:bg-gradient-to-r hover:from-purple-500/5 hover:via-blue-500/5 hover:to-pink-500/5 transition-all duration-300 animate-slide-in"
-                  style={{ animationDelay: `${index * 30}ms` }}
-                >
-                  {visibleColumns.name && (
-                    <td className="px-8 py-5 whitespace-nowrap">
-                      <div className="flex items-center gap-4">
-                        <div className="relative">
-                          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 via-blue-500 to-pink-500 rounded-xl flex items-center justify-center text-white font-semibold shadow-glow-purple transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                            {user.name.split(' ').map(n => n[0]).join('')}
-                          </div>
-                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-slate-900 shadow-glow-green" />
-                        </div>
-                        <span className="text-slate-200 font-medium group-hover:text-white transition-colors">{user.name}</span>
-                      </div>
-                    </td>
-                  )}
-                  {visibleColumns.email && (
-                    <td className="px-8 py-5 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-slate-500" />
-                        <span className="text-slate-400 group-hover:text-slate-300 transition-colors">{user.email}</span>
-                      </div>
-                    </td>
-                  )}
-                  {visibleColumns.role && (
-                    <td className="px-8 py-5 whitespace-nowrap">
-                      <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider badge-glow ${
-                        user.role === 'admin' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
-                        user.role === 'recruiter' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                        'bg-pink-500/20 text-pink-400 border border-pink-500/30'
-                      }`}>
-                        <Shield className="w-3 h-3" />
-                        {user.role}
-                      </span>
-                    </td>
-                  )}
-                  {visibleColumns.status && (
-                    <td className="px-8 py-5 whitespace-nowrap">
-                      <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider badge-glow ${
-                        user.status === 'active' 
-                          ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                          : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                      }`}>
-                        <div className={`w-2 h-2 rounded-full ${user.status === 'active' ? 'bg-green-400 animate-pulse-glow' : 'bg-red-400'}`} />
-                        {user.status}
-                      </span>
-                    </td>
-                  )}
-                  {visibleColumns.verified && (
-                    <td className="px-8 py-5 whitespace-nowrap">
-                      {user.verified ? (
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="w-5 h-5 text-green-400" />
-                          <span className="text-xs text-green-400 font-medium">Verified</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <XCircle className="w-5 h-5 text-red-400" />
-                          <span className="text-xs text-red-400 font-medium">Pending</span>
-                        </div>
-                      )}
-                    </td>
-                  )}
-                  {visibleColumns.createdAt && (
-                    <td className="px-8 py-5 whitespace-nowrap text-slate-400 text-sm">
-                      {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </td>
-                  )}
-                  {visibleColumns.actions && (
-                    <td className="px-8 py-5 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                        <button className="p-3 glass rounded-xl hover:bg-blue-500/20 hover:text-blue-400 hover:shadow-glow-blue transition-all duration-300 transform hover:scale-110">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => handleEditUser(user)}
-                          className="p-3 glass rounded-xl hover:bg-purple-500/20 hover:text-purple-400 hover:shadow-glow-purple transition-all duration-300 transform hover:scale-110"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteUser(user.id)}
-                          className="p-3 glass rounded-xl hover:bg-red-500/20 hover:text-red-400 transition-all duration-300 transform hover:scale-110"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  )}
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-slate-400">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+                      <p>Loading users...</p>
+                    </div>
+                  </td>
                 </tr>
-              ))}</tbody>
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-slate-400">
+                    No users found
+                  </td>
+                </tr>
+              ) : (
+                users.map((user, index) => (
+                  <tr
+                    key={user._id || user.id}
+                    className="group hover:bg-gradient-to-r hover:from-purple-500/5 hover:via-blue-500/5 hover:to-pink-500/5 transition-all duration-300 animate-slide-in"
+                    style={{ animationDelay: `${index * 30}ms` }}
+                  >
+                    {visibleColumns.name && (
+                      <td className="px-8 py-5 whitespace-nowrap">
+                        <div className="flex items-center gap-4">
+                          <div className="relative">
+                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 via-blue-500 to-pink-500 rounded-xl flex items-center justify-center text-white font-semibold shadow-glow-purple transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                              {user.name.split(' ').map(n => n[0]).join('')}
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-slate-900 shadow-glow-green" />
+                          </div>
+                          <span className="text-slate-200 font-medium group-hover:text-white transition-colors">{user.name}</span>
+                        </div>
+                      </td>
+                    )}
+                    {visibleColumns.email && (
+                      <td className="px-8 py-5 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-4 h-4 text-slate-500" />
+                          <span className="text-slate-400 group-hover:text-slate-300 transition-colors">{user.email}</span>
+                        </div>
+                      </td>
+                    )}
+                    {visibleColumns.role && (
+                      <td className="px-8 py-5 whitespace-nowrap">
+                        <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider badge-glow ${user.role === 'admin' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
+                          user.role === 'recruiter' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                            'bg-pink-500/20 text-pink-400 border border-pink-500/30'
+                          }`}>
+                          <Shield className="w-3 h-3" />
+                          {user.role}
+                        </span>
+                      </td>
+                    )}
+                    {visibleColumns.status && (
+                      <td className="px-8 py-5 whitespace-nowrap">
+                        <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider badge-glow ${user.status === 'active'
+                          ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                          : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                          }`}>
+                          <div className={`w-2 h-2 rounded-full ${user.status === 'active' ? 'bg-green-400 animate-pulse-glow' : 'bg-red-400'}`} />
+                          {user.status}
+                        </span>
+                      </td>
+                    )}
+                    {visibleColumns.verified && (
+                      <td className="px-8 py-5 whitespace-nowrap">
+                        <button
+                          onClick={() => handleToggleVerify(user._id || user.id!)}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300 ${user.isVerified
+                            ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20 shadow-glow-green/20'
+                            : 'bg-amber-500/10 text-amber-500 hover:bg-amber-500/20'
+                            }`}
+                          title={user.isVerified ? "Click to unverify" : "Click to verify"}
+                        >
+                          {user.isVerified ? (
+                            <>
+                              <CheckCircle className="w-4 h-4" />
+                              <span className="text-xs font-semibold">Verified</span>
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="w-4 h-4" />
+                              <span className="text-xs font-semibold">Verify User</span>
+                            </>
+                          )}
+                        </button>
+                      </td>
+                    )}
+                    {visibleColumns.createdAt && (
+                      <td className="px-8 py-5 whitespace-nowrap text-slate-400 text-sm">
+                        {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </td>
+                    )}
+                    {visibleColumns.actions && (
+                      <td className="px-8 py-5 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-2 transition-all duration-300">
+                          <button className="p-3 glass rounded-xl hover:bg-blue-500/20 hover:text-blue-400 hover:shadow-glow-blue transition-all duration-300 transform hover:scale-110">
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleEditUser(user)}
+                            className="p-3 glass rounded-xl hover:bg-purple-500/20 hover:text-purple-400 hover:shadow-glow-purple transition-all duration-300 transform hover:scale-110"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(user._id || user.id!)}
+                            className="p-3 glass rounded-xl hover:bg-red-500/20 hover:text-red-400 transition-all duration-300 transform hover:scale-110"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                )))}</tbody>
           </table>
         </div>
 
-        {/* Premium Pagination */}
+        {}
         <div className="glass-dark px-8 py-5 flex items-center justify-between border-t border-white/10">
           <div className="flex items-center gap-3">
             <p className="text-sm text-slate-400">
-              Showing <span className="text-purple-400 font-semibold">{filteredUsers.length}</span> of <span className="text-slate-300 font-semibold">{users.length}</span> users
+              Showing <span className="text-purple-400 font-semibold">{users.length}</span> of <span className="text-slate-300 font-semibold">{totalCount}</span> users
             </p>
           </div>
           <div className="flex gap-2">
-            <button className="px-5 py-2.5 glass rounded-xl text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-all duration-300 font-medium">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-5 py-2.5 glass rounded-xl text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Previous
             </button>
-            <button className="px-5 py-2.5 bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 rounded-xl text-sm text-white font-semibold shadow-glow-purple">
-              1
-            </button>
-            <button className="px-5 py-2.5 glass rounded-xl text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-all duration-300 font-medium">
-              2
-            </button>
-            <button className="px-5 py-2.5 glass rounded-xl text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-all duration-300 font-medium">
-              3
-            </button>
-            <button className="px-5 py-2.5 glass rounded-xl text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-all duration-300 font-medium">
+            <span className="px-5 py-2.5 bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 rounded-xl text-sm text-white font-semibold shadow-glow-purple">
+              {page}
+            </span>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-5 py-2.5 glass rounded-xl text-sm text-slate-300 hover:bg-white/10 hover:text-white transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Next
             </button>
           </div>
         </div>
       </div>
 
-      {/* Add/Edit User Modal with Two-Step Form */}
+      {}
       {(showAddModal || showEditModal) && (
         <UserFormModal
           user={selectedUser}
@@ -494,23 +582,38 @@ export function UsersPage() {
             setShowEditModal(false);
             setSelectedUser(null);
           }}
-          onSave={(userData) => {
-            if (showEditModal && selectedUser) {
-              setUsers(users.map(u => u.id === selectedUser.id ? { ...u, name: `${userData.firstName} ${userData.lastName}`, email: userData.email, role: userData.role as UserRole } : u));
-            } else {
-              setUsers([...users, { 
-                id: String(users.length + 1), 
+          onSave={async (userData) => {
+            try {
+
+              const payload: any = {
                 name: `${userData.firstName} ${userData.lastName}`,
                 email: userData.email,
-                role: userData.role as UserRole,
-                status: 'active',
-                verified: false,
-                createdAt: new Date().toISOString().split('T')[0]
-              }]);
+                role: userData.role,
+                phone: userData.phone,
+                department: userData.department,
+                location: userData.location,
+
+                password: userData.password || undefined
+              };
+
+              if (userData.password) payload.password = userData.password;
+
+              if (showEditModal && selectedUser) {
+                await UserService.updateUser(selectedUser._id || selectedUser.id!, payload);
+              } else {
+                if (!userData.password) payload.password = 'Default@123';
+                await UserService.createUser(payload);
+              }
+
+              setShowAddModal(false);
+              setShowEditModal(false);
+              setSelectedUser(null);
+              fetchUsers();
+              fetchStats();
+            } catch (err) {
+              console.error("Failed to save user", err);
+              alert("Failed to save user. Check console for details.");
             }
-            setShowAddModal(false);
-            setShowEditModal(false);
-            setSelectedUser(null);
           }}
         />
       )}
@@ -527,8 +630,8 @@ interface UserFormModalProps {
 function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
   const [currentStep, setCurrentStep] = useState<1 | 2>(1);
   const [formData, setFormData] = useState<CompensationFormData>({
-    firstName: user?.name.split(' ')[0] || '',
-    lastName: user?.name.split(' ')[1] || '',
+    firstName: user?.name ? user.name.split(' ')[0] : '',
+    lastName: user?.name ? user.name.split(' ').slice(1).join(' ') : '',
     email: user?.email || '',
     phone: '',
     password: '',
@@ -568,16 +671,16 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
 
   const canProceedToStep2 = formData.firstName && formData.lastName && formData.email && formData.role;
 
-  return (
-    <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-6 animate-slide-in overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-[9999] p-6 animate-slide-in overflow-y-auto">
       <div className="relative w-full max-w-6xl my-8">
         <div className="glass rounded-3xl p-10 shadow-premium border-2 border-white/10">
-          {/* Decorative Elements */}
+          {}
           <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" />
           <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{ animationDelay: '1s' }} />
-          
+
           <div className="relative">
-            {/* Header */}
+            {}
             <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/10">
               <div className="flex items-center gap-4">
                 <div className="p-4 bg-gradient-to-br from-purple-500 via-blue-500 to-pink-500 rounded-2xl shadow-glow-purple">
@@ -590,21 +693,21 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                   <p className="text-sm text-slate-400 mt-1">Step {currentStep} of 2</p>
                 </div>
               </div>
-              <button 
-                onClick={onClose} 
+              <button
+                onClick={onClose}
                 className="p-3 glass hover:bg-red-500/20 rounded-xl transition-all duration-300 group"
               >
                 <X className="w-6 h-6 text-slate-400 group-hover:text-red-400 transition-colors" />
               </button>
             </div>
 
-            {/* Progress Indicator */}
+            {}
             <div className="flex items-center gap-4 mb-8">
               <div className={`flex-1 h-2 rounded-full transition-all ${currentStep >= 1 ? 'bg-gradient-to-r from-purple-500 to-blue-500' : 'bg-white/10'}`} />
               <div className={`flex-1 h-2 rounded-full transition-all ${currentStep >= 2 ? 'bg-gradient-to-r from-blue-500 to-pink-500' : 'bg-white/10'}`} />
             </div>
 
-            {/* Step 1: Basic Details */}
+            {}
             {currentStep === 1 && (
               <div className="space-y-6 animate-slide-in">
                 <div className="grid grid-cols-2 gap-6">
@@ -755,11 +858,10 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                   <button
                     onClick={() => setCurrentStep(2)}
                     disabled={!canProceedToStep2}
-                    className={`px-8 py-4 rounded-xl font-semibold flex items-center gap-2 transition-all ${
-                      canProceedToStep2
-                        ? 'bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 text-white shadow-premium hover:shadow-glow-purple hover:scale-105'
-                        : 'bg-white/5 text-slate-500 cursor-not-allowed'
-                    }`}
+                    className={`px-8 py-4 rounded-xl font-semibold flex items-center gap-2 transition-all ${canProceedToStep2
+                      ? 'bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 text-white shadow-premium hover:shadow-glow-purple hover:scale-105'
+                      : 'bg-white/5 text-slate-500 cursor-not-allowed'
+                      }`}
                   >
                     Continue to Compensation
                     <ChevronRight className="w-5 h-5" />
@@ -768,10 +870,10 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
               </div>
             )}
 
-            {/* Step 2: Compensation Settings */}
+            {}
             {currentStep === 2 && (
               <div className="space-y-6 animate-slide-in max-h-[60vh] overflow-y-auto pr-4">
-                {/* No Role Selected */}
+                {}
                 {!formData.role && (
                   <div className="text-center py-12">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-800 flex items-center justify-center">
@@ -788,7 +890,7 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                   </div>
                 )}
 
-                {/* Admin Role - No Compensation */}
+                {}
                 {formData.role === 'admin' && (
                   <div className="text-center py-12">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-500/20 flex items-center justify-center">
@@ -799,10 +901,10 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                   </div>
                 )}
 
-                {/* Recruiter Compensation */}
+                {}
                 {formData.role === 'recruiter' && (
                   <div className="space-y-6">
-                    {/* Base Compensation */}
+                    {}
                     <div className="glass-dark rounded-2xl p-6 border border-blue-500/30">
                       <div className="flex items-center gap-3 mb-6">
                         <div className="p-2 bg-blue-500 rounded-lg">
@@ -846,7 +948,7 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                         </div>
                       </div>
 
-                      {/* PTO Settings */}
+                      {}
                       <div className="mt-6 space-y-4">
                         <div className="flex items-center justify-between p-4 glass rounded-xl border border-white/10">
                           <div className="flex items-center gap-3">
@@ -950,7 +1052,7 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                       </div>
                     </div>
 
-                    {/* Recurring Bonus */}
+                    {}
                     <div className="glass-dark rounded-2xl p-6 border border-purple-500/30">
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
@@ -1048,10 +1150,10 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                   </div>
                 )}
 
-                {/* Candidate Compensation */}
+                {}
                 {formData.role === 'candidate' && (
                   <div className="space-y-6">
-                    {/* Pay Model Selection */}
+                    {}
                     <div>
                       <label className="block text-sm text-slate-300 font-medium mb-3">
                         Candidate Compensation Model
@@ -1061,25 +1163,22 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                           <button
                             key={model}
                             onClick={() => updateField('candidatePayModel', model)}
-                            className={`p-4 rounded-xl border-2 transition-all ${
-                              formData.candidatePayModel === model
-                                ? 'border-emerald-500 bg-emerald-500/20 scale-105'
-                                : 'border-white/10 glass hover:border-emerald-500/50'
-                            }`}
+                            className={`p-4 rounded-xl border-2 transition-all ${formData.candidatePayModel === model
+                              ? 'border-emerald-500 bg-emerald-500/20 scale-105'
+                              : 'border-white/10 glass hover:border-emerald-500/50'
+                              }`}
                           >
-                            <div className={`w-10 h-10 mx-auto mb-2 rounded-lg flex items-center justify-center ${
-                              formData.candidatePayModel === model
-                                ? 'bg-emerald-500'
-                                : 'bg-slate-700'
-                            }`}>
+                            <div className={`w-10 h-10 mx-auto mb-2 rounded-lg flex items-center justify-center ${formData.candidatePayModel === model
+                              ? 'bg-emerald-500'
+                              : 'bg-slate-700'
+                              }`}>
                               {model === 'Fixed' && <DollarSign className={`w-5 h-5 ${formData.candidatePayModel === model ? 'text-white' : 'text-slate-400'}`} />}
                               {model === 'Hourly' && <Clock className={`w-5 h-5 ${formData.candidatePayModel === model ? 'text-white' : 'text-slate-400'}`} />}
                               {model === 'Percentage' && <Percent className={`w-5 h-5 ${formData.candidatePayModel === model ? 'text-white' : 'text-slate-400'}`} />}
                               {model === 'Hybrid' && <TrendingUp className={`w-5 h-5 ${formData.candidatePayModel === model ? 'text-white' : 'text-slate-400'}`} />}
                             </div>
-                            <div className={`font-semibold text-sm ${
-                              formData.candidatePayModel === model ? 'text-emerald-400' : 'text-slate-300'
-                            }`}>
+                            <div className={`font-semibold text-sm ${formData.candidatePayModel === model ? 'text-emerald-400' : 'text-slate-300'
+                              }`}>
                               {model}
                             </div>
                           </button>
@@ -1087,7 +1186,7 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                       </div>
                     </div>
 
-                    {/* Fixed Model */}
+                    {}
                     {formData.candidatePayModel === 'Fixed' && (
                       <div className="glass-dark rounded-2xl p-6 border border-emerald-500/30 animate-slide-in">
                         <div className="flex items-center gap-3 mb-6">
@@ -1115,7 +1214,7 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                       </div>
                     )}
 
-                    {/* Hourly Model */}
+                    {}
                     {formData.candidatePayModel === 'Hourly' && (
                       <div className="glass-dark rounded-2xl p-6 border border-blue-500/30 animate-slide-in">
                         <div className="flex items-center gap-3 mb-6">
@@ -1144,7 +1243,7 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                       </div>
                     )}
 
-                    {/* Percentage Model */}
+                    {}
                     {formData.candidatePayModel === 'Percentage' && (
                       <div className="glass-dark rounded-2xl p-6 border border-purple-500/30 animate-slide-in">
                         <div className="flex items-center gap-3 mb-6">
@@ -1191,7 +1290,7 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                       </div>
                     )}
 
-                    {/* Hybrid Model */}
+                    {}
                     {formData.candidatePayModel === 'Hybrid' && (
                       <div className="glass-dark rounded-2xl p-6 border border-orange-500/30 animate-slide-in">
                         <div className="flex items-center gap-3 mb-6">
@@ -1297,6 +1396,7 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

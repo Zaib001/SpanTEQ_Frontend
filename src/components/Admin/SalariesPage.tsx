@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import { 
+import { useState, useEffect, useCallback } from 'react';
+import {
   DollarSign, Search, Filter, Download, X, Eye, User,
-  Calendar, TrendingUp, Wallet, Users, Sparkles, Building,
-  ChevronDown, CheckCircle, Clock, Award, CreditCard, Percent
+  Calendar, TrendingUp, Wallet, Users, CheckCircle, Clock, Award, CreditCard, Percent, ChevronDown,
+  AlertCircle, Building
 } from 'lucide-react';
+import SalaryService from '../../services/salary.service';
+import type { Salary } from '../../services/salary.service';
 
 interface SalaryData {
   id: string;
@@ -21,34 +23,30 @@ interface SalaryData {
   position: string;
 }
 
-const mockSalaries: SalaryData[] = [
-  { id: 'SAL-001', employee: 'John Doe', role: 'Recruiter', department: 'Sales', baseSalary: 8000, bonus: 1200, deductions: 920, netPay: 8280, payPeriod: 'March 2024', paymentDate: '2024-03-31', status: 'paid', bankAccount: '****5678', position: 'Senior Recruiter' },
-  { id: 'SAL-002', employee: 'Jane Smith', role: 'Candidate', department: 'Engineering', baseSalary: 9500, bonus: 0, deductions: 950, netPay: 8550, payPeriod: 'March 2024', paymentDate: '2024-03-31', status: 'paid', bankAccount: '****1234', position: 'Software Engineer' },
-  { id: 'SAL-003', employee: 'Bob Wilson', role: 'Recruiter', department: 'Sales', baseSalary: 7500, bonus: 1500, deductions: 825, netPay: 8175, payPeriod: 'March 2024', paymentDate: '2024-04-05', status: 'processed', bankAccount: '****9012', position: 'Technical Recruiter' },
-  { id: 'SAL-004', employee: 'Alice Brown', role: 'Admin', department: 'Operations', baseSalary: 6500, bonus: 500, deductions: 650, netPay: 6350, payPeriod: 'March 2024', paymentDate: '2024-04-05', status: 'processed', bankAccount: '****3456', position: 'Operations Manager' },
-  { id: 'SAL-005', employee: 'Charlie Davis', role: 'Candidate', department: 'Engineering', baseSalary: 10200, bonus: 0, deductions: 1020, netPay: 9180, payPeriod: 'March 2024', paymentDate: '2024-04-05', status: 'pending', bankAccount: '****7890', position: 'Lead Developer' },
-  { id: 'SAL-006', employee: 'Diana Prince', role: 'Recruiter', department: 'Sales', baseSalary: 8500, bonus: 2000, deductions: 935, netPay: 9565, payPeriod: 'March 2024', paymentDate: '2024-04-05', status: 'pending', bankAccount: '****2468', position: 'Principal Recruiter' },
-];
-
-const statusColors = {
+const statusColors: Record<string, { bg: string, text: string, border: string }> = {
   pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30' },
   processed: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
   paid: { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500/30' },
 };
 
-const roleColors = {
+const roleColors: Record<string, { bg: string, text: string, border: string }> = {
+  recruiter: { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' },
+  candidate: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
+  admin: { bg: 'bg-pink-500/20', text: 'text-pink-400', border: 'border-pink-500/30' },
   Recruiter: { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' },
   Candidate: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
   Admin: { bg: 'bg-pink-500/20', text: 'text-pink-400', border: 'border-pink-500/30' },
 };
 
 export function SalariesPage() {
-  const [salaries, setSalaries] = useState<SalaryData[]>(mockSalaries);
+  const [salaries, setSalaries] = useState<SalaryData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedSalary, setSelectedSalary] = useState<SalaryData | null>(null);
-  
+
   const [filters, setFilters] = useState({
     employee: 'all',
     role: 'all',
@@ -56,27 +54,59 @@ export function SalariesPage() {
     status: 'all',
   });
 
+  const fetchSalaries = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await SalaryService.getAllSalaries();
+      const mappedData: SalaryData[] = data.map((s: Salary) => ({
+        id: s._id,
+        employee: s.userId?.name || 'Unknown',
+        role: (s.userId?.role || 'Candidate') as any,
+        department: (s as any).department || 'General',
+        baseSalary: s.base || 0,
+        bonus: s.bonus || 0,
+        deductions: (s as any).deductions || 0,
+        netPay: s.finalAmount || 0,
+        payPeriod: s.month,
+        paymentDate: s.createdAt ? new Date(s.createdAt).toISOString().split('T')[0] : 'N/A',
+        status: (s as any).status || 'pending',
+        bankAccount: s.bankAccount || '****0000',
+        position: (s as any).position || s.userId?.role || 'Staff'
+      }));
+      setSalaries(mappedData);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch salaries');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSalaries();
+  }, [fetchSalaries]);
+
   const filteredSalaries = salaries.filter(sal => {
-    const matchesSearch = 
+    const matchesSearch =
       sal.employee.toLowerCase().includes(searchQuery.toLowerCase()) ||
       sal.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
       sal.position.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesFilters = 
+
+    const matchesFilters =
       (filters.role === 'all' || sal.role === filters.role) &&
       (filters.department === 'all' || sal.department === filters.department) &&
       (filters.status === 'all' || sal.status === filters.status);
-    
+
     return matchesSearch && matchesFilters;
   });
 
   const stats = {
     total: salaries.length,
-    pending: salaries.filter(s => s.status === 'pending').length,
-    processed: salaries.filter(s => s.status === 'processed').length,
-    paid: salaries.filter(s => s.status === 'paid').length,
-    totalPayroll: salaries.reduce((sum, s) => sum + s.netPay, 0),
-    totalBonus: salaries.reduce((sum, s) => sum + s.bonus, 0),
+    pending: salaries.filter((s: SalaryData) => s.status === 'pending').length,
+    processed: salaries.filter((s: SalaryData) => s.status === 'processed').length,
+    paid: salaries.filter((s: SalaryData) => s.status === 'paid').length,
+    totalPayroll: salaries.reduce((sum: number, s: SalaryData) => sum + s.netPay, 0),
+    totalBonus: salaries.reduce((sum: number, s: SalaryData) => sum + s.bonus, 0),
   };
 
   const formatCurrency = (value: number) => {
@@ -87,12 +117,41 @@ export function SalariesPage() {
     }).format(value);
   };
 
+  if (loading) {
+    return (
+      <div className="p-8 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
+          <p className="text-slate-400 animate-pulse">Loading payroll data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="glass-dark border-red-500/20 p-8 rounded-3xl text-center">
+          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-slate-200 mb-2">Failed to Load Payroll</h2>
+          <p className="text-slate-400 mb-6">{error}</p>
+          <button
+            onClick={() => fetchSalaries()}
+            className="px-6 py-2 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500/30 transition-all border border-red-500/30"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 space-y-6">
-      {/* Header */}
+      {}
       <div className="relative">
         <div className="absolute -top-20 -right-20 w-64 h-64 bg-green-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" />
-        
+
         <div className="relative flex items-center justify-between animate-slide-in">
           <div>
             <div className="flex items-center gap-3 mb-3">
@@ -105,7 +164,7 @@ export function SalariesPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="flex gap-3">
             <button className="group relative px-6 py-4 glass rounded-2xl hover:bg-white/10 transition-all duration-300 flex items-center gap-3 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-green-500/10 to-teal-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -116,7 +175,7 @@ export function SalariesPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {}
       <div className="grid grid-cols-6 gap-6 animate-slide-in" style={{ animationDelay: '100ms' }}>
         {[
           { label: 'Total Employees', value: stats.total, gradient: 'from-emerald-500 to-teal-500', icon: Users },
@@ -144,7 +203,7 @@ export function SalariesPage() {
         })}
       </div>
 
-      {/* Controls */}
+      {}
       <div className="glass rounded-3xl p-6 space-y-4 animate-slide-in shadow-premium" style={{ animationDelay: '200ms' }}>
         <div className="flex items-center gap-4">
           <div className="flex-1 relative group">
@@ -157,7 +216,7 @@ export function SalariesPage() {
               className="w-full pl-14 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 text-slate-100 placeholder-slate-500 transition-all duration-300 hover:bg-white/10"
             />
           </div>
-          
+
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`group relative px-6 py-4 glass rounded-2xl transition-all duration-300 flex items-center gap-3 overflow-hidden ${showFilters ? 'bg-emerald-500/20 border-emerald-500/30 shadow-glow-green' : 'hover:bg-white/10'}`}
@@ -185,7 +244,7 @@ export function SalariesPage() {
           </button>
         </div>
 
-        {/* Filters Panel */}
+        {}
         {showFilters && (
           <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/10 animate-slide-in">
             {[
@@ -210,15 +269,15 @@ export function SalariesPage() {
         )}
       </div>
 
-      {/* Salaries Cards Grid - Enterprise Design */}
+      {}
       <div className="grid grid-cols-1 gap-4 animate-slide-in" style={{ animationDelay: '300ms' }}>
         {filteredSalaries.map((sal) => (
           <div key={sal.id} className="group relative glass rounded-2xl p-6 hover-lift card-shine overflow-hidden border border-white/10 hover:border-emerald-500/30 transition-all duration-300">
             <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500`} />
-            
+
             <div className="relative">
               <div className="flex items-start justify-between mb-4">
-                {/* Left Section - Employee Info */}
+                {}
                 <div className="flex-1">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center shadow-glow-green">
@@ -240,8 +299,8 @@ export function SalariesPage() {
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Compensation Breakdown */}
+
+                  {}
                   <div className="grid grid-cols-5 gap-3">
                     <div className="glass rounded-xl p-3">
                       <p className="text-xs text-slate-500 mb-1 flex items-center gap-1">
@@ -274,7 +333,7 @@ export function SalariesPage() {
                   </div>
                 </div>
 
-                {/* Right Section - Status & Actions */}
+                {}
                 <div className="flex flex-col items-end gap-4 ml-6">
                   <div className="flex items-center gap-3">
                     <div className="text-right">
@@ -293,7 +352,7 @@ export function SalariesPage() {
                     </span>
                   </div>
 
-                  {/* Action Button */}
+                  {}
                   <button
                     onClick={() => {
                       setSelectedSalary(sal);
@@ -307,7 +366,7 @@ export function SalariesPage() {
                 </div>
               </div>
 
-              {/* Bank Account Info */}
+              {}
               <div className="mt-4 pt-4 border-t border-white/10">
                 <div className="flex items-center gap-2 text-sm">
                   <CreditCard className="w-4 h-4 text-slate-500" />
@@ -320,12 +379,12 @@ export function SalariesPage() {
         ))}
       </div>
 
-      {/* Detail Modal */}
+      {}
       {showDetailModal && selectedSalary && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop animate-slide-in">
           <div className="glass-dark rounded-3xl max-w-3xl w-full p-8 shadow-premium border border-white/20 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500 rounded-full blur-3xl opacity-20 animate-pulse" />
-            
+
             <div className="relative">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-3xl premium-text">Payroll Details</h3>
@@ -338,7 +397,7 @@ export function SalariesPage() {
               </div>
 
               <div className="space-y-6">
-                {/* Employee Info */}
+                {}
                 <div className="glass rounded-2xl p-6">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-glow-green">
@@ -349,7 +408,7 @@ export function SalariesPage() {
                       <p className="text-sm text-slate-400 mt-1">{selectedSalary.position}</p>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="glass rounded-xl p-4">
                       <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Role</p>
@@ -364,7 +423,7 @@ export function SalariesPage() {
                   </div>
                 </div>
 
-                {/* Pay Period & Status */}
+                {}
                 <div className="grid grid-cols-2 gap-6">
                   <div className="glass rounded-2xl p-6">
                     <h5 className="text-sm text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
@@ -403,7 +462,7 @@ export function SalariesPage() {
                   </div>
                 </div>
 
-                {/* Compensation Breakdown */}
+                {}
                 <div className="glass rounded-2xl p-6 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border-emerald-500/20">
                   <h5 className="text-sm text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                     <Wallet className="w-4 h-4" />

@@ -1,53 +1,16 @@
-import { useState } from 'react';
-import { FileUp, Filter, Plus, Download, Eye, X } from 'lucide-react';
-
-interface DocumentRequest {
-    id: string;
-    candidateName: string;
-    requestedBy: string;
-    documentType: string;
-    status: 'Pending' | 'Uploaded' | 'Approved' | 'Rejected';
-    requestedDate: string;
-    uploadedDate?: string;
-    notes: string;
-    submissionId?: string;
-}
-
-const mockRequests: DocumentRequest[] = [
-    {
-        id: '1',
-        candidateName: 'John Doe',
-        requestedBy: 'Alice Johnson',
-        documentType: 'Resume',
-        status: 'Uploaded',
-        requestedDate: '2025-01-05',
-        uploadedDate: '2025-01-06',
-        notes: 'Updated resume needed',
-    },
-    {
-        id: '2',
-        candidateName: 'Jane Smith',
-        requestedBy: 'Bob Smith',
-        documentType: 'ID Proof',
-        status: 'Pending',
-        requestedDate: '2025-01-08',
-        notes: 'Government ID required for verification',
-    },
-    {
-        id: '3',
-        candidateName: 'Mike Johnson',
-        requestedBy: 'Alice Johnson',
-        documentType: 'Certification',
-        status: 'Approved',
-        requestedDate: '2025-01-03',
-        uploadedDate: '2025-01-04',
-        notes: 'AWS certification',
-    },
-];
+import { useState, useEffect } from 'react';
+import { FileUp, Filter, Plus, Download, Eye, X, Loader2, AlertCircle } from 'lucide-react';
+import DocumentService, { type DocumentRequest } from '../../services/document.service';
+import UserService, { type User } from '../../services/user.service';
 
 export function DocumentRequests() {
-    const [requests, setRequests] = useState<DocumentRequest[]>(mockRequests);
+    const [requests, setRequests] = useState<DocumentRequest[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
+    const [candidates, setCandidates] = useState<User[]>([]);
+    const [loadingCandidates, setLoadingCandidates] = useState(false);
+
     const [filters, setFilters] = useState({
         candidate: '',
         requestedBy: '',
@@ -55,49 +18,90 @@ export function DocumentRequests() {
         status: '',
     });
     const [formData, setFormData] = useState({
-        candidate: '',
-        submission: '',
-        documentType: '',
+        requestedFrom: '',
+        type: 'OTHER',
         notes: '',
     });
 
-    const handleCreateRequest = () => {
-        const newRequest: DocumentRequest = {
-            id: Date.now().toString(),
-            candidateName: formData.candidate,
-            requestedBy: 'Admin User',
-            documentType: formData.documentType,
-            status: 'Pending',
-            requestedDate: new Date().toISOString().split('T')[0],
-            notes: formData.notes,
-            submissionId: formData.submission || undefined,
-        };
-        setRequests([...requests, newRequest]);
-        setShowModal(false);
-        setFormData({ candidate: '', submission: '', documentType: '', notes: '' });
+    useEffect(() => {
+        fetchRequests();
+    }, []);
+
+    const fetchRequests = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const data = await DocumentService.getDocumentRequests();
+            setRequests(data);
+        } catch (err: any) {
+            console.error('Error fetching document requests:', err);
+            setError('Failed to load document requests.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleOpenCreateModal = async () => {
+        setShowModal(true);
+        if (candidates.length === 0) {
+            try {
+                setLoadingCandidates(true);
+                const response = await UserService.getAllUsers({ role: 'candidate', limit: 1000 });
+                setCandidates(response.users);
+            } catch (err) {
+                console.error('Error fetching candidates:', err);
+            } finally {
+                setLoadingCandidates(false);
+            }
+        }
+    };
+
+    const handleCreateRequest = async () => {
+        if (!formData.requestedFrom || !formData.type) return;
+        try {
+            setLoading(true);
+            await DocumentService.createDocumentRequest(formData);
+            await fetchRequests();
+            setShowModal(false);
+            setFormData({ requestedFrom: '', type: 'OTHER', notes: '' });
+        } catch (err: any) {
+            console.error('Error creating request:', err);
+            setError(err.response?.data?.message || 'Failed to create request.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const filteredRequests = requests.filter(req => {
-        if (filters.candidate && !req.candidateName.toLowerCase().includes(filters.candidate.toLowerCase())) return false;
-        if (filters.requestedBy && !req.requestedBy.toLowerCase().includes(filters.requestedBy.toLowerCase())) return false;
-        if (filters.documentType && req.documentType !== filters.documentType) return false;
+        if (filters.candidate && !req.requestedFrom.name.toLowerCase().includes(filters.candidate.toLowerCase())) return false;
+        if (filters.requestedBy && !req.requestedBy.name.toLowerCase().includes(filters.requestedBy.toLowerCase())) return false;
+        if (filters.documentType && req.type !== filters.documentType) return false;
         if (filters.status && req.status !== filters.status) return false;
         return true;
     });
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'Pending': return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
-            case 'Uploaded': return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
-            case 'Approved': return 'bg-green-500/20 text-green-300 border-green-500/30';
-            case 'Rejected': return 'bg-red-500/20 text-red-300 border-red-500/30';
+            case 'PENDING': return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
+            case 'UPLOADED': return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+            case 'REVIEWED': return 'bg-green-500/20 text-green-300 border-green-500/30';
+            case 'REJECTED': return 'bg-red-500/20 text-red-300 border-red-500/30';
             default: return 'bg-slate-500/20 text-slate-300 border-slate-500/30';
         }
     };
 
+    if (loading && requests.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-white/10 m-8">
+                <Loader2 className="w-12 h-12 text-purple-500 animate-spin mb-4" />
+                <p className="text-purple-200 font-bold">Loading document requests...</p>
+            </div>
+        );
+    }
+
     return (
         <div className="p-8 space-y-6">
-            {/* Header */}
+            {}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <div className="w-14 h-14 bg-gradient-to-br from-purple-500 via-blue-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-glow-purple">
@@ -109,7 +113,7 @@ export function DocumentRequests() {
                     </div>
                 </div>
                 <button
-                    onClick={() => setShowModal(true)}
+                    onClick={handleOpenCreateModal}
                     className="px-6 py-3 bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 rounded-xl text-white font-medium hover-lift shadow-premium flex items-center gap-2"
                 >
                     <Plus className="w-5 h-5" />
@@ -117,7 +121,14 @@ export function DocumentRequests() {
                 </button>
             </div>
 
-            {/* Filters */}
+            {error && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-200 px-6 py-4 rounded-2xl flex items-center gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-400" />
+                    <span className="font-semibold">{error}</span>
+                </div>
+            )}
+
+            {}
             <div className="glass rounded-2xl p-6 border border-white/10">
                 <div className="flex items-center gap-3 mb-4">
                     <Filter className="w-5 h-5 text-purple-400" />
@@ -144,10 +155,11 @@ export function DocumentRequests() {
                         className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                     >
                         <option value="">All Document Types</option>
-                        <option value="Resume">Resume</option>
-                        <option value="ID Proof">ID Proof</option>
-                        <option value="Certification">Certification</option>
-                        <option value="Reference Letter">Reference Letter</option>
+                        <option value="ID_PROOF">ID Proof</option>
+                        <option value="W2">W2</option>
+                        <option value="OFFER">Offer</option>
+                        <option value="TIMESHEET">Timesheet</option>
+                        <option value="OTHER">Other</option>
                     </select>
                     <select
                         value={filters.status}
@@ -155,15 +167,15 @@ export function DocumentRequests() {
                         className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                     >
                         <option value="">All Statuses</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Uploaded">Uploaded</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Rejected">Rejected</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="UPLOADED">Uploaded</option>
+                        <option value="REVIEWED">Reviewed</option>
+                        <option value="REJECTED">Rejected</option>
                     </select>
                 </div>
             </div>
 
-            {/* Table */}
+            {}
             <div className="glass rounded-2xl border border-white/10 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
@@ -174,22 +186,24 @@ export function DocumentRequests() {
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Document Type</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Requested Date</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Uploaded Date</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {filteredRequests.map((request) => (
-                                <tr key={request.id} className="hover:bg-white/5 transition-colors">
+                                <tr key={request._id} className="hover:bg-white/5 transition-colors">
                                     <td className="px-6 py-4">
-                                        <span className="text-slate-200 font-medium">{request.candidateName}</span>
+                                        <div className="flex flex-col">
+                                            <span className="text-slate-200 font-medium">{request.requestedFrom.name}</span>
+                                            <span className="text-xs text-slate-500">{request.requestedFrom.email}</span>
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="text-slate-400 text-sm">{request.requestedBy}</span>
+                                        <span className="text-slate-400 text-sm">{request.requestedBy.name}</span>
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-lg text-xs font-medium border border-purple-500/30">
-                                            {request.documentType}
+                                            {request.type}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
@@ -199,15 +213,7 @@ export function DocumentRequests() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className="text-slate-300 text-sm">
-                                            {new Date(request.requestedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className="text-slate-300 text-sm">
-                                            {request.uploadedDate
-                                                ? new Date(request.uploadedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                                                : '-'
-                                            }
+                                            {new Date(request.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
@@ -215,11 +221,14 @@ export function DocumentRequests() {
                                             <button className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors">
                                                 <Eye className="w-4 h-4" />
                                             </button>
-                                            {request.status !== 'Pending' && (
-                                                <button className="p-2 text-green-400 hover:bg-green-500/10 rounded-lg transition-colors">
+                                            {request.status === 'UPLOADED' || request.status === 'REVIEWED' ? (
+                                                <button
+                                                    onClick={() => DocumentService.downloadFile(request._id)}
+                                                    className="p-2 text-green-400 hover:bg-green-500/10 rounded-lg transition-colors"
+                                                >
                                                     <Download className="w-4 h-4" />
                                                 </button>
-                                            )}
+                                            ) : null}
                                         </div>
                                     </td>
                                 </tr>
@@ -229,7 +238,7 @@ export function DocumentRequests() {
                 </div>
             </div>
 
-            {/* Create Request Modal */}
+            {}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
                     <div className="glass rounded-2xl border border-white/10 max-w-lg w-full shadow-premium">
@@ -242,36 +251,31 @@ export function DocumentRequests() {
                         <div className="p-6 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">Candidate</label>
-                                <input
-                                    type="text"
-                                    value={formData.candidate}
-                                    onChange={(e) => setFormData({ ...formData, candidate: e.target.value })}
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                                    placeholder="Enter candidate name"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Related Submission (Optional)</label>
-                                <input
-                                    type="text"
-                                    value={formData.submission}
-                                    onChange={(e) => setFormData({ ...formData, submission: e.target.value })}
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-                                    placeholder="Enter submission ID"
-                                />
+                                <select
+                                    value={formData.requestedFrom}
+                                    onChange={(e) => setFormData({ ...formData, requestedFrom: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    disabled={loadingCandidates}
+                                >
+                                    <option value="">Select a candidate</option>
+                                    {candidates.map(candidate => (
+                                        <option key={candidate._id} value={candidate._id}>{candidate.name} ({candidate.email})</option>
+                                    ))}
+                                </select>
+                                {loadingCandidates && <span className="text-xs text-purple-400 mt-1">Loading candidates...</span>}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">Document Type</label>
                                 <select
-                                    value={formData.documentType}
-                                    onChange={(e) => setFormData({ ...formData, documentType: e.target.value })}
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                                    value={formData.type}
+                                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-800 border border-white/10 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                 >
-                                    <option value="">Select document type</option>
-                                    <option value="Resume">Resume</option>
-                                    <option value="ID Proof">ID Proof</option>
-                                    <option value="Certification">Certification</option>
-                                    <option value="Reference Letter">Reference Letter</option>
+                                    <option value="ID_PROOF">ID Proof</option>
+                                    <option value="W2">W2</option>
+                                    <option value="OFFER">Offer</option>
+                                    <option value="TIMESHEET">Timesheet</option>
+                                    <option value="OTHER">Other</option>
                                 </select>
                             </div>
                             <div>
@@ -294,9 +298,10 @@ export function DocumentRequests() {
                             </button>
                             <button
                                 onClick={handleCreateRequest}
-                                className="px-6 py-3 bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 rounded-xl text-white font-medium hover-lift shadow-premium flex items-center gap-2"
+                                disabled={loading}
+                                className="px-6 py-3 bg-gradient-to-r from-purple-500 via-blue-500 to-pink-500 rounded-xl text-white font-medium hover-lift shadow-premium flex items-center gap-2 disabled:opacity-50"
                             >
-                                <Plus className="w-5 h-5" />
+                                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
                                 Create Request
                             </button>
                         </div>

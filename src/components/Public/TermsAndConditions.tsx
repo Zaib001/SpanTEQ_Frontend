@@ -6,7 +6,7 @@ export function TermsAndConditions() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
+      {}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200">
         <div className="max-w-4xl mx-auto px-6 py-4">
           <button
@@ -19,9 +19,9 @@ export function TermsAndConditions() {
         </div>
       </header>
 
-      {/* Content */}
+      {}
       <div className="max-w-4xl mx-auto px-6 py-16">
-        {/* Title Section */}
+        {}
         <div className="mb-12">
           <div className="inline-flex items-center gap-3 px-4 py-2 bg-blue-50 rounded-full border border-blue-200 mb-6">
             <FileText className="w-4 h-4 text-blue-600" />
@@ -33,7 +33,7 @@ export function TermsAndConditions() {
           </p>
         </div>
 
-        {/* Introduction */}
+        {}
         <div className="prose prose-slate max-w-none">
           <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 rounded-2xl p-8 border border-purple-200 mb-12">
             <div className="mb-6">
@@ -55,7 +55,7 @@ export function TermsAndConditions() {
             </p>
           </div>
 
-          {/* Section 1 */}
+          {}
           <section className="mb-12">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -82,7 +82,7 @@ export function TermsAndConditions() {
             </div>
           </section>
 
-          {/* Section 2 */}
+          {}
           <section className="mb-12">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -148,7 +148,7 @@ export function TermsAndConditions() {
             </div>
           </section>
 
-          {/* Section 3 */}
+          {}
           <section className="mb-12">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -211,7 +211,7 @@ export function TermsAndConditions() {
             </div>
           </section>
 
-          {/* Section 4 */}
+          {}
           <section className="mb-12">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -261,7 +261,7 @@ export function TermsAndConditions() {
             </div>
           </section>
 
-          {/* Section 5 */}
+          {}
           <section className="mb-12">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -299,7 +299,7 @@ export function TermsAndConditions() {
             </div>
           </section>
 
-          {/* Section 6 */}
+          {}
           <section className="mb-12">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -344,7 +344,7 @@ export function TermsAndConditions() {
             </div>
           </section>
 
-          {/* Section 7 */}
+          {}
           <section className="mb-12">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">7. Indemnification</h2>
             <div className="ml-0 text-slate-700">
@@ -374,7 +374,7 @@ export function TermsAndConditions() {
             </div>
           </section>
 
-          {/* Section 8 */}
+          {}
           <section className="mb-12">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">8. Data and Privacy</h2>
             <div className="ml-0 text-slate-700">
@@ -390,7 +390,7 @@ export function TermsAndConditions() {
             </div>
           </section>
 
-          {/* Section 9 */}
+          {}
           <section className="mb-12">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">9. Termination</h2>
             <div className="ml-0 text-slate-700">
@@ -410,7 +410,7 @@ export function TermsAndConditions() {
             </div>
           </section>
 
-          {/* Section 10 */}
+          {}
           <section className="mb-12">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">10. Governing Law and Dispute Resolution</h2>
             <div className="ml-0 space-y-6">
@@ -445,7 +445,7 @@ export function TermsAndConditions() {
             </div>
           </section>
 
-          {/* Section 11 */}
+          {}
           <section className="mb-12">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">11. General Provisions</h2>
             <div className="ml-0 space-y-6">
@@ -482,7 +482,7 @@ export function TermsAndConditions() {
             </div>
           </section>
 
-          {/* Contact Section */}
+          {}
           <section className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-8 border border-blue-200">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -502,7 +502,7 @@ export function TermsAndConditions() {
             </div>
           </section>
 
-          {/* Acknowledgment */}
+          {}
           <div className="bg-slate-900 text-white rounded-2xl p-8 mt-12">
             <h3 className="text-2xl font-bold mb-4">Acknowledgment</h3>
             <p className="text-slate-300 leading-relaxed">

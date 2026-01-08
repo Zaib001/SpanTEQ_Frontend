@@ -78,13 +78,13 @@ export function SalariesPage() {
 
   return (
     <div className="p-8 space-y-6">
-      {/* Header */}
+      {}
       <div>
         <h1 className="text-3xl mb-2">Salary Management</h1>
         <p className="text-gray-600">Manage compensation, bonuses, and payout projections</p>
       </div>
 
-      {/* Stats */}
+      {}
       <div className="grid grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="flex items-center justify-between">
@@ -124,7 +124,7 @@ export function SalariesPage() {
         </div>
       </div>
 
-      {/* Payout Projections Chart */}
+      {}
       <div className="bg-white p-6 rounded-xl border border-gray-200">
         <div className="mb-6">
           <h2 className="text-xl mb-1">Future Payout Projections</h2>
@@ -147,7 +147,7 @@ export function SalariesPage() {
         </ResponsiveContainer>
       </div>
 
-      {/* Filters */}
+      {}
       <div className="flex gap-3">
         <button
           onClick={() => setFilterModel('all')}
@@ -181,7 +181,7 @@ export function SalariesPage() {
         </button>
       </div>
 
-      {/* Salaries Grid */}
+      {}
       <div className="grid grid-cols-2 gap-4">
         {filteredSalaries.map((employee) => (
           <div key={employee.id} className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-all">

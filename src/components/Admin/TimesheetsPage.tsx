@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import { 
+import { useState, useEffect, useCallback } from 'react';
+import {
   Clock, Search, Filter, Download, X, Eye, CheckCircle, XCircle,
   Calendar, User, DollarSign, TrendingUp, AlertCircle, Sparkles,
   ChevronDown, Briefcase, FileText, ChevronRight, BarChart3
 } from 'lucide-react';
+import TimesheetService from '../../services/timesheet.service';
+import type { Timesheet } from '../../services/timesheet.service';
 
 interface TimesheetData {
   id: string;
@@ -33,22 +35,7 @@ interface ConsultantTimesheets {
   lastSubmission: string;
 }
 
-const mockTimesheets: TimesheetData[] = [
-  { id: 'TS-001', consultant: 'John Doe', client: 'TechCorp', weekEnding: '2024-03-15', regularHours: 40, overtimeHours: 5, totalHours: 45, billRate: 85, totalAmount: 3825, status: 'pending', submittedDate: '2024-03-16', notes: 'Includes weekend work', project: 'Migration Project' },
-  { id: 'TS-002', consultant: 'John Doe', client: 'TechCorp', weekEnding: '2024-03-08', regularHours: 40, overtimeHours: 3, totalHours: 43, billRate: 85, totalAmount: 3655, status: 'approved', submittedDate: '2024-03-09', notes: 'Regular week', project: 'Migration Project' },
-  { id: 'TS-003', consultant: 'John Doe', client: 'TechCorp', weekEnding: '2024-03-01', regularHours: 38, overtimeHours: 0, totalHours: 38, billRate: 85, totalAmount: 3230, status: 'approved', submittedDate: '2024-03-02', notes: 'Short week', project: 'Migration Project' },
-  { id: 'TS-004', consultant: 'Jane Smith', client: 'DataInc', weekEnding: '2024-03-15', regularHours: 40, overtimeHours: 0, totalHours: 40, billRate: 95, totalAmount: 3800, status: 'approved', submittedDate: '2024-03-16', notes: 'Regular hours only', project: 'Analytics Dashboard' },
-  { id: 'TS-005', consultant: 'Jane Smith', client: 'DataInc', weekEnding: '2024-03-08', regularHours: 40, overtimeHours: 2, totalHours: 42, billRate: 95, totalAmount: 3990, status: 'approved', submittedDate: '2024-03-09', notes: 'Minor overtime', project: 'Analytics Dashboard' },
-  { id: 'TS-006', consultant: 'Bob Wilson', client: 'CloudSys', weekEnding: '2024-03-15', regularHours: 38, overtimeHours: 8, totalHours: 46, billRate: 105, totalAmount: 4830, status: 'submitted', submittedDate: '2024-03-17', notes: 'Project deadline rush', project: 'Cloud Infrastructure' },
-  { id: 'TS-007', consultant: 'Bob Wilson', client: 'CloudSys', weekEnding: '2024-03-08', regularHours: 40, overtimeHours: 5, totalHours: 45, billRate: 105, totalAmount: 4725, status: 'pending', submittedDate: '2024-03-09', notes: 'High workload', project: 'Cloud Infrastructure' },
-  { id: 'TS-008', consultant: 'Alice Brown', client: 'FinTech', weekEnding: '2024-03-08', regularHours: 40, overtimeHours: 3, totalHours: 43, billRate: 90, totalAmount: 3870, status: 'approved', submittedDate: '2024-03-09', notes: 'Extra hours approved', project: 'Payment Gateway' },
-  { id: 'TS-009', consultant: 'Charlie Davis', client: 'StartupX', weekEnding: '2024-03-08', regularHours: 35, overtimeHours: 0, totalHours: 35, billRate: 80, totalAmount: 2800, status: 'rejected', submittedDate: '2024-03-09', notes: 'Hours mismatch', project: 'MVP Development' },
-  { id: 'TS-010', consultant: 'Diana Prince', client: 'MegaCorp', weekEnding: '2024-03-15', regularHours: 40, overtimeHours: 10, totalHours: 50, billRate: 110, totalAmount: 5500, status: 'pending', submittedDate: '2024-03-16', notes: 'Critical deployment', project: 'ERP Implementation' },
-  { id: 'TS-011', consultant: 'Diana Prince', client: 'MegaCorp', weekEnding: '2024-03-08', regularHours: 40, overtimeHours: 6, totalHours: 46, billRate: 110, totalAmount: 5060, status: 'approved', submittedDate: '2024-03-09', notes: 'Regular overtime', project: 'ERP Implementation' },
-  { id: 'TS-012', consultant: 'Diana Prince', client: 'MegaCorp', weekEnding: '2024-03-01', regularHours: 40, overtimeHours: 4, totalHours: 44, billRate: 110, totalAmount: 4840, status: 'approved', submittedDate: '2024-03-02', notes: 'Extra work', project: 'ERP Implementation' },
-];
-
-const statusColors = {
+const statusColors: Record<string, { bg: string, text: string, border: string }> = {
   pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30' },
   submitted: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
   approved: { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500/30' },
@@ -56,14 +43,48 @@ const statusColors = {
 };
 
 export function TimesheetsPage() {
-  const [timesheets, setTimesheets] = useState<TimesheetData[]>(mockTimesheets);
+  const [timesheets, setTimesheets] = useState<TimesheetData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedTimesheet, setSelectedTimesheet] = useState<TimesheetData | null>(null);
   const [expandedConsultants, setExpandedConsultants] = useState<{ [key: string]: boolean }>({});
   const [viewMode, setViewMode] = useState<'grouped' | 'list'>('grouped');
-  
+
+  const fetchTimesheets = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await TimesheetService.getAllTimesheets();
+      const mappedData: TimesheetData[] = response.timesheets.map((ts: Timesheet) => ({
+        id: ts._id,
+        consultant: ts.user?.name || 'Unknown',
+        client: ts.client || 'General',
+        weekEnding: new Date(ts.to).toISOString().split('T')[0],
+        regularHours: ts.hours || 0,
+        overtimeHours: 0,
+        totalHours: ts.hours || 0,
+        billRate: 0,
+        totalAmount: ts.totalPay || 0,
+        status: ts.status,
+        submittedDate: new Date(ts.createdAt).toISOString().split('T')[0],
+        notes: ts.notes || '',
+        project: ts.project || 'General Project'
+      }));
+      setTimesheets(mappedData);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch timesheets');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTimesheets();
+  }, [fetchTimesheets]);
+
   const [filters, setFilters] = useState({
     consultant: 'all',
     client: 'all',
@@ -72,10 +93,9 @@ export function TimesheetsPage() {
     dateTo: '',
   });
 
-  // Group timesheets by consultant
   const groupedTimesheets = (): ConsultantTimesheets[] => {
     const groups: { [key: string]: ConsultantTimesheets } = {};
-    
+
     timesheets.forEach(ts => {
       const key = `${ts.consultant}-${ts.client}`;
       if (!groups[key]) {
@@ -101,7 +121,6 @@ export function TimesheetsPage() {
       }
     });
 
-    // Sort timesheets within each group by week ending date (newest first)
     Object.values(groups).forEach(group => {
       group.timesheets.sort((a, b) => new Date(b.weekEnding).getTime() - new Date(a.weekEnding).getTime());
     });
@@ -110,46 +129,70 @@ export function TimesheetsPage() {
   };
 
   const filteredTimesheets = timesheets.filter(ts => {
-    const matchesSearch = 
+    const matchesSearch =
       ts.consultant.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ts.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ts.project.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesFilters = 
+
+    const matchesFilters =
       (filters.consultant === 'all' || ts.consultant === filters.consultant) &&
       (filters.client === 'all' || ts.client === filters.client) &&
       (filters.status === 'all' || ts.status === filters.status);
-    
+
     return matchesSearch && matchesFilters;
   });
 
   const stats = {
     total: timesheets.length,
-    pending: timesheets.filter(ts => ts.status === 'pending').length,
-    approved: timesheets.filter(ts => ts.status === 'approved').length,
-    totalHours: timesheets.reduce((sum, ts) => sum + ts.totalHours, 0),
-    totalAmount: timesheets.reduce((sum, ts) => sum + ts.totalAmount, 0),
-    activeConsultants: new Set(timesheets.map(ts => ts.consultant)).size,
+    pending: timesheets.filter((ts: TimesheetData) => ts.status === 'pending').length,
+    approved: timesheets.filter((ts: TimesheetData) => ts.status === 'approved').length,
+    totalHours: timesheets.reduce((sum: number, ts: TimesheetData) => sum + ts.totalHours, 0),
+    totalAmount: timesheets.reduce((sum: number, ts: TimesheetData) => sum + ts.totalAmount, 0),
+    activeConsultants: new Set(timesheets.map((ts: TimesheetData) => ts.consultant)).size,
   };
 
-  const handleApprove = (id: string) => {
-    setTimesheets(timesheets.map(ts => 
-      ts.id === id ? { ...ts, status: 'approved' as const } : ts
-    ));
+  const handleApprove = async (id: string) => {
+    try {
+      await TimesheetService.updateTimesheet(id, { status: 'approved' });
+      setTimesheets(prev => prev.map(ts =>
+        ts.id === id ? { ...ts, status: 'approved' as const } : ts
+      ));
+    } catch (err: any) {
+      alert(err.message || 'Failed to approve timesheet');
+    }
   };
 
-  const handleReject = (id: string) => {
-    setTimesheets(timesheets.map(ts => 
-      ts.id === id ? { ...ts, status: 'rejected' as const } : ts
-    ));
+  const handleReject = async (id: string) => {
+    try {
+      await TimesheetService.updateTimesheet(id, { status: 'rejected' });
+      setTimesheets(prev => prev.map(ts =>
+        ts.id === id ? { ...ts, status: 'rejected' as const } : ts
+      ));
+    } catch (err: any) {
+      alert(err.message || 'Failed to reject timesheet');
+    }
   };
 
-  const handleApproveAll = (consultant: string, client: string) => {
-    setTimesheets(timesheets.map(ts => 
+  const handleApproveAll = async (consultant: string, client: string) => {
+    const pendingTs = timesheets.filter(ts =>
       ts.consultant === consultant && ts.client === client && ts.status === 'pending'
-        ? { ...ts, status: 'approved' as const }
-        : ts
-    ));
+    );
+
+    if (pendingTs.length === 0) return;
+
+    try {
+      await Promise.all(pendingTs.map(ts =>
+        TimesheetService.updateTimesheet(ts.id, { status: 'approved' })
+      ));
+
+      setTimesheets(prev => prev.map(ts =>
+        ts.consultant === consultant && ts.client === client && ts.status === 'pending'
+          ? { ...ts, status: 'approved' as const }
+          : ts
+      ));
+    } catch (err: any) {
+      alert(err.message || 'Failed to approve some timesheets');
+    }
   };
 
   const toggleConsultant = (key: string) => {
@@ -167,12 +210,41 @@ export function TimesheetsPage() {
     }).format(value);
   };
 
+  if (loading) {
+    return (
+      <div className="p-8 flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
+          <p className="text-slate-400 animate-pulse">Loading timesheets...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="glass-dark border-red-500/20 p-8 rounded-3xl text-center">
+          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-slate-200 mb-2">Failed to Load Timesheets</h2>
+          <p className="text-slate-400 mb-6">{error}</p>
+          <button
+            onClick={() => fetchTimesheets()}
+            className="px-6 py-2 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500/30 transition-all border border-red-500/30"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 space-y-6">
-      {/* Header */}
+      {}
       <div className="relative">
         <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" />
-        
+
         <div className="relative flex items-center justify-between animate-slide-in">
           <div>
             <div className="flex items-center gap-3 mb-3">
@@ -185,34 +257,32 @@ export function TimesheetsPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="flex gap-3">
-            {/* View Toggle */}
+            {}
             <div className="glass rounded-2xl p-1 flex gap-1">
               <button
                 onClick={() => setViewMode('grouped')}
-                className={`px-4 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-2 ${
-                  viewMode === 'grouped'
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-glow-purple'
-                    : 'text-slate-400 hover:text-white'
-                }`}
+                className={`px-4 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-2 ${viewMode === 'grouped'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-glow-purple'
+                  : 'text-slate-400 hover:text-white'
+                  }`}
               >
                 <User className="w-4 h-4" />
                 <span className="text-sm font-medium">By Consultant</span>
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`px-4 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-2 ${
-                  viewMode === 'list'
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-glow-purple'
-                    : 'text-slate-400 hover:text-white'
-                }`}
+                className={`px-4 py-2.5 rounded-xl transition-all duration-300 flex items-center gap-2 ${viewMode === 'list'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-glow-purple'
+                  : 'text-slate-400 hover:text-white'
+                  }`}
               >
                 <FileText className="w-4 h-4" />
                 <span className="text-sm font-medium">All Weeks</span>
               </button>
             </div>
-            
+
             <button className="group relative px-6 py-4 glass rounded-2xl hover:bg-white/10 transition-all duration-300 flex items-center gap-3 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-rose-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <Download className="w-5 h-5 relative z-10 text-slate-400 group-hover:text-purple-400 transition-colors" />
@@ -222,7 +292,7 @@ export function TimesheetsPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {}
       <div className="grid grid-cols-6 gap-6 animate-slide-in" style={{ animationDelay: '100ms' }}>
         {[
           { label: 'Total Submissions', value: stats.total, gradient: 'from-purple-500 to-pink-500', icon: Clock },
@@ -250,7 +320,7 @@ export function TimesheetsPage() {
         })}
       </div>
 
-      {/* Controls */}
+      {}
       <div className="glass rounded-3xl p-6 space-y-4 animate-slide-in shadow-premium" style={{ animationDelay: '200ms' }}>
         <div className="flex items-center gap-4">
           <div className="flex-1 relative group">
@@ -263,7 +333,7 @@ export function TimesheetsPage() {
               className="w-full pl-14 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 text-slate-100 placeholder-slate-500 transition-all duration-300 hover:bg-white/10"
             />
           </div>
-          
+
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`group relative px-6 py-4 glass rounded-2xl transition-all duration-300 flex items-center gap-3 overflow-hidden ${showFilters ? 'bg-purple-500/20 border-purple-500/30 shadow-glow-purple' : 'hover:bg-white/10'}`}
@@ -287,12 +357,12 @@ export function TimesheetsPage() {
           </button>
         </div>
 
-        {/* Filters Panel */}
+        {}
         {showFilters && (
           <div className="grid grid-cols-4 gap-4 pt-6 border-t border-white/10 animate-slide-in">
             {[
-              { label: 'Consultant', value: filters.consultant, key: 'consultant', options: ['all', ...Array.from(new Set(timesheets.map(t => t.consultant)))] },
-              { label: 'Client', value: filters.client, key: 'client', options: ['all', ...Array.from(new Set(timesheets.map(t => t.client)))] },
+              { label: 'Consultant', value: filters.consultant, key: 'consultant', options: ['all', ...Array.from(new Set(timesheets.map((t: TimesheetData) => t.consultant)))] },
+              { label: 'Client', value: filters.client, key: 'client', options: ['all', ...Array.from(new Set(timesheets.map((t: TimesheetData) => t.client)))] },
               { label: 'Status', value: filters.status, key: 'status', options: ['all', 'pending', 'submitted', 'approved', 'rejected'] },
               { label: 'Week Ending', value: filters.dateFrom, key: 'dateFrom', type: 'date' },
             ].map((filter, index) => (
@@ -322,17 +392,17 @@ export function TimesheetsPage() {
         )}
       </div>
 
-      {/* Grouped View - By Consultant */}
+      {}
       {viewMode === 'grouped' && (
         <div className="space-y-4 animate-slide-in" style={{ animationDelay: '300ms' }}>
           {groupedTimesheets().map((group) => {
             const key = `${group.consultant}-${group.client}`;
             const isExpanded = expandedConsultants[key];
-            
+
             return (
               <div key={key} className="glass rounded-3xl overflow-hidden border border-white/10 hover:border-purple-500/30 transition-all duration-300">
-                {/* Consultant Header */}
-                <div 
+                {}
+                <div
                   className="p-6 cursor-pointer group"
                   onClick={() => toggleConsultant(key)}
                 >
@@ -356,7 +426,7 @@ export function TimesheetsPage() {
                       </div>
                     </div>
 
-                    {/* Summary Stats */}
+                    {}
                     <div className="flex items-center gap-3 mr-6">
                       <div className="text-right">
                         <p className="text-xs text-slate-500 mb-1">Total Hours</p>
@@ -373,11 +443,11 @@ export function TimesheetsPage() {
                       )}
                     </div>
 
-                    {/* Expand Icon */}
+                    {}
                     <ChevronRight className={`w-6 h-6 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''} group-hover:text-purple-400`} />
                   </div>
 
-                  {/* Quick Actions Bar */}
+                  {}
                   {group.pendingCount > 0 && (
                     <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
                       <p className="text-sm text-slate-400">Quick Actions:</p>
@@ -395,7 +465,7 @@ export function TimesheetsPage() {
                   )}
                 </div>
 
-                {/* Weekly Timesheets */}
+                {}
                 {isExpanded && (
                   <div className="border-t border-white/10 bg-white/5">
                     <div className="p-6 space-y-3">
@@ -492,13 +562,13 @@ export function TimesheetsPage() {
         </div>
       )}
 
-      {/* List View - All Weeks */}
+      {}
       {viewMode === 'list' && (
         <div className="grid grid-cols-1 gap-4 animate-slide-in" style={{ animationDelay: '300ms' }}>
           {filteredTimesheets.map((ts) => (
             <div key={ts.id} className="group relative glass rounded-2xl p-6 hover-lift card-shine overflow-hidden border border-white/10 hover:border-purple-500/30 transition-all duration-300">
               <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500`} />
-              
+
               <div className="relative">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -516,7 +586,7 @@ export function TimesheetsPage() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-4 gap-3">
                       <div className="glass rounded-xl p-3">
                         <p className="text-xs text-slate-500 mb-1">Regular</p>
@@ -605,12 +675,12 @@ export function TimesheetsPage() {
         </div>
       )}
 
-      {/* Detail Modal */}
+      {}
       {showDetailModal && selectedTimesheet && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop animate-slide-in">
           <div className="glass-dark rounded-3xl max-w-3xl w-full p-8 shadow-premium border border-white/20 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500 rounded-full blur-3xl opacity-20 animate-pulse" />
-            
+
             <div className="relative">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-3xl premium-text">Timesheet Details</h3>
@@ -633,7 +703,7 @@ export function TimesheetsPage() {
                       <p className="text-sm text-slate-400 mt-1">{selectedTimesheet.client} • {selectedTimesheet.project}</p>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="glass rounded-xl p-4">
                       <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Week Ending</p>

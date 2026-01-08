@@ -1,50 +1,43 @@
-import { useState } from 'react';
-import { 
-  Search, Filter, Download, Upload, X, Eye, Edit, Trash2, 
-  FileText, User, Briefcase, Calendar, MapPin, Sparkles,
+import { useState, useEffect } from 'react';
+import {
+  Search, Filter, Download, Upload, X, Eye, Edit, Trash2,
+  FileText, User, Briefcase, Calendar, Sparkles,
   ChevronDown, ArrowUpDown
 } from 'lucide-react';
+import SubmissionService from '../../services/submission.service';
+import type { Submission } from '../../services/submission.service';
 
-interface SubmissionData {
-  id: string;
-  candidate: string;
-  recruiter: string;
-  client: string;
-  vendor: string;
-  technology: string;
-  role: string;
-  date: string;
-  status: 'pending' | 'submitted' | 'interview' | 'offered' | 'placed' | 'rejected';
-  notes: string;
-  interviews?: number;
-}
+type SubmissionData = Submission & { id: string };
 
-const mockSubmissions: SubmissionData[] = [
-  { id: '1', candidate: 'John Doe', recruiter: 'Sarah Johnson', client: 'TechCorp', vendor: 'VendorA', technology: 'React', role: 'Frontend Developer', date: '2024-03-15', status: 'interview', notes: 'Second round scheduled', interviews: 2 },
-  { id: '2', candidate: 'Jane Smith', recruiter: 'Michael Chen', client: 'DataInc', vendor: 'VendorB', technology: 'Python', role: 'Data Engineer', date: '2024-03-14', status: 'placed', notes: 'Offer accepted', interviews: 3 },
-  { id: '3', candidate: 'Bob Wilson', recruiter: 'Sarah Johnson', client: 'CloudSys', vendor: 'VendorC', technology: 'AWS', role: 'Cloud Architect', date: '2024-03-13', status: 'offered', notes: 'Awaiting response', interviews: 3 },
-  { id: '4', candidate: 'Alice Brown', recruiter: 'Emily Davis', client: 'FinTech', vendor: 'VendorA', technology: 'Java', role: 'Backend Developer', date: '2024-03-12', status: 'submitted', notes: 'Profile sent', interviews: 0 },
-  { id: '5', candidate: 'Charlie Davis', recruiter: 'Michael Chen', client: 'StartupX', vendor: 'VendorB', technology: 'Node.js', role: 'Full Stack Developer', date: '2024-03-11', status: 'rejected', notes: 'Not a fit', interviews: 1 },
-];
-
-const statusColors = {
+const statusColors: Record<string, { bg: string, text: string, border: string }> = {
   pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30' },
   submitted: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
   interview: { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' },
   offered: { bg: 'bg-cyan-500/20', text: 'text-cyan-400', border: 'border-cyan-500/30' },
   placed: { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500/30' },
   rejected: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' },
+
+  SUBMITTED: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
+  INTERVIEWING: { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' },
+  OFFERED: { bg: 'bg-cyan-500/20', text: 'text-cyan-400', border: 'border-cyan-500/30' },
+  PLACED: { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500/30' },
+  REJECTED: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' },
+  ON_HOLD: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30' },
+  WITHDRAWN: { bg: 'bg-slate-500/20', text: 'text-slate-400', border: 'border-slate-500/30' },
+  CLOSED: { bg: 'bg-slate-500/20', text: 'text-slate-400', border: 'border-slate-500/30' },
 };
 
 export function SubmissionsPage() {
-  const [submissions, setSubmissions] = useState<SubmissionData[]>(mockSubmissions);
+  const [submissions, setSubmissions] = useState<SubmissionData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<SubmissionData | null>(null);
-  
-  // Filters
+  const [recruiters, setRecruiters] = useState<{ id: string, name: string }[]>([]);
+
   const [filters, setFilters] = useState({
     recruiter: 'all',
     candidate: 'all',
@@ -56,35 +49,174 @@ export function SubmissionsPage() {
     dateTo: '',
   });
 
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      try {
+        setLoading(true);
+        const params: any = {};
+        if (filters.recruiter !== 'all') params.recruiterId = filters.recruiter;
+        if (filters.client !== 'all') params.client = filters.client;
+        if (filters.vendor !== 'all') params.vendor = filters.vendor;
+        if (filters.technology !== 'all') params.technology = filters.technology;
+        if (filters.status !== 'all') params.status = filters.status;
+        if (filters.dateFrom) params.startDate = filters.dateFrom;
+        if (filters.dateTo) params.endDate = filters.dateTo;
+        if (searchQuery) params.search = searchQuery;
+
+        const response = await SubmissionService.getAllSubmissions(params);
+
+        const mappedSubmissions = response.submissions.map(sub => {
+
+          const candidate = sub.candidate;
+          const recruiter = sub.recruiter;
+
+          return {
+            ...sub,
+            id: sub._id,
+            notes: sub.notes || '',
+
+            candidateName: candidate && typeof candidate === 'object' ? (candidate as any).name : (candidate || 'N/A'),
+            recruiterName: recruiter && typeof recruiter === 'object' ? (recruiter as any).name : (recruiter || 'N/A'),
+          };
+        });
+        setSubmissions(mappedSubmissions);
+      } catch (err: any) {
+        console.error('Failed to fetch submissions:', err);
+        setError(err.message || 'Failed to load submissions');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSubmissions();
+  }, [filters, searchQuery]);
+
+  useEffect(() => {
+    const fetchRecruiters = async () => {
+      try {
+        const UserService = (await import('../../services/user.service')).default;
+        const response = await UserService.getAllUsers({ role: 'recruiter' });
+        setRecruiters(response.users.map(u => ({ id: u._id, name: u.name })));
+      } catch (err) {
+        console.error('Failed to fetch recruiters:', err);
+      }
+    };
+    fetchRecruiters();
+  }, []);
+
   const filteredSubmissions = submissions.filter(sub => {
-    const matchesSearch = 
-      sub.candidate.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      sub.recruiter.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      sub.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      sub.technology.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesFilters = 
-      (filters.recruiter === 'all' || sub.recruiter === filters.recruiter) &&
-      (filters.client === 'all' || sub.client === filters.client) &&
-      (filters.technology === 'all' || sub.technology === filters.technology) &&
+    const candidateStr = (sub as any).candidateName || '';
+    const recruiterStr = (sub as any).recruiterName || '';
+    const clientStr = sub.client || '';
+    const techStr = sub.technology || '';
+
+    const matchesSearch =
+      candidateStr.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      recruiterStr.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      clientStr.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      techStr.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesFilters =
+      (filters.recruiter === 'all' || recruiterStr === filters.recruiter) &&
+      (filters.client === 'all' || clientStr === filters.client) &&
+      (filters.technology === 'all' || techStr === filters.technology) &&
       (filters.status === 'all' || sub.status === filters.status);
-    
+
     return matchesSearch && matchesFilters;
   });
 
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this submission?')) {
+      try {
+        await SubmissionService.deleteSubmission(id);
+        setSubmissions(prev => prev.filter(s => s.id !== id));
+      } catch (err: any) {
+        console.error('Delete error:', err);
+        setError(err.message || 'Failed to delete submission');
+      }
+    }
+  };
+
   const stats = {
     total: submissions.length,
-    pending: submissions.filter(s => s.status === 'pending').length,
-    interview: submissions.filter(s => s.status === 'interview').length,
-    placed: submissions.filter(s => s.status === 'placed').length,
+    pending: submissions.filter(s => s.status === 'pending' || s.status === 'SUBMITTED').length,
+    interview: submissions.filter(s => s.status === 'interview' || s.status === 'INTERVIEWING').length,
+    placed: submissions.filter(s => s.status === 'placed' || s.status === 'PLACED').length,
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      setLoading(true);
+      const params: any = {};
+      if (filters.recruiter !== 'all') params.recruiterId = filters.recruiter;
+      if (filters.client !== 'all') params.client = filters.client;
+      if (filters.status !== 'all') params.status = filters.status;
+      if (filters.dateFrom) params.fromDate = filters.dateFrom;
+      if (filters.dateTo) params.toDate = filters.dateTo;
+
+      const blob = await SubmissionService.exportCSV(params);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `submissions_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      console.error('Export error:', err);
+      setError(err.message || 'Failed to export CSV');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      setLoading(true);
+      const params: any = {};
+      if (filters.recruiter !== 'all') params.recruiterId = filters.recruiter;
+      if (filters.client !== 'all') params.client = filters.client;
+      if (filters.status !== 'all') params.status = filters.status;
+      if (filters.dateFrom) params.fromDate = filters.dateFrom;
+      if (filters.dateTo) params.toDate = filters.dateTo;
+
+      const blob = await SubmissionService.exportPDF(params);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `submissions_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      console.error('Export error:', err);
+      setError(err.message || 'Failed to export PDF');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="p-8 space-y-6">
-      {/* Header */}
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl animate-shake">
+          {error}
+          <button onClick={() => window.location.reload()} className="ml-4 underline">Retry</button>
+        </div>
+      )}
+
+      {loading && !submissions.length && (
+        <div className="flex items-center justify-center p-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" />
+        </div>
+      )}
+
+      {}
       <div className="relative">
         <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" />
-        
+
         <div className="relative flex items-center justify-between animate-slide-in">
           <div>
             <div className="flex items-center gap-3 mb-3">
@@ -97,7 +229,7 @@ export function SubmissionsPage() {
               </div>
             </div>
           </div>
-          
+
           <div className="flex gap-3">
             <button
               onClick={() => setShowUploadModal(true)}
@@ -111,7 +243,7 @@ export function SubmissionsPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {}
       <div className="grid grid-cols-4 gap-6 animate-slide-in" style={{ animationDelay: '100ms' }}>
         {[
           { label: 'Total Submissions', value: stats.total, gradient: 'from-blue-500 to-cyan-500', icon: FileText },
@@ -137,7 +269,7 @@ export function SubmissionsPage() {
         })}
       </div>
 
-      {/* Controls */}
+      {}
       <div className="glass rounded-3xl p-6 space-y-4 animate-slide-in shadow-premium" style={{ animationDelay: '200ms' }}>
         <div className="flex items-center gap-4">
           <div className="flex-1 relative group">
@@ -150,7 +282,7 @@ export function SubmissionsPage() {
               className="w-full pl-14 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 text-slate-100 placeholder-slate-500 transition-all duration-300 hover:bg-white/10"
             />
           </div>
-          
+
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`group relative px-6 py-4 glass rounded-2xl transition-all duration-300 flex items-center gap-3 overflow-hidden ${showFilters ? 'bg-blue-500/20 border-blue-500/30 shadow-glow-blue' : 'hover:bg-white/10'}`}
@@ -176,25 +308,45 @@ export function SubmissionsPage() {
             Clear
           </button>
 
-          <button className="group relative px-6 py-4 glass rounded-2xl hover:bg-white/10 transition-all duration-300 flex items-center gap-3 overflow-hidden">
+          <button
+            onClick={handleExportCSV}
+            disabled={loading}
+            className="group relative px-6 py-4 glass rounded-2xl hover:bg-white/10 transition-all duration-300 flex items-center gap-3 overflow-hidden disabled:opacity-50"
+          >
             <Download className="w-5 h-5 relative z-10 text-slate-400 group-hover:text-blue-400 transition-colors" />
             <span className="relative z-10 text-slate-300 font-medium">Export CSV</span>
           </button>
 
-          <button className="group relative px-6 py-4 glass rounded-2xl hover:bg-white/10 transition-all duration-300 flex items-center gap-3 overflow-hidden">
+          <button
+            onClick={handleExportPDF}
+            disabled={loading}
+            className="group relative px-6 py-4 glass rounded-2xl hover:bg-white/10 transition-all duration-300 flex items-center gap-3 overflow-hidden disabled:opacity-50"
+          >
             <Download className="w-5 h-5 relative z-10 text-slate-400 group-hover:text-blue-400 transition-colors" />
             <span className="relative z-10 text-slate-300 font-medium">Export PDF</span>
           </button>
         </div>
 
-        {/* Filters Panel */}
+        {}
         {showFilters && (
           <div className="grid grid-cols-4 gap-4 pt-6 border-t border-white/10 animate-slide-in">
+            <div>
+              <label className="block text-xs text-slate-400 mb-2 uppercase tracking-wider font-medium">Recruiter</label>
+              <select
+                value={filters.recruiter}
+                onChange={(e) => setFilters({ ...filters, recruiter: e.target.value })}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all hover:bg-white/10 appearance-none cursor-pointer"
+              >
+                <option value="all">All Recruiters</option>
+                {recruiters.map(r => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+            </div>
             {[
-              { label: 'Recruiter', value: filters.recruiter, key: 'recruiter', options: ['all', 'Sarah Johnson', 'Michael Chen', 'Emily Davis'] },
               { label: 'Client', value: filters.client, key: 'client', options: ['all', 'TechCorp', 'DataInc', 'CloudSys', 'FinTech'] },
               { label: 'Technology', value: filters.technology, key: 'technology', options: ['all', 'React', 'Python', 'AWS', 'Java', 'Node.js'] },
-              { label: 'Status', value: filters.status, key: 'status', options: ['all', 'pending', 'submitted', 'interview', 'offered', 'placed', 'rejected'] },
+              { label: 'Status', value: filters.status, key: 'status', options: ['all', 'SUBMITTED', 'INTERVIEWING', 'OFFERED', 'PLACED', 'REJECTED', 'ON_HOLD', 'WITHDRAWN', 'CLOSED'] },
             ].map((filter, index) => (
               <div key={index}>
                 <label className="block text-xs text-slate-400 mb-2 uppercase tracking-wider font-medium">{filter.label}</label>
@@ -213,7 +365,7 @@ export function SubmissionsPage() {
         )}
       </div>
 
-      {/* Submissions Table */}
+      {}
       <div className="glass rounded-3xl overflow-hidden shadow-premium animate-slide-in" style={{ animationDelay: '300ms' }}>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -258,7 +410,7 @@ export function SubmissionsPage() {
             </thead>
             <tbody className="divide-y divide-white/5">
               {filteredSubmissions.map((submission, index) => (
-                <tr 
+                <tr
                   key={submission.id}
                   className="group hover:bg-gradient-to-r hover:from-blue-500/5 hover:via-cyan-500/5 hover:to-blue-500/5 transition-all duration-300 animate-slide-in"
                   style={{ animationDelay: `${index * 30}ms` }}
@@ -266,15 +418,15 @@ export function SubmissionsPage() {
                   <td className="px-8 py-5 whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 rounded-lg flex items-center justify-center text-white font-semibold shadow-glow-blue">
-                        {submission.candidate.split(' ').map(n => n[0]).join('')}
+                        {((submission as any).candidateName || '').split(' ').map((n: string) => n[0]).join('')}
                       </div>
                       <div>
-                        <p className="text-slate-200 font-medium">{submission.candidate}</p>
+                        <p className="text-slate-200 font-medium">{(submission as any).candidateName}</p>
                         <p className="text-xs text-slate-500">{submission.role}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-8 py-5 whitespace-nowrap text-slate-400">{submission.recruiter}</td>
+                  <td className="px-8 py-5 whitespace-nowrap text-slate-400">{(submission as any).recruiterName}</td>
                   <td className="px-8 py-5 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <Briefcase className="w-4 h-4 text-slate-500" />
@@ -290,14 +442,14 @@ export function SubmissionsPage() {
                     {new Date(submission.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </td>
                   <td className="px-8 py-5 whitespace-nowrap">
-                    <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider badge-glow ${statusColors[submission.status].bg} ${statusColors[submission.status].text} border ${statusColors[submission.status].border}`}>
-                      <div className={`w-2 h-2 rounded-full ${submission.status === 'placed' ? 'bg-green-400 animate-pulse-glow' : statusColors[submission.status].text.replace('text-', 'bg-')}`} />
+                    <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider badge-glow ${statusColors[submission.status]?.bg || 'bg-slate-500/20'} ${statusColors[submission.status]?.text || 'text-slate-400'} border ${statusColors[submission.status]?.border || 'border-slate-500/30'}`}>
+                      <div className={`w-2 h-2 rounded-full ${submission.status.toLowerCase() === 'placed' ? 'bg-green-400 animate-pulse-glow' : (statusColors[submission.status]?.text || 'text-slate-400').replace('text-', 'bg-')}`} />
                       {submission.status}
                     </span>
                   </td>
                   <td className="px-8 py-5 whitespace-nowrap text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                      <button 
+                    <div className="flex items-center justify-end gap-2 transition-all duration-300">
+                      <button
                         onClick={() => {
                           setSelectedSubmission(submission);
                           setShowDetailModal(true);
@@ -306,10 +458,19 @@ export function SubmissionsPage() {
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button className="p-3 glass rounded-xl hover:bg-purple-500/20 hover:text-purple-400 hover:shadow-glow-purple transition-all duration-300 transform hover:scale-110">
+                      <button
+                        onClick={() => {
+                          setSelectedSubmission(submission);
+                          setShowDetailModal(true);
+                        }}
+                        className="p-3 glass rounded-xl hover:bg-purple-500/20 hover:text-purple-400 hover:shadow-glow-purple transition-all duration-300 transform hover:scale-110"
+                      >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button className="p-3 glass rounded-xl hover:bg-red-500/20 hover:text-red-400 transition-all duration-300 transform hover:scale-110">
+                      <button
+                        onClick={() => handleDelete(submission.id)}
+                        className="p-3 glass rounded-xl hover:bg-red-500/20 hover:text-red-400 transition-all duration-300 transform hover:scale-110"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -320,7 +481,7 @@ export function SubmissionsPage() {
           </table>
         </div>
 
-        {/* Pagination */}
+        {}
         <div className="glass-dark px-8 py-5 flex items-center justify-between border-t border-white/10">
           <p className="text-sm text-slate-400">
             Showing <span className="text-blue-400 font-semibold">{filteredSubmissions.length}</span> of <span className="text-slate-300 font-semibold">{submissions.length}</span> submissions
@@ -334,7 +495,7 @@ export function SubmissionsPage() {
         </div>
       </div>
 
-      {/* Detail Modal */}
+      {}
       {showDetailModal && selectedSubmission && (
         <SubmissionDetailModal
           submission={selectedSubmission}
@@ -342,10 +503,15 @@ export function SubmissionsPage() {
             setShowDetailModal(false);
             setSelectedSubmission(null);
           }}
+          onUpdate={(id, updatedData) => {
+            setSubmissions(prev => prev.map(sub =>
+              sub.id === id ? { ...sub, ...updatedData } : sub
+            ));
+          }}
         />
       )}
 
-      {/* Upload Modal */}
+      {}
       {showUploadModal && (
         <UploadExcelModal onClose={() => setShowUploadModal(false)} />
       )}
@@ -353,12 +519,31 @@ export function SubmissionsPage() {
   );
 }
 
-function SubmissionDetailModal({ submission, onClose }: { submission: SubmissionData; onClose: () => void }) {
+function SubmissionDetailModal({ submission, onClose, onUpdate }: {
+  submission: SubmissionData;
+  onClose: () => void;
+  onUpdate: (id: string, data: Partial<Submission>) => void;
+}) {
   const [status, setStatus] = useState(submission.status);
   const [notes, setNotes] = useState(submission.notes);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      await SubmissionService.updateSubmission(submission.id, { status, notes });
+      onUpdate(submission.id, { status, notes });
+      onClose();
+    } catch (err: any) {
+      console.error('Update error:', err);
+      alert(err.message || 'Failed to update submission');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
-    <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-6 animate-slide-in">
+    <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-[100] p-6 animate-slide-in">
       <div className="relative glass rounded-3xl p-10 max-w-2xl w-full shadow-premium border-2 border-white/10">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
@@ -367,7 +552,7 @@ function SubmissionDetailModal({ submission, onClose }: { submission: Submission
             </div>
             <div>
               <h2 className="text-3xl text-gradient-premium">Submission Details</h2>
-              <p className="text-sm text-slate-400 mt-1">{submission.candidate}</p>
+              <p className="text-sm text-slate-400 mt-1">{(submission as any).candidateName}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-3 glass hover:bg-red-500/20 rounded-xl transition-all duration-300 group">
@@ -379,11 +564,11 @@ function SubmissionDetailModal({ submission, onClose }: { submission: Submission
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Candidate</label>
-              <p className="text-slate-200 text-lg">{submission.candidate}</p>
+              <p className="text-slate-200 text-lg">{(submission as any).candidateName}</p>
             </div>
             <div className="space-y-2">
               <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Recruiter</label>
-              <p className="text-slate-200 text-lg">{submission.recruiter}</p>
+              <p className="text-slate-200 text-lg">{(submission as any).recruiterName}</p>
             </div>
             <div className="space-y-2">
               <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Client</label>
@@ -399,7 +584,7 @@ function SubmissionDetailModal({ submission, onClose }: { submission: Submission
             </div>
             <div className="space-y-2">
               <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Interview Rounds</label>
-              <p className="text-slate-200 text-lg">{submission.interviews || 0}</p>
+              <p className="text-slate-200 text-lg">{Array.isArray(submission.interviews) ? submission.interviews.length : 0}</p>
             </div>
           </div>
 
@@ -410,12 +595,14 @@ function SubmissionDetailModal({ submission, onClose }: { submission: Submission
               onChange={(e) => setStatus(e.target.value as any)}
               className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-100 appearance-none cursor-pointer transition-all hover:bg-white/10 capitalize"
             >
-              <option value="pending">Pending</option>
-              <option value="submitted">Submitted</option>
-              <option value="interview">Interview</option>
-              <option value="offered">Offered</option>
-              <option value="placed">Placed</option>
-              <option value="rejected">Rejected</option>
+              <option value="SUBMITTED">Submitted</option>
+              <option value="INTERVIEWING">Interviewing</option>
+              <option value="OFFERED">Offered</option>
+              <option value="PLACED">Placed</option>
+              <option value="REJECTED">Rejected</option>
+              <option value="ON_HOLD">On Hold</option>
+              <option value="WITHDRAWN">Withdrawn</option>
+              <option value="CLOSED">Closed</option>
             </select>
           </div>
 
@@ -437,9 +624,15 @@ function SubmissionDetailModal({ submission, onClose }: { submission: Submission
             >
               Cancel
             </button>
-            <button className="flex-1 relative px-6 py-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 rounded-xl overflow-hidden shadow-premium hover:shadow-glow-blue transition-all duration-500 group">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 relative px-6 py-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 rounded-xl overflow-hidden shadow-premium hover:shadow-glow-blue transition-all duration-500 group disabled:opacity-50"
+            >
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <span className="relative z-10 text-white font-semibold">Save Changes</span>
+              <span className="relative z-10 text-white font-semibold">
+                {saving ? 'Saving...' : 'Save Changes'}
+              </span>
             </button>
           </div>
         </div>
@@ -449,8 +642,43 @@ function SubmissionDetailModal({ submission, onClose }: { submission: Submission
 }
 
 function UploadExcelModal({ onClose }: { onClose: () => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+      setError(null);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!file) {
+      setError('Please select a file first');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setError(null);
+      const result = await SubmissionService.importSubmissions(file);
+      setSuccess(`Successfully imported ${result.imported} submissions!`);
+      setTimeout(() => {
+        onClose();
+        window.location.reload();
+      }, 2000);
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      setError(err.response?.data?.message || err.message || 'Failed to upload file');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-6 animate-slide-in">
+    <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-[100] p-6 animate-slide-in">
       <div className="relative glass rounded-3xl p-10 max-w-lg w-full shadow-premium border-2 border-white/10">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
@@ -468,9 +696,31 @@ function UploadExcelModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="space-y-6">
-          <div className="border-2 border-dashed border-white/20 rounded-2xl p-12 text-center hover:border-blue-500/50 hover:bg-blue-500/5 transition-all cursor-pointer">
-            <Upload className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-            <p className="text-slate-300 mb-2">Click to upload or drag and drop</p>
+          {error && (
+            <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm">
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="p-4 bg-green-500/10 border border-green-500/20 text-green-400 rounded-xl text-sm">
+              {success}
+            </div>
+          )}
+
+          <div
+            className="border-2 border-dashed border-white/20 rounded-2xl p-12 text-center hover:border-blue-500/50 hover:bg-blue-500/5 transition-all cursor-pointer relative"
+            onClick={() => document.getElementById('excel-upload')?.click()}
+          >
+            <input
+              id="excel-upload"
+              type="file"
+              accept=".xlsx, .xls"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <Upload className={`w-12 h-12 mx-auto mb-4 ${file ? 'text-blue-400' : 'text-slate-400'}`} />
+            <p className="text-slate-300 mb-2">{file ? file.name : 'Click to upload or drag and drop'}</p>
             <p className="text-xs text-slate-500">Excel files only (.xlsx, .xls)</p>
           </div>
 
@@ -488,11 +738,21 @@ function UploadExcelModal({ onClose }: { onClose: () => void }) {
           </div>
 
           <div className="flex gap-4">
-            <button onClick={onClose} className="flex-1 px-6 py-4 glass rounded-xl hover:bg-white/10 transition-all duration-300 text-slate-300 font-medium">
+            <button
+              onClick={onClose}
+              disabled={uploading}
+              className="flex-1 px-6 py-4 glass rounded-xl hover:bg-white/10 transition-all duration-300 text-slate-300 font-medium disabled:opacity-50"
+            >
               Cancel
             </button>
-            <button className="flex-1 relative px-6 py-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 rounded-xl overflow-hidden shadow-premium hover:shadow-glow-blue transition-all duration-500 group">
-              <span className="relative z-10 text-white font-semibold">Upload</span>
+            <button
+              onClick={handleUpload}
+              disabled={uploading || !file}
+              className="flex-1 relative px-6 py-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 rounded-xl overflow-hidden shadow-premium hover:shadow-glow-blue transition-all duration-500 group disabled:opacity-50"
+            >
+              <span className="relative z-10 text-white font-semibold">
+                {uploading ? 'Uploading...' : 'Upload'}
+              </span>
             </button>
           </div>
         </div>

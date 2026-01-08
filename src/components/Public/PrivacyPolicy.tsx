@@ -6,7 +6,7 @@ export function PrivacyPolicy() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
+      {}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200">
         <div className="max-w-4xl mx-auto px-6 py-4">
           <button
@@ -19,9 +19,9 @@ export function PrivacyPolicy() {
         </div>
       </header>
 
-      {/* Content */}
+      {}
       <div className="max-w-4xl mx-auto px-6 py-16">
-        {/* Title Section */}
+        {}
         <div className="mb-12">
           <div className="inline-flex items-center gap-3 px-4 py-2 bg-purple-50 rounded-full border border-purple-200 mb-6">
             <Shield className="w-4 h-4 text-purple-600" />
@@ -33,7 +33,7 @@ export function PrivacyPolicy() {
           </p>
         </div>
 
-        {/* Introduction */}
+        {}
         <div className="prose prose-slate max-w-none">
           <div className="bg-slate-50 rounded-2xl p-8 border border-slate-200 mb-12">
             <p className="text-slate-700 leading-relaxed mb-0">
@@ -43,7 +43,7 @@ export function PrivacyPolicy() {
             </p>
           </div>
 
-          {/* Section 1 */}
+          {}
           <section className="mb-12">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -108,7 +108,7 @@ export function PrivacyPolicy() {
             </div>
           </section>
 
-          {/* Section 2 */}
+          {}
           <section className="mb-12">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -155,7 +155,7 @@ export function PrivacyPolicy() {
             </div>
           </section>
 
-          {/* Section 3 */}
+          {}
           <section className="mb-12">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -204,7 +204,7 @@ export function PrivacyPolicy() {
             </div>
           </section>
 
-          {/* Section 4 */}
+          {}
           <section className="mb-12">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -245,7 +245,7 @@ export function PrivacyPolicy() {
             </div>
           </section>
 
-          {/* Section 5 */}
+          {}
           <section className="mb-12">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -291,7 +291,7 @@ export function PrivacyPolicy() {
             </div>
           </section>
 
-          {/* Section 6 */}
+          {}
           <section className="mb-12">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">6. Data Retention</h2>
             <div className="ml-0 text-slate-700">
@@ -316,7 +316,7 @@ export function PrivacyPolicy() {
             </div>
           </section>
 
-          {/* Section 7 */}
+          {}
           <section className="mb-12">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">7. Changes to This Privacy Policy</h2>
             <div className="ml-0 text-slate-700">
@@ -332,7 +332,7 @@ export function PrivacyPolicy() {
             </div>
           </section>
 
-          {/* Contact Section */}
+          {}
           <section className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl p-8 border border-purple-200">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">

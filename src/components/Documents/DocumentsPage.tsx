@@ -89,7 +89,7 @@ export function DocumentsPage() {
 
   return (
     <div className="p-8 space-y-6">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl mb-2">Documents</h1>
@@ -101,7 +101,7 @@ export function DocumentsPage() {
         </button>
       </div>
 
-      {/* Stats */}
+      {}
       <div className="grid grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="flex items-center justify-between">
@@ -143,7 +143,7 @@ export function DocumentsPage() {
         </div>
       </div>
 
-      {/* Upload Zone */}
+      {}
       <div className="bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-dashed border-blue-300 rounded-xl p-12">
         <div className="text-center">
           <Upload className="w-12 h-12 text-blue-600 mx-auto mb-4" />
@@ -155,7 +155,7 @@ export function DocumentsPage() {
         </div>
       </div>
 
-      {/* Filters and View Toggle */}
+      {}
       <div className="flex items-center gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -187,7 +187,7 @@ export function DocumentsPage() {
         </div>
       </div>
 
-      {/* Documents Grid/List */}
+      {}
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-4 gap-4">
           {filteredDocuments.map((doc) => (

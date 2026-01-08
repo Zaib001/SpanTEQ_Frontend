@@ -60,7 +60,7 @@ export function InvoiceDetail() {
 
   const handleSend = async () => {
     setSending(true);
-    // Simulate API call
+
     await new Promise(resolve => setTimeout(resolve, 1500));
     setStatus('SENT');
     setSentAt(new Date().toISOString());
@@ -70,7 +70,7 @@ export function InvoiceDetail() {
 
   return (
     <div className="space-y-6">
-      {/* Back Button */}
+      {}
       <button
         onClick={() => navigate('/admin/finance/invoices')}
         className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors font-bold text-slate-700"
@@ -80,9 +80,9 @@ export function InvoiceDetail() {
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
+        {}
         <div className="lg:col-span-2 space-y-6">
-          {/* Header */}
+          {}
           <div className="bg-white border border-slate-200 rounded-2xl p-8">
             <div className="flex items-start justify-between mb-6">
               <div>
@@ -103,7 +103,7 @@ export function InvoiceDetail() {
               </div>
             </div>
 
-            {/* Status Alert */}
+            {}
             {status === 'SENT' && sentAt && (
               <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
@@ -116,7 +116,7 @@ export function InvoiceDetail() {
               </div>
             )}
 
-            {/* Metadata Grid */}
+            {}
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Billing Period</div>
@@ -148,7 +148,7 @@ export function InvoiceDetail() {
               </div>
             </div>
 
-            {/* Client Billing Address */}
+            {}
             <div className="border-t border-slate-200 pt-6">
               <div className="flex items-center gap-2 mb-3">
                 <Building2 className="w-5 h-5 text-blue-600" strokeWidth={2.5} />
@@ -169,7 +169,7 @@ export function InvoiceDetail() {
             </div>
           </div>
 
-          {/* Line Items */}
+          {}
           <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
             <div className="p-6 border-b border-slate-200">
               <h2 className="text-xl font-black text-slate-900">Line Items</h2>
@@ -205,7 +205,7 @@ export function InvoiceDetail() {
               </table>
             </div>
 
-            {/* Totals */}
+            {}
             <div className="border-t-2 border-slate-200 p-6 bg-slate-50">
               <div className="max-w-sm ml-auto space-y-3">
                 <div className="flex items-center justify-between">
@@ -226,7 +226,7 @@ export function InvoiceDetail() {
             </div>
           </div>
 
-          {/* Attachments */}
+          {}
           <div className="bg-white border border-slate-200 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -271,7 +271,7 @@ export function InvoiceDetail() {
           </div>
         </div>
 
-        {/* Actions Sidebar */}
+        {}
         <div className="space-y-4">
           <div className="bg-white border border-slate-200 rounded-2xl p-6 sticky top-6">
             <h3 className="text-lg font-black text-slate-900 mb-4">Actions</h3>
@@ -313,7 +313,7 @@ export function InvoiceDetail() {
         </div>
       </div>
 
-      {/* Send Confirmation Dialog */}
+      {}
       {showSendDialog && (
         <>
           <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 animate-fade-in" onClick={() => !sending && setShowSendDialog(false)} />

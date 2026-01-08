@@ -79,7 +79,7 @@ export function MessagesPage() {
 
   return (
     <div className="p-8 space-y-6">
-      {/* Header */}
+      {}
       <div className="relative animate-slide-in">
         <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" />
         
@@ -94,9 +94,9 @@ export function MessagesPage() {
         </div>
       </div>
 
-      {/* Messages Interface */}
+      {}
       <div className="grid grid-cols-3 gap-6 h-[calc(100vh-280px)] animate-slide-in" style={{ animationDelay: '100ms' }}>
-        {/* Conversations List */}
+        {}
         <div className="glass rounded-3xl overflow-hidden shadow-premium flex flex-col">
           <div className="p-6 border-b border-white/10">
             <div className="relative">
@@ -157,9 +157,9 @@ export function MessagesPage() {
           </div>
         </div>
 
-        {/* Chat Window */}
+        {}
         <div className="col-span-2 glass rounded-3xl overflow-hidden shadow-premium flex flex-col">
-          {/* Chat Header */}
+          {}
           <div className="p-6 border-b border-white/10 glass-dark">
             <div className="flex items-center gap-4">
               <div className={`w-14 h-14 bg-gradient-to-br ${getRoleColor(selectedConversation.role)} rounded-xl flex items-center justify-center text-white font-semibold text-lg shadow-glow-blue`}>
@@ -180,7 +180,7 @@ export function MessagesPage() {
             </div>
           </div>
 
-          {/* Messages */}
+          {}
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {messages.map((message, index) => (
               <div
@@ -209,7 +209,7 @@ export function MessagesPage() {
             ))}
           </div>
 
-          {/* Message Input */}
+          {}
           <div className="p-6 border-t border-white/10 glass-dark">
             <div className="flex items-end gap-3">
               <button className="p-3 glass rounded-xl hover:bg-white/10 transition-all duration-300 group">

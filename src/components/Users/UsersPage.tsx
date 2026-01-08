@@ -25,7 +25,7 @@ export function UsersPage() {
 
   return (
     <div className="p-8 space-y-6 relative">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between animate-slide-in">
         <div>
           <h1 className="text-4xl mb-2 bg-gradient-to-r from-purple-400 via-blue-400 to-pink-400 bg-clip-text text-transparent">
@@ -40,7 +40,7 @@ export function UsersPage() {
         </button>
       </div>
 
-      {/* Stats Cards */}
+      {}
       <div className="grid grid-cols-4 gap-4 animate-slide-in" style={{ animationDelay: '100ms' }}>
         {[
           { label: 'Total Users', value: usersData.length, icon: User, gradient: 'from-purple-500 to-blue-500' },
@@ -65,7 +65,7 @@ export function UsersPage() {
         })}
       </div>
 
-      {/* Filters */}
+      {}
       <div className="glass p-4 rounded-xl animate-slide-in" style={{ animationDelay: '150ms' }}>
         <div className="flex items-center gap-4">
           <div className="flex-1 relative group">
@@ -96,7 +96,7 @@ export function UsersPage() {
         </div>
       </div>
 
-      {/* Users Grid */}
+      {}
       <div className="grid grid-cols-2 gap-4">
         {filteredUsers.map((user, index) => (
           <div
@@ -142,7 +142,7 @@ export function UsersPage() {
               </div>
             </div>
 
-            {/* Performance Bar */}
+            {}
             <div className="mb-4">
               <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
                 <span>Performance Score</span>
@@ -156,7 +156,7 @@ export function UsersPage() {
               </div>
             </div>
 
-            {/* Actions */}
+            {}
             <div className="flex gap-2 pt-4 border-t border-white/5">
               <button className="flex-1 px-4 py-2 glass rounded-lg hover:bg-purple-500/10 transition-all flex items-center justify-center gap-2 text-sm text-slate-300 hover:text-purple-400">
                 <Eye className="w-4 h-4" />

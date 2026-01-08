@@ -29,5 +29,4 @@ export function CustomBuilderPage() {
   );
 }
 
-// Also export as default just in case
 export default CustomBuilderPage;

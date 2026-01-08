@@ -91,13 +91,13 @@ export function TimesheetsPage() {
 
   return (
     <div className="p-8 space-y-6">
-      {/* Header */}
+      {}
       <div>
         <h1 className="text-3xl mb-2">Timesheet Management</h1>
         <p className="text-gray-600">Review and approve consultant timesheets</p>
       </div>
 
-      {/* Stats */}
+      {}
       <div className="grid grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="flex items-center justify-between">
@@ -139,7 +139,7 @@ export function TimesheetsPage() {
         </div>
       </div>
 
-      {/* Timesheets Table */}
+      {}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -216,7 +216,7 @@ export function TimesheetsPage() {
         </div>
       </div>
 
-      {/* Timesheet Detail Modal Example */}
+      {}
       {selectedTimesheet && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-8 z-50">
           <div className="bg-white rounded-2xl p-8 max-w-2xl w-full">

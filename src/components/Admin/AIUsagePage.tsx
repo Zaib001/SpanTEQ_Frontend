@@ -1,168 +1,42 @@
-import { useState } from 'react';
-import { 
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import {
   Bot, Search, Filter, Download, X, Eye, Calendar, User, Clock,
-  Video, MessageSquare, TrendingUp, Sparkles, ChevronDown, BarChart3,
+  Video, MessageSquare, ChevronDown, BarChart3,
   CheckCircle, AlertCircle, XCircle, FileText, Zap, Users, Activity,
-  Brain, Target, Star, ThumbsUp, ThumbsDown
+  Brain, Target, Star, ThumbsUp, ThumbsDown, Loader2
 } from 'lucide-react';
+import AIService, { type AISession, type AIAnalytics } from '../../services/ai.service';
 
-interface AIInterviewSession {
-  id: string;
-  candidate: string;
-  position: string;
-  recruiter: string;
-  startTime: string;
-  endTime: string;
-  duration: number; // minutes
-  questionsAsked: number;
-  tokensUsed: number;
-  interviewType: 'screening' | 'technical' | 'behavioral' | 'final';
-  status: 'completed' | 'in-progress' | 'interrupted' | 'failed';
-  aiScore: number; // 0-100
-  sentiment: 'positive' | 'neutral' | 'negative';
-  keyTopics: string[];
-  cost: number;
-  notes: string;
-}
-
-const mockSessions: AIInterviewSession[] = [
-  { 
-    id: 'AI-001', 
-    candidate: 'Sarah Johnson', 
-    position: 'Senior React Developer', 
-    recruiter: 'John Smith',
-    startTime: '2024-03-15 10:30 AM', 
-    endTime: '2024-03-15 11:15 AM',
-    duration: 45, 
-    questionsAsked: 12,
-    tokensUsed: 8500,
-    interviewType: 'technical',
-    status: 'completed',
-    aiScore: 92,
-    sentiment: 'positive',
-    keyTopics: ['React Hooks', 'State Management', 'Performance'],
-    cost: 1.28,
-    notes: 'Strong technical skills, excellent communication'
-  },
-  { 
-    id: 'AI-002', 
-    candidate: 'Michael Chen', 
-    position: 'DevOps Engineer', 
-    recruiter: 'Jane Doe',
-    startTime: '2024-03-15 02:00 PM', 
-    endTime: '2024-03-15 02:35 PM',
-    duration: 35, 
-    questionsAsked: 10,
-    tokensUsed: 6200,
-    interviewType: 'screening',
-    status: 'completed',
-    aiScore: 78,
-    sentiment: 'neutral',
-    keyTopics: ['AWS', 'Docker', 'CI/CD'],
-    cost: 0.93,
-    notes: 'Good basic knowledge, needs more experience'
-  },
-  { 
-    id: 'AI-003', 
-    candidate: 'Emily Rodriguez', 
-    position: 'UX Designer', 
-    recruiter: 'John Smith',
-    startTime: '2024-03-15 03:30 PM', 
-    endTime: '2024-03-15 04:25 PM',
-    duration: 55, 
-    questionsAsked: 15,
-    tokensUsed: 11000,
-    interviewType: 'behavioral',
-    status: 'completed',
-    aiScore: 88,
-    sentiment: 'positive',
-    keyTopics: ['User Research', 'Design Systems', 'Collaboration'],
-    cost: 1.65,
-    notes: 'Excellent portfolio, great cultural fit'
-  },
-  { 
-    id: 'AI-004', 
-    candidate: 'David Park', 
-    position: 'Data Scientist', 
-    recruiter: 'Jane Doe',
-    startTime: '2024-03-14 11:00 AM', 
-    endTime: '2024-03-14 11:28 AM',
-    duration: 28, 
-    questionsAsked: 8,
-    tokensUsed: 4800,
-    interviewType: 'technical',
-    status: 'interrupted',
-    aiScore: 0,
-    sentiment: 'neutral',
-    keyTopics: ['Machine Learning', 'Python'],
-    cost: 0.72,
-    notes: 'Technical issues during interview'
-  },
-  { 
-    id: 'AI-005', 
-    candidate: 'Lisa Wang', 
-    position: 'Product Manager', 
-    recruiter: 'John Smith',
-    startTime: '2024-03-14 09:00 AM', 
-    endTime: '2024-03-14 10:05 AM',
-    duration: 65, 
-    questionsAsked: 18,
-    tokensUsed: 13500,
-    interviewType: 'final',
-    status: 'completed',
-    aiScore: 95,
-    sentiment: 'positive',
-    keyTopics: ['Product Strategy', 'Stakeholder Management', 'Agile'],
-    cost: 2.03,
-    notes: 'Exceptional candidate, highly recommended'
-  },
-  { 
-    id: 'AI-006', 
-    candidate: 'Robert Taylor', 
-    position: 'Backend Developer', 
-    recruiter: 'Jane Doe',
-    startTime: '2024-03-13 02:30 PM', 
-    endTime: '2024-03-13 03:10 PM',
-    duration: 40, 
-    questionsAsked: 11,
-    tokensUsed: 7200,
-    interviewType: 'technical',
-    status: 'completed',
-    aiScore: 65,
-    sentiment: 'negative',
-    keyTopics: ['Node.js', 'APIs', 'Databases'],
-    cost: 1.08,
-    notes: 'Limited experience, not suitable for senior role'
-  },
-];
-
-const interviewTypeColors = {
+const interviewTypeColors: Record<string, { bg: string, text: string, icon: any }> = {
   screening: { bg: 'from-blue-500 to-cyan-500', text: 'text-blue-400', icon: Users },
   technical: { bg: 'from-purple-500 to-pink-500', text: 'text-purple-400', icon: Brain },
   behavioral: { bg: 'from-green-500 to-emerald-500', text: 'text-green-400', icon: MessageSquare },
   final: { bg: 'from-orange-500 to-amber-500', text: 'text-orange-400', icon: Star },
 };
 
-const statusColors = {
-  completed: { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500/30', icon: CheckCircle },
-  'in-progress': { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30', icon: Activity },
-  interrupted: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30', icon: AlertCircle },
+const statusColors: Record<string, { bg: string, text: string, border: string, icon: any }> = {
+  Completed: { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500/30', icon: CheckCircle },
+  Active: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30', icon: Activity },
+  Incomplete: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30', icon: AlertCircle },
   failed: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30', icon: XCircle },
 };
 
-const sentimentColors = {
+const sentimentColors: Record<string, { bg: string, text: string, icon: any }> = {
   positive: { bg: 'from-green-500 to-emerald-500', text: 'text-green-400', icon: ThumbsUp },
   neutral: { bg: 'from-slate-500 to-gray-500', text: 'text-slate-400', icon: MessageSquare },
   negative: { bg: 'from-red-500 to-rose-500', text: 'text-red-400', icon: ThumbsDown },
 };
 
 export function AIUsagePage() {
-  const [sessions, setSessions] = useState<AIInterviewSession[]>(mockSessions);
+  const [sessions, setSessions] = useState<AISession[]>([]);
+  const [analytics, setAnalytics] = useState<AIAnalytics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedSession, setSelectedSession] = useState<AIInterviewSession | null>(null);
-  
+  const [selectedSession, setSelectedSession] = useState<AISession | null>(null);
+
   const [filters, setFilters] = useState({
     candidate: 'all',
     recruiter: 'all',
@@ -172,31 +46,57 @@ export function AIUsagePage() {
     dateTo: '',
   });
 
-  const filteredSessions = sessions.filter(session => {
-    const matchesSearch = 
-      session.candidate.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      session.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      session.recruiter.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesFilters = 
-      (filters.candidate === 'all' || session.candidate === filters.candidate) &&
-      (filters.recruiter === 'all' || session.recruiter === filters.recruiter) &&
-      (filters.interviewType === 'all' || session.interviewType === filters.interviewType) &&
-      (filters.status === 'all' || session.status === filters.status);
-    
-    return matchesSearch && matchesFilters;
-  });
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [sessionsData, analyticsData] = await Promise.all([
+        AIService.getAISessions(),
+        AIService.getAIAnalytics()
+      ]);
+      setSessions(sessionsData);
+      setAnalytics(analyticsData);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch AI analytics');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const stats = {
-    totalSessions: sessions.length,
-    completedSessions: sessions.filter(s => s.status === 'completed').length,
-    totalDuration: sessions.reduce((sum, s) => sum + s.duration, 0),
-    totalTokens: sessions.reduce((sum, s) => sum + s.tokensUsed, 0),
-    totalCost: sessions.reduce((sum, s) => sum + s.cost, 0),
-    avgScore: sessions.filter(s => s.aiScore > 0).reduce((sum, s, _, arr) => sum + s.aiScore / arr.length, 0),
-    activeCandidates: new Set(sessions.map(s => s.candidate)).size,
-    activeRecruiters: new Set(sessions.map(s => s.recruiter)).size,
-  };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const filteredSessions = useMemo(() => {
+    return sessions.filter(session => {
+      const matchesSearch =
+        session.candidateName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        session.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        session.recruiter.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesFilters =
+        (filters.candidate === 'all' || session.candidateName === filters.candidate) &&
+        (filters.recruiter === 'all' || session.recruiter === filters.recruiter) &&
+        (filters.interviewType === 'all' || session.purpose.toLowerCase() === filters.interviewType) &&
+        (filters.status === 'all' || session.sessionStatus === filters.status);
+
+      return matchesSearch && matchesFilters;
+    });
+  }, [sessions, searchQuery, filters]);
+
+  const stats = useMemo(() => {
+    if (!analytics) return {
+      totalSessions: 0,
+      completedSessions: 0,
+      totalDuration: 0,
+      totalTokens: 0,
+      totalCost: 0,
+      avgScore: 0,
+      activeCandidates: 0,
+      activeRecruiters: 0,
+    };
+    return analytics;
+  }, [analytics]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -206,470 +106,435 @@ export function AIUsagePage() {
     }).format(value);
   };
 
+  if (loading && sessions.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 text-fuchsia-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-500/10 border border-red-500/20 rounded-3xl p-8 flex items-center gap-6 text-red-400 glass">
+          <AlertCircle className="w-10 h-10" />
+          <div>
+            <h3 className="text-xl font-bold mb-1">Error Loading Analytics</h3>
+            <p className="text-red-400/80">{error}</p>
+          </div>
+          <button
+            onClick={() => fetchData()}
+            className="ml-auto px-6 py-3 bg-red-500/20 hover:bg-red-500/30 rounded-2xl transition-all font-bold border border-red-500/30"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const TypeIconComponent = ({ type }: { type: string }) => {
+    const Icon = interviewTypeColors[type.toLowerCase()]?.icon || Brain;
+    return <Icon className="w-8 h-8 text-white" />;
+  };
+
   return (
     <div className="p-8 space-y-6">
-      {/* Header */}
-      <div className="relative">
-        <div className="absolute -top-20 -right-20 w-64 h-64 bg-fuchsia-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" />
-        
-        <div className="relative flex items-center justify-between animate-slide-in">
+      {}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-fuchsia-500/20 rounded-2xl border border-fuchsia-500/30">
+            <Bot className="w-8 h-8 text-fuchsia-400" />
+          </div>
           <div>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-3 bg-gradient-to-br from-fuchsia-500 via-purple-500 to-pink-500 rounded-2xl shadow-glow-purple animate-pulse-glow">
-                <Bot className="w-7 h-7 text-white" />
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-fuchsia-400 to-purple-400 bg-clip-text text-transparent">
+              AI Interview Analytics
+            </h1>
+            <p className="text-slate-400 flex items-center gap-2 mt-1">
+              <Zap className="w-4 h-4 text-fuchsia-400" />
+              Real-time monitoring and quality assessment of AI evaluate sessions
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => fetchData()}
+            className="flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-2xl transition-all font-bold border border-slate-700 group ring-1 ring-white/5 active:scale-95"
+          >
+            <Activity className="w-5 h-5 text-fuchsia-400 group-hover:animate-pulse" />
+            Refresh Data
+          </button>
+          <button className="flex items-center gap-2 px-6 py-3 bg-fuchsia-500 hover:bg-fuchsia-600 rounded-2xl transition-all font-bold shadow-lg shadow-fuchsia-500/20 active:scale-95">
+            <Download className="w-5 h-5" />
+            Export Analytics
+          </button>
+        </div>
+      </div>
+
+      {}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: 'Total Sessions', value: stats.totalSessions, icon: Video, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+          { label: 'Completed', value: stats.completedSessions, icon: CheckCircle, color: 'text-green-400', bg: 'bg-green-500/10' },
+          { label: 'Avg AI Score', value: `${Math.round(stats.avgScore)}%`, icon: Target, color: 'text-fuchsia-400', bg: 'bg-fuchsia-500/10' },
+          { label: 'Total Duration', value: `${Math.round(stats.totalDuration / 60)}h`, icon: Clock, color: 'text-orange-400', bg: 'bg-orange-500/10' },
+        ].map((stat, i) => (
+          <div key={i} className="group relative overflow-hidden glass rounded-[2.5rem] p-8 border border-white/5 hover:border-white/10 transition-all duration-500">
+            <div className={`absolute top-0 right-0 w-32 h-32 ${stat.bg} blur-[80px] -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700`} />
+            <div className="relative z-10">
+              <div className={`w-14 h-14 rounded-2xl ${stat.bg} flex items-center justify-center mb-6 ring-1 ring-white/10 group-hover:scale-110 transition-transform duration-500`}>
+                <stat.icon className={`w-7 h-7 ${stat.color}`} />
+              </div>
+              <p className="text-slate-400 font-medium mb-1">{stat.label}</p>
+              <h3 className="text-3xl font-bold tracking-tight">{stat.value}</h3>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[
+          { label: 'Tokens Used', value: stats.totalTokens.toLocaleString(), icon: Zap, color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
+          { label: 'Total Cost', value: formatCurrency(stats.totalCost), icon: BarChart3, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+          { label: 'Active Recruiters', value: stats.activeRecruiters, icon: Users, color: 'text-purple-400', bg: 'bg-purple-500/10' },
+        ].map((stat, i) => (
+          <div key={i} className="group relative overflow-hidden glass rounded-[2rem] p-6 border border-white/5 hover:border-white/10 transition-all duration-500">
+            <div className="relative z-10 flex items-center gap-6">
+              <div className={`w-12 h-12 rounded-xl ${stat.bg} flex items-center justify-center ring-1 ring-white/10`}>
+                <stat.icon className={`w-6 h-6 ${stat.color}`} />
               </div>
               <div>
-                <h1 className="text-5xl text-gradient-premium">AI Interview Analytics</h1>
-                <p className="text-slate-400 mt-1 text-sm">Track and analyze AI-powered candidate interviews</p>
+                <p className="text-sm text-slate-400 font-medium">{stat.label}</p>
+                <h3 className="text-xl font-bold tracking-tight">{stat.value}</h3>
               </div>
             </div>
           </div>
-          
-          <button className="group relative px-6 py-4 glass rounded-2xl hover:bg-white/10 transition-all duration-300 flex items-center gap-3 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-500/10 via-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <Download className="w-5 h-5 relative z-10 text-slate-400 group-hover:text-fuchsia-400 transition-colors" />
-            <span className="relative z-10 text-slate-300 font-medium">Export Analytics</span>
-          </button>
-        </div>
+        ))}
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-6 animate-slide-in" style={{ animationDelay: '100ms' }}>
-        {[
-          { label: 'Total Sessions', value: stats.totalSessions, gradient: 'from-fuchsia-500 to-pink-500', icon: Bot },
-          { label: 'Completed', value: stats.completedSessions, gradient: 'from-green-500 to-emerald-500', icon: CheckCircle },
-          { label: 'Active Candidates', value: stats.activeCandidates, gradient: 'from-blue-500 to-cyan-500', icon: Users },
-          { label: 'Avg AI Score', value: `${stats.avgScore.toFixed(0)}%`, gradient: 'from-purple-500 to-pink-500', icon: Target },
-        ].map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div key={index} className="group relative glass rounded-2xl p-6 hover-lift card-shine overflow-hidden">
-              <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${stat.gradient} rounded-full blur-3xl opacity-20 group-hover:opacity-30 transition-opacity duration-500`} />
-              <div className="relative flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-slate-400 mb-2">{stat.label}</p>
-                  <p className="text-4xl premium-text mb-1">{stat.value}</p>
-                </div>
-                <div className={`p-4 bg-gradient-to-br ${stat.gradient} rounded-xl transform group-hover:scale-110 group-hover:rotate-12 transition-all duration-500`}>
-                  <Icon className="w-6 h-6 text-white" />
-                </div>
+      {}
+      <div className="glass rounded-[3rem] border border-white/5 overflow-hidden">
+        <div className="p-8 border-b border-white/5 space-y-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="relative flex-1 group">
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-fuchsia-400 transition-colors" />
+              <input
+                type="text"
+                placeholder="Search candidate, position, or recruiter..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-900/50 border border-white/5 rounded-2xl py-4 pl-14 pr-6 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/20 focus:border-fuchsia-500/30 transition-all"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-2 px-6 py-4 rounded-2xl transition-all font-bold border active:scale-95 ${showFilters
+                    ? 'bg-fuchsia-500/10 border-fuchsia-500/30 text-fuchsia-400 shadow-lg shadow-fuchsia-500/10'
+                    : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                  }`}
+              >
+                <Filter className="w-5 h-5" />
+                Filters
+                <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`} />
+              </button>
+              <div className="h-10 w-px bg-white/5 hidden lg:block" />
+              <div className="text-sm text-slate-500 font-medium px-4">
+                Showing <span className="text-slate-300">{filteredSessions.length}</span> of <span className="text-slate-300">{sessions.length}</span> sessions
               </div>
             </div>
-          );
-        })}
-      </div>
-
-      {/* Usage Metrics */}
-      <div className="grid grid-cols-4 gap-6 animate-slide-in" style={{ animationDelay: '150ms' }}>
-        {[
-          { label: 'Total Duration', value: `${(stats.totalDuration / 60).toFixed(1)}h`, gradient: 'from-cyan-500 to-blue-500', icon: Clock },
-          { label: 'Tokens Used', value: `${(stats.totalTokens / 1000).toFixed(1)}K`, gradient: 'from-indigo-500 to-purple-500', icon: Zap },
-          { label: 'Total Cost', value: formatCurrency(stats.totalCost), gradient: 'from-orange-500 to-amber-500', icon: BarChart3 },
-          { label: 'Active Recruiters', value: stats.activeRecruiters, gradient: 'from-rose-500 to-pink-500', icon: User },
-        ].map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <div key={index} className="group relative glass rounded-2xl p-6 hover-lift card-shine overflow-hidden">
-              <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${stat.gradient} rounded-full blur-3xl opacity-20 group-hover:opacity-30 transition-opacity duration-500`} />
-              <div className="relative">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className={`p-2 bg-gradient-to-br ${stat.gradient} rounded-lg`}>
-                    <Icon className="w-4 h-4 text-white" />
-                  </div>
-                  <p className="text-xs text-slate-400 uppercase tracking-wider font-medium">{stat.label}</p>
-                </div>
-                <p className="text-3xl premium-text">{stat.value}</p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Controls */}
-      <div className="glass rounded-3xl p-6 space-y-4 animate-slide-in shadow-premium" style={{ animationDelay: '200ms' }}>
-        <div className="flex items-center gap-4">
-          <div className="flex-1 relative group">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-fuchsia-400 transition-all duration-300" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by candidate, position, or recruiter..."
-              className="w-full pl-14 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-fuchsia-500/50 focus:border-fuchsia-500/50 text-slate-100 placeholder-slate-500 transition-all duration-300 hover:bg-white/10"
-            />
           </div>
-          
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`group relative px-6 py-4 glass rounded-2xl transition-all duration-300 flex items-center gap-3 overflow-hidden ${showFilters ? 'bg-fuchsia-500/20 border-fuchsia-500/30 shadow-glow-purple' : 'hover:bg-white/10'}`}
-          >
-            <Filter className={`w-5 h-5 relative z-10 ${showFilters ? 'text-fuchsia-400' : 'text-slate-400 group-hover:text-fuchsia-400'} transition-colors`} />
-            <span className={`relative z-10 font-medium ${showFilters ? 'text-fuchsia-400' : 'text-slate-300'}`}>Filters</span>
-            <ChevronDown className={`w-4 h-4 relative z-10 transition-transform duration-300 ${showFilters ? 'rotate-180 text-fuchsia-400' : 'text-slate-400'}`} />
-          </button>
-        </div>
 
-        {showFilters && (
-          <div className="grid grid-cols-4 gap-4 pt-6 border-t border-white/10 animate-slide-in">
-            {[
-              { label: 'Candidate', value: filters.candidate, key: 'candidate', options: ['all', ...Array.from(new Set(sessions.map(s => s.candidate)))] },
-              { label: 'Recruiter', value: filters.recruiter, key: 'recruiter', options: ['all', ...Array.from(new Set(sessions.map(s => s.recruiter)))] },
-              { label: 'Interview Type', value: filters.interviewType, key: 'interviewType', options: ['all', 'screening', 'technical', 'behavioral', 'final'] },
-              { label: 'Status', value: filters.status, key: 'status', options: ['all', 'completed', 'in-progress', 'interrupted', 'failed'] },
-            ].map((filter, index) => (
-              <div key={index}>
-                <label className="block text-xs text-slate-400 mb-2 uppercase tracking-wider font-medium">{filter.label}</label>
+          {}
+          {showFilters && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6 bg-slate-900/40 rounded-3xl border border-white/5 animate-in slide-in-from-top duration-300">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Candidate</label>
                 <select
-                  value={filter.value as string}
-                  onChange={(e) => setFilters({ ...filters, [filter.key]: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-fuchsia-500/50 focus:border-fuchsia-500/50 text-slate-100 transition-all"
+                  value={filters.candidate}
+                  onChange={(e) => setFilters({ ...filters, candidate: e.target.value })}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-fuchsia-500/20 outline-none"
                 >
-                  {filter.options?.map(opt => (
-                    <option key={opt} value={opt}>{opt === 'all' ? 'All' : opt}</option>
+                  <option value="all">All Candidates</option>
+                  {Array.from(new Set(sessions.map(s => s.candidateName))).map(name => (
+                    <option key={name} value={name}>{name}</option>
                   ))}
                 </select>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Interview Status</label>
+                <select
+                  value={filters.status}
+                  onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-fuchsia-500/20 outline-none"
+                >
+                  <option value="all">All Status</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Active">Active</option>
+                  <option value="Incomplete">Incomplete</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Date From</label>
+                <input
+                  type="date"
+                  value={filters.dateFrom}
+                  onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                  className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 focus:ring-2 focus:ring-fuchsia-500/20 outline-none text-slate-300"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={() => setFilters({
+                    candidate: 'all', recruiter: 'all', interviewType: 'all',
+                    status: 'all', dateFrom: '', dateTo: ''
+                  })}
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl transition-all"
+                >
+                  <X className="w-4 h-4" />
+                  Reset Filters
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
-      {/* Sessions List */}
-      <div className="space-y-4 animate-slide-in" style={{ animationDelay: '300ms' }}>
-        {filteredSessions.map((session) => {
-          const TypeIcon = interviewTypeColors[session.interviewType].icon;
-          const StatusIcon = statusColors[session.status].icon;
-          const SentimentIcon = sentimentColors[session.sentiment].icon;
-          
-          return (
-            <div key={session.id} className="group relative glass rounded-3xl p-6 hover-lift card-shine overflow-hidden border border-white/10 hover:border-fuchsia-500/30 transition-all duration-300">
-              <div className={`absolute top-0 right-0 w-48 h-48 bg-gradient-to-br ${interviewTypeColors[session.interviewType].bg} rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500`} />
-              
-              <div className="relative">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className={`w-16 h-16 bg-gradient-to-br ${interviewTypeColors[session.interviewType].bg} rounded-2xl flex items-center justify-center shadow-glow-purple`}>
-                      <TypeIcon className="w-8 h-8 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-bold text-slate-100">{session.candidate}</h3>
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold border ${statusColors[session.status].bg} ${statusColors[session.status].text} ${statusColors[session.status].border}`}>
-                          <StatusIcon className="w-3.5 h-3.5" />
-                          {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 text-sm text-slate-400">
-                        <div className="flex items-center gap-1.5">
-                          <User className="w-4 h-4" />
-                          <span>Recruiter: {session.recruiter}</span>
+        {}
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-white/5 bg-white/[0.02]">
+                <th className="px-8 py-6 text-left text-xs font-bold text-slate-300 uppercase tracking-widest">Candidate</th>
+                <th className="px-6 py-6 text-left text-xs font-bold text-slate-300 uppercase tracking-widest">Session Details</th>
+                <th className="px-6 py-6 text-left text-xs font-bold text-slate-300 uppercase tracking-widest">Metrics</th>
+                <th className="px-6 py-6 text-left text-xs font-bold text-slate-300 uppercase tracking-widest whitespace-nowrap">AI evaluation</th>
+                <th className="px-6 py-6 text-left text-xs font-bold text-slate-300 uppercase tracking-widest">Status</th>
+                <th className="px-8 py-6 text-right text-xs font-bold text-slate-300 uppercase tracking-widest">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/[0.02]">
+              {filteredSessions.map((session) => {
+                const statusInfo = statusColors[session.sessionStatus] || statusColors.Active;
+                const sentimentInfo = sentimentColors[session.sentiment] || sentimentColors.neutral;
+
+                return (
+                  <tr key={session.id} className="group hover:bg-white/[0.02] transition-colors">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center font-bold text-white group-hover:scale-110 transition-transform">
+                          {session.candidateName.charAt(0)}
                         </div>
-                        <span className="text-slate-600">•</span>
-                        <span className="font-medium">{session.position}</span>
-                        <span className="text-slate-600">•</span>
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r ${interviewTypeColors[session.interviewType].bg} rounded-lg text-xs font-bold text-white`}>
-                          {session.interviewType.charAt(0).toUpperCase() + session.interviewType.slice(1)}
-                        </span>
+                        <div>
+                          <p className="font-bold text-slate-200 group-hover:text-fuchsia-400 transition-colors">{session.candidateName}</p>
+                          <p className="text-xs text-slate-500 font-medium">{session.position}</p>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col items-end gap-3">
-                    {session.status === 'completed' && session.aiScore > 0 && (
-                      <div className="text-right">
-                        <p className="text-xs text-slate-500 mb-1">AI Score</p>
+                    </td>
+                    <td className="px-6 py-6">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
+                          <User className="w-3.5 h-3.5" />
+                          {session.recruiter}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {new Date(session.interviewDate).toLocaleString()}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-6">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
+                          <Clock className="w-3.5 h-3.5" />
+                          {session.duration} mins
+                        </div>
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                          <Zap className="w-3.5 h-3.5" />
+                          {session.tokensUsed.toLocaleString()} tokens
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-6">
+                      <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2">
-                          <div className="relative w-16 h-2 bg-white/10 rounded-full overflow-hidden">
-                            <div 
-                              className={`absolute inset-y-0 left-0 bg-gradient-to-r ${
-                                session.aiScore >= 80 ? 'from-green-500 to-emerald-500' :
-                                session.aiScore >= 60 ? 'from-yellow-500 to-orange-500' :
-                                'from-red-500 to-rose-500'
-                              } rounded-full transition-all duration-500`}
+                          <div className={`text-xl font-black ${session.aiScore >= 80 ? 'text-green-400' : session.aiScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>
+                            {session.aiScore}
+                          </div>
+                          <div className="h-1.5 flex-1 bg-white/5 rounded-full overflow-hidden max-w-[60px]">
+                            <div
+                              className={`h-full bg-gradient-to-r ${session.aiScore >= 80 ? 'from-green-500 to-emerald-500' : session.aiScore >= 60 ? 'from-yellow-500 to-orange-500' : 'from-red-500 to-rose-500'}`}
                               style={{ width: `${session.aiScore}%` }}
                             />
                           </div>
-                          <span className={`text-2xl font-black ${
-                            session.aiScore >= 80 ? 'text-green-400' :
-                            session.aiScore >= 60 ? 'text-yellow-400' :
-                            'text-red-400'
-                          }`}>
-                            {session.aiScore}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <sentimentInfo.icon className={`w-3.5 h-3.5 ${sentimentInfo.text}`} />
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${sentimentInfo.text}`}>
+                            {session.sentiment}
                           </span>
                         </div>
                       </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Session Details Grid */}
-                <div className="grid grid-cols-6 gap-3 mb-4">
-                  <div className="glass rounded-xl p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Clock className="w-3.5 h-3.5 text-slate-500" />
-                      <p className="text-xs text-slate-500">Duration</p>
-                    </div>
-                    <p className="text-lg font-bold text-cyan-400">{session.duration}m</p>
-                  </div>
-                  
-                  <div className="glass rounded-xl p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <MessageSquare className="w-3.5 h-3.5 text-slate-500" />
-                      <p className="text-xs text-slate-500">Questions</p>
-                    </div>
-                    <p className="text-lg font-bold text-purple-400">{session.questionsAsked}</p>
-                  </div>
-                  
-                  <div className="glass rounded-xl p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Zap className="w-3.5 h-3.5 text-slate-500" />
-                      <p className="text-xs text-slate-500">Tokens</p>
-                    </div>
-                    <p className="text-lg font-bold text-indigo-400">{(session.tokensUsed / 1000).toFixed(1)}K</p>
-                  </div>
-                  
-                  <div className="glass rounded-xl p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <BarChart3 className="w-3.5 h-3.5 text-slate-500" />
-                      <p className="text-xs text-slate-500">Cost</p>
-                    </div>
-                    <p className="text-lg font-bold text-orange-400">{formatCurrency(session.cost)}</p>
-                  </div>
-                  
-                  <div className="glass rounded-xl p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <SentimentIcon className="w-3.5 h-3.5 text-slate-500" />
-                      <p className="text-xs text-slate-500">Sentiment</p>
-                    </div>
-                    <p className={`text-sm font-bold ${sentimentColors[session.sentiment].text}`}>
-                      {session.sentiment.charAt(0).toUpperCase() + session.sentiment.slice(1)}
-                    </p>
-                  </div>
-                  
-                  <div className="glass rounded-xl p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                      <p className="text-xs text-slate-500">Date</p>
-                    </div>
-                    <p className="text-xs font-medium text-slate-300">{session.startTime.split(' ')[0]}</p>
-                  </div>
-                </div>
-
-                {/* Key Topics */}
-                <div className="flex items-center gap-2 mb-4">
-                  <Brain className="w-4 h-4 text-slate-500" />
-                  <span className="text-xs text-slate-500 uppercase tracking-wider font-medium">Key Topics:</span>
-                  <div className="flex flex-wrap gap-2">
-                    {session.keyTopics.map((topic, index) => (
-                      <span key={index} className="px-3 py-1 glass rounded-lg text-xs font-medium text-slate-300 border border-white/10">
-                        {topic}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Notes & Actions */}
-                <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                  <div className="flex items-start gap-2 flex-1">
-                    <FileText className="w-4 h-4 text-slate-500 mt-0.5" />
-                    <div>
-                      <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Notes</p>
-                      <p className="text-sm text-slate-400">{session.notes}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => {
-                        setSelectedSession(session);
-                        setShowDetailModal(true);
-                      }}
-                      className="px-5 py-2.5 glass rounded-xl hover:bg-white/10 transition-all duration-300 flex items-center gap-2 group/btn border border-white/10"
-                    >
-                      <Eye className="w-4 h-4 text-slate-400 group-hover/btn:text-fuchsia-400 transition-colors" />
-                      <span className="text-sm text-slate-300 group-hover/btn:text-fuchsia-400 font-medium transition-colors">View Transcript</span>
-                    </button>
-                    
-                    <button className="px-5 py-2.5 bg-gradient-to-r from-fuchsia-500 to-pink-500 rounded-xl hover:shadow-glow-purple transition-all duration-300 flex items-center gap-2">
-                      <Download className="w-4 h-4 text-white" />
-                      <span className="text-sm text-white font-medium">Export</span>
-                    </button>
-                  </div>
-                </div>
+                    </td>
+                    <td className="px-6 py-6">
+                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border ${statusInfo.bg} ${statusInfo.text} ${statusInfo.border}`}>
+                        <statusInfo.icon className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase tracking-wider">{session.sessionStatus}</span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-right">
+                      <button
+                        onClick={() => {
+                          setSelectedSession(session);
+                          setShowDetailModal(true);
+                        }}
+                        className="p-3 bg-slate-800 hover:bg-fuchsia-500/20 text-slate-400 hover:text-fuchsia-400 rounded-xl transition-all active:scale-95"
+                      >
+                        <Eye className="w-5 h-5" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {filteredSessions.length === 0 && (
+            <div className="flex flex-col items-center justify-center p-20 text-slate-500">
+              <div className="w-20 h-20 rounded-full bg-slate-800/50 flex items-center justify-center mb-6">
+                <Bot className="w-10 h-10 text-slate-600" />
               </div>
+              <p className="text-xl font-bold mb-2">No sessions found</p>
+              <p>Try adjusting your search or filters</p>
             </div>
-          );
-        })}
+          )}
+        </div>
       </div>
 
-      {/* Detail Modal */}
+      {}
       {showDetailModal && selectedSession && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop animate-slide-in">
-          <div className="glass-dark rounded-3xl max-w-4xl w-full p-8 shadow-premium border border-white/20 relative overflow-hidden max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-fuchsia-500 rounded-full blur-3xl opacity-20 animate-pulse" />
-            
-            <div className="relative">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-3xl premium-text">Interview Session Details</h3>
-                <button
-                  onClick={() => setShowDetailModal(false)}
-                  className="p-2 glass rounded-xl hover:bg-white/10 transition-all duration-300"
-                >
-                  <X className="w-5 h-5 text-slate-400" />
-                </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+            onClick={() => setShowDetailModal(false)}
+          />
+          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto glass border border-white/10 rounded-[2.5rem] shadow-2xl animate-in fade-in zoom-in duration-300 no-scrollbar overflow-x-hidden">
+            {}
+            <div className="p-8 border-b border-white/5 flex items-center justify-between sticky top-0 bg-slate-900/50 backdrop-blur-xl z-10">
+              <div className="flex items-center gap-6">
+                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${interviewTypeColors[selectedSession.purpose.toLowerCase()]?.bg || interviewTypeColors.screening.bg} flex items-center justify-center shadow-lg`}>
+                  <TypeIconComponent type={selectedSession.purpose} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold">{selectedSession.candidateName}</h2>
+                  <p className="text-slate-400 font-medium">Session ID: {selectedSession.id}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="p-3 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-8 space-y-8">
+              {}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="p-6 bg-slate-800/40 rounded-3xl border border-white/5">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Score</p>
+                  <p className="text-3xl font-black text-fuchsia-400">{selectedSession.aiScore}%</p>
+                </div>
+                <div className="p-6 bg-slate-800/40 rounded-3xl border border-white/5">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Time spent</p>
+                  <p className="text-2xl font-bold">{selectedSession.duration} mins</p>
+                </div>
+                <div className="p-6 bg-slate-800/40 rounded-3xl border border-white/5">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Cost</p>
+                  <p className="text-2xl font-bold text-emerald-400">{formatCurrency(selectedSession.cost)}</p>
+                </div>
+                <div className="p-6 bg-slate-800/40 rounded-3xl border border-white/5">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Status</p>
+                  <p className={`font-bold ${statusColors[selectedSession.sessionStatus]?.text || 'text-slate-400'}`}>
+                    {selectedSession.sessionStatus}
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-6">
-                {/* Session Overview */}
-                <div className="glass rounded-2xl p-6 border border-white/10">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className={`w-16 h-16 bg-gradient-to-br ${interviewTypeColors[selectedSession.interviewType].bg} rounded-2xl flex items-center justify-center shadow-glow-purple`}>
-                      {(() => {
-                        const Icon = interviewTypeColors[selectedSession.interviewType].icon;
-                        return <Icon className="w-8 h-8 text-white" />;
-                      })()}
-                    </div>
-                    <div>
-                      <h4 className="text-2xl font-bold text-slate-100">{selectedSession.candidate}</h4>
-                      <p className="text-sm text-slate-400 mt-1">{selectedSession.position}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="glass rounded-xl p-4">
-                      <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Recruiter</p>
-                      <p className="text-base text-slate-200 font-medium">{selectedSession.recruiter}</p>
-                    </div>
-                    <div className="glass rounded-xl p-4">
-                      <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Interview Type</p>
-                      <p className="text-base text-slate-200 font-medium capitalize">{selectedSession.interviewType}</p>
-                    </div>
-                    <div className="glass rounded-xl p-4">
-                      <p className="text-xs text-slate-400 mb-1 uppercase tracking-wider">Status</p>
-                      <p className={`text-base font-medium capitalize ${statusColors[selectedSession.status].text}`}>{selectedSession.status}</p>
+              {}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <h3 className="text-xl font-bold flex items-center gap-3">
+                    <MessageSquare className="w-6 h-6 text-fuchsia-400" />
+                    Interview Transcript Summary
+                  </h3>
+                  <div className="bg-slate-900/50 rounded-3xl p-6 border border-white/5 space-y-4">
+                    <p className="text-slate-300 leading-relaxed italic">
+                      "{selectedSession.notes}"
+                    </p>
+                    <div className="h-px bg-white/5" />
+                    <div className="space-y-3">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Key Topics Discussed</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedSession.keyTopics.map((topic, i) => (
+                          <span key={i} className="px-3 py-1 bg-white/5 rounded-lg text-xs font-bold text-slate-400">
+                            {topic}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Metrics Grid */}
-                <div className="grid grid-cols-3 gap-6">
-                  <div className="glass rounded-2xl p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Clock className="w-5 h-5 text-cyan-400" />
-                      <h5 className="text-sm text-slate-400 uppercase tracking-wider font-medium">Time & Duration</h5>
-                    </div>
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-xs text-slate-500 mb-1">Start Time</p>
-                        <p className="text-base text-slate-200">{selectedSession.startTime}</p>
+                <div className="space-y-6">
+                  <h3 className="text-xl font-bold flex items-center gap-3">
+                    <Activity className="w-6 h-6 text-fuchsia-400" />
+                    AI evaluate Deep Dive
+                  </h3>
+                  <div className="bg-slate-900/50 rounded-3xl p-6 border border-white/5 space-y-6">
+                    <div className="space-y-2 text-fuchsia-400">
+                      <div className="flex justify-between text-sm font-bold">
+                        <span>Sentiment evaluation</span>
+                        <span className="capitalize">{selectedSession.sentiment}</span>
                       </div>
-                      <div>
-                        <p className="text-xs text-slate-500 mb-1">End Time</p>
-                        <p className="text-base text-slate-200">{selectedSession.endTime}</p>
-                      </div>
-                      <div className="pt-2 border-t border-white/10">
-                        <p className="text-xs text-slate-500 mb-1">Duration</p>
-                        <p className="text-2xl text-cyan-400 font-bold">{selectedSession.duration} minutes</p>
+                      <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full bg-gradient-to-r ${sentimentColors[selectedSession.sentiment]?.bg || 'from-slate-500 to-gray-500'}`}
+                          style={{ width: selectedSession.sentiment === 'positive' ? '100%' : selectedSession.sentiment === 'neutral' ? '50%' : '20%' }}
+                        />
                       </div>
                     </div>
-                  </div>
 
-                  <div className="glass rounded-2xl p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Zap className="w-5 h-5 text-purple-400" />
-                      <h5 className="text-sm text-slate-400 uppercase tracking-wider font-medium">AI Metrics</h5>
-                    </div>
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-xs text-slate-500 mb-1">Questions Asked</p>
-                        <p className="text-2xl text-purple-400 font-bold">{selectedSession.questionsAsked}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500 mb-1">Tokens Used</p>
-                        <p className="text-2xl text-indigo-400 font-bold">{selectedSession.tokensUsed.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500 mb-1">Cost</p>
-                        <p className="text-2xl text-orange-400 font-bold">{formatCurrency(selectedSession.cost)}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="glass rounded-2xl p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Target className="w-5 h-5 text-green-400" />
-                      <h5 className="text-sm text-slate-400 uppercase tracking-wider font-medium">Assessment</h5>
-                    </div>
-                    {selectedSession.aiScore > 0 ? (
-                      <div className="space-y-4">
-                        <div>
-                          <p className="text-xs text-slate-500 mb-2">AI Score</p>
-                          <div className="relative w-full h-3 bg-white/10 rounded-full overflow-hidden mb-2">
-                            <div 
-                              className={`absolute inset-y-0 left-0 bg-gradient-to-r ${
-                                selectedSession.aiScore >= 80 ? 'from-green-500 to-emerald-500' :
-                                selectedSession.aiScore >= 60 ? 'from-yellow-500 to-orange-500' :
-                                'from-red-500 to-rose-500'
-                              } rounded-full transition-all duration-500`}
-                              style={{ width: `${selectedSession.aiScore}%` }}
-                            />
+                    <div className="space-y-4">
+                      {[
+                        { label: 'Technical Depth', value: 85 },
+                        { label: 'Communication', value: 92 },
+                        { label: 'Problem Solving', value: 78 }
+                      ].map((metric, i) => (
+                        <div key={i} className="space-y-1.5">
+                          <div className="flex justify-between text-xs font-bold text-slate-400">
+                            <span>{metric.label}</span>
+                            <span>{metric.value}%</span>
                           </div>
-                          <p className={`text-4xl font-black ${
-                            selectedSession.aiScore >= 80 ? 'text-green-400' :
-                            selectedSession.aiScore >= 60 ? 'text-yellow-400' :
-                            'text-red-400'
-                          }`}>
-                            {selectedSession.aiScore}/100
-                          </p>
+                          <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-slate-600" style={{ width: `${metric.value}%` }} />
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs text-slate-500 mb-1">Sentiment</p>
-                          <p className={`text-lg font-bold capitalize ${sentimentColors[selectedSession.sentiment].text}`}>
-                            {selectedSession.sentiment}
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-slate-500">No score available</p>
-                    )}
+                      ))}
+                    </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Key Topics */}
-                <div className="glass rounded-2xl p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Brain className="w-5 h-5 text-pink-400" />
-                    <h5 className="text-sm text-slate-400 uppercase tracking-wider font-medium">Key Topics Covered</h5>
-                  </div>
-                  <div className="flex flex-wrap gap-3">
-                    {selectedSession.keyTopics.map((topic, index) => (
-                      <span key={index} className="px-4 py-2 bg-gradient-to-r from-fuchsia-500/20 to-pink-500/20 border border-fuchsia-500/30 rounded-xl text-sm font-medium text-fuchsia-300">
-                        {topic}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Notes */}
-                <div className="glass rounded-2xl p-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <FileText className="w-5 h-5 text-blue-400" />
-                    <h5 className="text-sm text-slate-400 uppercase tracking-wider font-medium">Interview Notes</h5>
-                  </div>
-                  <p className="text-base text-slate-300 leading-relaxed">{selectedSession.notes}</p>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-4">
-                  <button className="flex-1 px-6 py-4 bg-gradient-to-r from-fuchsia-500 to-pink-500 rounded-2xl text-white font-semibold hover:shadow-glow-purple transition-all duration-300 flex items-center justify-center gap-2">
-                    <Download className="w-5 h-5" />
-                    Download Full Report
-                  </button>
-                  <button className="flex-1 px-6 py-4 glass rounded-2xl text-slate-300 font-semibold hover:bg-white/10 transition-all duration-300 flex items-center justify-center gap-2 border border-white/10">
-                    <Video className="w-5 h-5" />
-                    View Recording
-                  </button>
-                </div>
+              {}
+              <div className="flex items-center gap-4 pt-4">
+                <button className="flex-1 flex items-center justify-center gap-3 bg-fuchsia-500 hover:bg-fuchsia-600 py-4 rounded-2xl font-bold transition-all active:scale-95 shadow-lg shadow-fuchsia-500/20">
+                  <FileText className="w-5 h-5" />
+                  Generate Full Report
+                </button>
+                <button className="flex-1 flex items-center justify-center gap-3 bg-slate-800 hover:bg-slate-700 py-4 rounded-2xl font-bold transition-all active:scale-95 border border-slate-700">
+                  <Video className="w-5 h-5" />
+                  View Recording
+                </button>
               </div>
             </div>
           </div>

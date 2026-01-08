@@ -25,7 +25,7 @@ type PayModel = 'Fixed' | 'Hourly' | 'Percentage' | 'Hybrid';
 type BonusFrequency = 'Monthly' | 'Quarterly' | 'Yearly';
 
 interface FormData {
-  // Step 1: Basic Details
+
   firstName: string;
   lastName: string;
   email: string;
@@ -34,8 +34,7 @@ interface FormData {
   role: UserRole | '';
   department: string;
   location: string;
-  
-  // Step 2: Recruiter Compensation
+
   recruiterBaseSalary: string;
   recruiterPTO: string;
   recruiterCarryForward: boolean;
@@ -48,8 +47,7 @@ interface FormData {
   recruiterBonusFrequency: BonusFrequency | '';
   recruiterBonusStartMonth: string;
   recruiterBonusEndMonth: string;
-  
-  // Step 2: Candidate Compensation
+
   candidatePayModel: PayModel | '';
   candidateFixedSalary: string;
   candidateHourlyRate: string;
@@ -101,7 +99,7 @@ export function CreateUserPage() {
 
   const handleSubmit = () => {
     console.log('Form submitted:', formData);
-    // Here you would typically send the data to your backend
+
     alert('User created successfully!');
   };
 
@@ -110,7 +108,7 @@ export function CreateUserPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
             <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-500 shadow-glow-green">
@@ -124,13 +122,13 @@ export function CreateUserPage() {
         </div>
 
         <div className="grid grid-cols-[280px_1fr] gap-8">
-          {/* Progress Sidebar */}
+          {}
           <div className="space-y-4">
             <div className="glass rounded-3xl p-6 border border-white/10 sticky top-8">
               <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-6">Progress</h3>
               
               <div className="space-y-6">
-                {/* Step 1 */}
+                {}
                 <div className="relative">
                   <div className={`flex items-start gap-4 cursor-pointer ${currentStep === 1 ? 'opacity-100' : 'opacity-50'}`}
                     onClick={() => setCurrentStep(1)}>
@@ -157,7 +155,7 @@ export function CreateUserPage() {
                   )}
                 </div>
 
-                {/* Step 2 */}
+                {}
                 <div className="relative">
                   <div className={`flex items-start gap-4 ${currentStep === 2 ? 'opacity-100' : 'opacity-50'}`}>
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
@@ -177,7 +175,7 @@ export function CreateUserPage() {
                 </div>
               </div>
 
-              {/* Role Badge */}
+              {}
               {formData.role && (
                 <div className="mt-8 pt-6 border-t border-white/10">
                   <div className="text-xs text-slate-500 mb-2">Selected Role</div>
@@ -193,9 +191,9 @@ export function CreateUserPage() {
             </div>
           </div>
 
-          {/* Main Form */}
+          {}
           <div className="space-y-6">
-            {/* Step 1: Basic Details */}
+            {}
             {currentStep === 1 && (
               <div className="bg-white rounded-3xl p-8 shadow-xl animate-slide-in">
                 <div className="flex items-center gap-3 mb-6">
@@ -206,7 +204,7 @@ export function CreateUserPage() {
                 </div>
 
                 <div className="space-y-6">
-                  {/* Name Fields */}
+                  {}
                   <div className="grid grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
@@ -240,7 +238,7 @@ export function CreateUserPage() {
                     </div>
                   </div>
 
-                  {/* Email & Phone */}
+                  {}
                   <div className="grid grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
@@ -274,7 +272,7 @@ export function CreateUserPage() {
                     </div>
                   </div>
 
-                  {/* Password */}
+                  {}
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       Temporary Password
@@ -292,7 +290,7 @@ export function CreateUserPage() {
                     <p className="text-xs text-slate-500 mt-1">User will be prompted to change on first login</p>
                   </div>
 
-                  {/* Role Selection */}
+                  {}
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       User Role <span className="text-red-500">*</span>
@@ -313,7 +311,7 @@ export function CreateUserPage() {
                     </div>
                   </div>
 
-                  {/* Department & Location */}
+                  {}
                   <div className="grid grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 mb-2">
@@ -348,7 +346,7 @@ export function CreateUserPage() {
                   </div>
                 </div>
 
-                {/* Navigation */}
+                {}
                 <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-slate-200">
                   <button
                     onClick={() => setCurrentStep(2)}
@@ -366,7 +364,7 @@ export function CreateUserPage() {
               </div>
             )}
 
-            {/* Step 2: Compensation Settings */}
+            {}
             {currentStep === 2 && (
               <div className="space-y-6 animate-slide-in">
                 <div className="bg-white rounded-3xl p-8 shadow-xl">
@@ -377,7 +375,7 @@ export function CreateUserPage() {
                     <h2 className="text-2xl font-bold text-slate-800">Compensation Settings</h2>
                   </div>
 
-                  {/* No Role Selected */}
+                  {}
                   {!formData.role && (
                     <div className="text-center py-12">
                       <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center">
@@ -394,7 +392,7 @@ export function CreateUserPage() {
                     </div>
                   )}
 
-                  {/* Admin Role - No Compensation Needed */}
+                  {}
                   {formData.role === 'Admin' && (
                     <div className="text-center py-12">
                       <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-100 flex items-center justify-center">
@@ -405,10 +403,10 @@ export function CreateUserPage() {
                     </div>
                   )}
 
-                  {/* Recruiter Compensation */}
+                  {}
                   {formData.role === 'Recruiter' && (
                     <div className="space-y-8">
-                      {/* Base Compensation */}
+                      {}
                       <div className="border-2 border-blue-200 rounded-2xl p-6 bg-blue-50/50">
                         <div className="flex items-center gap-3 mb-6">
                           <div className="p-2 bg-blue-500 rounded-lg">
@@ -452,7 +450,7 @@ export function CreateUserPage() {
                           </div>
                         </div>
 
-                        {/* PTO Settings */}
+                        {}
                         <div className="mt-6 space-y-4">
                           <div className="flex items-center justify-between p-4 bg-white rounded-xl border-2 border-slate-200">
                             <div className="flex items-center gap-3">
@@ -555,7 +553,7 @@ export function CreateUserPage() {
                         </div>
                       </div>
 
-                      {/* Recurring Bonus */}
+                      {}
                       <div className="border-2 border-purple-200 rounded-2xl p-6 bg-purple-50/50">
                         <div className="flex items-center justify-between mb-6">
                           <div className="flex items-center gap-3">
@@ -650,10 +648,10 @@ export function CreateUserPage() {
                     </div>
                   )}
 
-                  {/* Candidate Compensation */}
+                  {}
                   {formData.role === 'Candidate' && (
                     <div className="space-y-8">
-                      {/* Pay Model Selection */}
+                      {}
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-3">
                           Candidate Compensation Model
@@ -689,7 +687,7 @@ export function CreateUserPage() {
                         </div>
                       </div>
 
-                      {/* Fixed Model */}
+                      {}
                       {formData.candidatePayModel === 'Fixed' && (
                         <div className="border-2 border-emerald-200 rounded-2xl p-6 bg-emerald-50/50 animate-slide-in">
                           <div className="flex items-center gap-3 mb-6">
@@ -717,7 +715,7 @@ export function CreateUserPage() {
                         </div>
                       )}
 
-                      {/* Hourly Model */}
+                      {}
                       {formData.candidatePayModel === 'Hourly' && (
                         <div className="border-2 border-blue-200 rounded-2xl p-6 bg-blue-50/50 animate-slide-in">
                           <div className="flex items-center gap-3 mb-6">
@@ -746,7 +744,7 @@ export function CreateUserPage() {
                         </div>
                       )}
 
-                      {/* Percentage Model */}
+                      {}
                       {formData.candidatePayModel === 'Percentage' && (
                         <div className="border-2 border-purple-200 rounded-2xl p-6 bg-purple-50/50 animate-slide-in">
                           <div className="flex items-center gap-3 mb-6">
@@ -793,7 +791,7 @@ export function CreateUserPage() {
                         </div>
                       )}
 
-                      {/* Hybrid Model */}
+                      {}
                       {formData.candidatePayModel === 'Hybrid' && (
                         <div className="border-2 border-orange-200 rounded-2xl p-6 bg-orange-50/50 animate-slide-in">
                           <div className="flex items-center gap-3 mb-6">
@@ -877,7 +875,7 @@ export function CreateUserPage() {
                   )}
                 </div>
 
-                {/* Navigation */}
+                {}
                 <div className="bg-white rounded-3xl p-6 shadow-xl">
                   <div className="flex justify-between gap-4">
                     <button

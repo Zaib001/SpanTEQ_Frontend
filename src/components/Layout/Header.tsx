@@ -1,10 +1,11 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Bell, Search, Settings, LogOut, User, ChevronDown, 
+import {
+  Bell, Search, Settings, LogOut, User, ChevronDown,
   Zap, TrendingUp, Clock, Shield, Palette, Moon, Sun,
   HelpCircle, BarChart3, Activity
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import StorageService from '../../services/storage.service';
 
 const pageTitle = (pathname: string): string => {
   const titles: Record<string, string> = {
@@ -27,7 +28,27 @@ const pageTitle = (pathname: string): string => {
     '/admin/finance/client-billing-profiles': 'Client Billing Profiles',
     '/admin/finance/invoices': 'Invoices',
     '/admin/finance/payments': 'Payments',
+
+    '/recruiter/dashboard': 'Recruiter Dashboard',
+    '/recruiter/candidates': 'My Candidates',
+    '/recruiter/submissions': 'Submissions',
+    '/recruiter/timesheets': 'Timesheets',
+    '/recruiter/pto': 'PTO Requests',
+
+    '/candidate/dashboard': 'My Dashboard',
+    '/candidate/submissions': 'My Submissions',
+    '/candidate/timesheets': 'My Timesheets',
+
+    '/admin/profile': 'My Profile',
+    '/admin/settings': 'Account Settings',
+    '/recruiter/profile': 'My Profile',
+    '/recruiter/settings': 'Account Settings',
+    '/candidate/profile': 'My Profile',
+    '/candidate/settings': 'Account Settings',
   };
+
+  if (pathname.startsWith('/recruiter')) return titles[pathname] || 'Recruiter Portal';
+  if (pathname.startsWith('/candidate')) return titles[pathname] || 'Candidate Portal';
   return titles[pathname] || 'SpanTeq Admin';
 };
 
@@ -52,7 +73,27 @@ const pageSubtitle = (pathname: string): string => {
     '/admin/finance/client-billing-profiles': 'Client billing configuration',
     '/admin/finance/invoices': 'Invoice generation and tracking',
     '/admin/finance/payments': 'Payment processing and history',
+
+    '/recruiter/dashboard': 'Overview of your recruitment pipeline',
+    '/recruiter/candidates': 'Manage your candidate pool',
+    '/recruiter/submissions': 'Track your submissions',
+    '/recruiter/timesheets': 'Approve candidate timesheets',
+    '/recruiter/pto': 'Review time-off requests',
+
+    '/candidate/dashboard': 'Overview of your activity',
+    '/candidate/submissions': 'Track your job applications',
+    '/candidate/timesheets': 'Manage your work logs',
+
+    '/admin/profile': 'Manage your personal information',
+    '/admin/settings': 'Security and preferences',
+    '/recruiter/profile': 'Manage your personal information',
+    '/recruiter/settings': 'Security and preferences',
+    '/candidate/profile': 'Manage your personal information',
+    '/candidate/settings': 'Security and preferences',
   };
+
+  if (pathname.startsWith('/recruiter')) return subtitles[pathname] || 'Recruiter Workspace';
+  if (pathname.startsWith('/candidate')) return subtitles[pathname] || 'Candidate Workspace';
   return subtitles[pathname] || 'Admin Portal';
 };
 
@@ -63,12 +104,23 @@ export function Header() {
   const [showSettings, setShowSettings] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
-  
+
   const notificationsRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
+
+  useEffect(() => {
+
+    const storedUser = StorageService.getItem('authUser', true);
+    if (storedUser) {
+      setUser(storedUser);
+    }
+  }, []);
+
   const handleLogout = () => {
+    StorageService.clearAuth();
     navigate('/login');
   };
 
@@ -82,7 +134,6 @@ export function Header() {
 
   const unreadCount = notifications.filter(n => n.type === 'success' || n.type === 'warning').length;
 
-  // Click away detection
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
@@ -108,14 +159,14 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 backdrop-blur-2xl">
-      {/* Glass background */}
+      {}
       <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-800/95 to-slate-900/95" />
       <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-blue-500/5 to-pink-500/5" />
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
 
       <div className="relative px-8 py-5">
         <div className="flex items-center justify-between gap-8">
-          {/* Page Title Section */}
+          {}
           <div className="flex-1">
             <div className="flex items-center gap-4">
               <div>
@@ -125,12 +176,11 @@ export function Header() {
             </div>
           </div>
 
-          {/* Search Bar */}
+          {}
           <div className="flex-1 max-w-xl">
             <div className={`relative group transition-all duration-300 ${searchFocused ? 'scale-105' : ''}`}>
-              <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors duration-300 ${
-                searchFocused ? 'text-purple-400' : 'text-slate-400'
-              }`} />
+              <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors duration-300 ${searchFocused ? 'text-purple-400' : 'text-slate-400'
+                }`} />
               <input
                 type="text"
                 placeholder="Quick search... (Ctrl+K)"
@@ -144,25 +194,23 @@ export function Header() {
             </div>
           </div>
 
-          {/* Actions */}
+          {}
           <div className="flex items-center gap-3">
-            {/* Quick Actions */}
+            {}
             <button className="group relative p-3 glass rounded-xl hover:bg-white/10 transition-all duration-300 overflow-hidden">
               <Zap className="w-5 h-5 text-slate-400 group-hover:text-yellow-400 transition-colors relative z-10" />
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/0 via-yellow-500/10 to-yellow-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
 
-            {/* Notifications */}
+            {}
             <div ref={notificationsRef} className="relative">
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
-                className={`group relative p-3 rounded-xl transition-all duration-300 overflow-hidden ${
-                  showNotifications ? 'glass bg-white/10 shadow-glow-purple' : 'glass hover:bg-white/10'
-                }`}
+                className={`group relative p-3 rounded-xl transition-all duration-300 overflow-hidden ${showNotifications ? 'glass bg-white/10 shadow-glow-purple' : 'glass hover:bg-white/10'
+                  }`}
               >
-                <Bell className={`w-5 h-5 relative z-10 transition-colors ${
-                  showNotifications ? 'text-purple-400' : 'text-slate-400 group-hover:text-purple-400'
-                }`} />
+                <Bell className={`w-5 h-5 relative z-10 transition-colors ${showNotifications ? 'text-purple-400' : 'text-slate-400 group-hover:text-purple-400'
+                  }`} />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2 border-slate-900 z-10">
                     {unreadCount}
@@ -170,7 +218,7 @@ export function Header() {
                 )}
               </button>
 
-              {/* Notifications Dropdown */}
+              {}
               {showNotifications && (
                 <div className="absolute right-0 top-full mt-3 w-96 glass-dark rounded-3xl shadow-premium border border-white/20 overflow-hidden animate-slide-in">
                   <div className="p-5 border-b border-white/10 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-pink-500/10">
@@ -213,20 +261,18 @@ export function Header() {
               )}
             </div>
 
-            {/* Settings */}
+            {}
             <div ref={settingsRef} className="relative">
               <button
                 onClick={() => setShowSettings(!showSettings)}
-                className={`group relative p-3 rounded-xl transition-all duration-300 overflow-hidden ${
-                  showSettings ? 'glass bg-white/10 shadow-glow-purple' : 'glass hover:bg-white/10'
-                }`}
+                className={`group relative p-3 rounded-xl transition-all duration-300 overflow-hidden ${showSettings ? 'glass bg-white/10 shadow-glow-purple' : 'glass hover:bg-white/10'
+                  }`}
               >
-                <Settings className={`w-5 h-5 relative z-10 transition-all ${
-                  showSettings ? 'text-purple-400 rotate-90' : 'text-slate-400 group-hover:text-purple-400 group-hover:rotate-90'
-                }`} />
+                <Settings className={`w-5 h-5 relative z-10 transition-all ${showSettings ? 'text-purple-400 rotate-90' : 'text-slate-400 group-hover:text-purple-400 group-hover:rotate-90'
+                  }`} />
               </button>
 
-              {/* Settings Dropdown */}
+              {}
               {showSettings && (
                 <div className="absolute right-0 top-full mt-3 w-80 glass-dark rounded-3xl shadow-premium border border-white/20 overflow-hidden animate-slide-in">
                   <div className="p-5 border-b border-white/10 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-pink-500/10">
@@ -261,29 +307,28 @@ export function Header() {
               )}
             </div>
 
-            {/* Divider */}
+            {}
             <div className="w-px h-8 bg-gradient-to-b from-transparent via-slate-600 to-transparent" />
 
-            {/* User Menu */}
+            {}
             <div ref={userMenuRef} className="relative">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className={`group flex items-center gap-3 pl-3 pr-4 py-2.5 rounded-2xl transition-all duration-300 ${
-                  showUserMenu ? 'glass bg-white/10 shadow-glow-purple' : 'glass hover:bg-white/10'
-                }`}
+                className={`group flex items-center gap-3 pl-3 pr-4 py-2.5 rounded-2xl transition-all duration-300 ${showUserMenu ? 'glass bg-white/10 shadow-glow-purple' : 'glass hover:bg-white/10'
+                  }`}
               >
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-500 via-blue-500 to-pink-500 rounded-xl flex items-center justify-center relative overflow-hidden">
                   <User className="w-5 h-5 text-white relative z-10" />
                   <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent" />
                 </div>
                 <div className="text-left hidden xl:block">
-                  <p className="text-sm font-bold text-white">Admin User</p>
-                  <p className="text-xs text-slate-400">Administrator</p>
+                  <p className="text-sm font-bold text-white">{user?.name || 'User'}</p>
+                  <p className="text-xs text-slate-400 capitalize">{user?.role || 'Guest'}</p>
                 </div>
                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${showUserMenu ? 'rotate-180' : ''}`} />
               </button>
 
-              {/* User Dropdown */}
+              {}
               {showUserMenu && (
                 <div className="absolute right-0 top-full mt-3 w-64 glass-dark rounded-3xl shadow-premium border border-white/20 overflow-hidden animate-slide-in">
                   <div className="p-4 border-b border-white/10 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-pink-500/10">
@@ -292,14 +337,14 @@ export function Header() {
                         <User className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-white">Admin User</p>
-                        <p className="text-xs text-slate-400">admin@spanteq.com</p>
+                        <p className="text-sm font-bold text-white">{user?.name || 'User'}</p>
+                        <p className="text-xs text-slate-400">{user?.email || 'email@example.com'}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex-1 glass rounded-lg p-2">
                         <p className="text-xs text-slate-500">Role</p>
-                        <p className="text-xs font-bold text-white">Super Admin</p>
+                        <p className="text-xs font-bold text-white capitalize">{user?.role || 'Guest'}</p>
                       </div>
                       <div className="flex-1 glass rounded-lg p-2">
                         <p className="text-xs text-slate-500">Status</p>
@@ -317,6 +362,15 @@ export function Header() {
                       return (
                         <button
                           key={index}
+                          onClick={() => {
+                            const rolePrefix = user?.role === 'recruiter' ? '/recruiter'
+                              : user?.role === 'candidate' ? '/candidate'
+                                : '/admin';
+
+                            if (item.label === 'My Profile') navigate(`${rolePrefix}/profile`);
+                            else if (item.label === 'Account Settings') navigate(`${rolePrefix}/settings`);
+                            setShowUserMenu(false);
+                          }}
                           className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all group"
                         >
                           <div className={`w-9 h-9 bg-gradient-to-br ${item.gradient} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>

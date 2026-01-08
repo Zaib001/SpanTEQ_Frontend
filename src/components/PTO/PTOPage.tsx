@@ -88,13 +88,13 @@ export function PTOPage() {
 
   return (
     <div className="p-8 space-y-6">
-      {/* Header */}
+      {}
       <div>
         <h1 className="text-3xl mb-2">PTO Requests</h1>
         <p className="text-gray-600">Review and manage time-off requests from your team</p>
       </div>
 
-      {/* Stats */}
+      {}
       <div className="grid grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="flex items-center justify-between">
@@ -134,7 +134,7 @@ export function PTOPage() {
         </div>
       </div>
 
-      {/* Requests Table */}
+      {}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">

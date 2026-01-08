@@ -64,7 +64,7 @@ export function RecordPayment({
     if (!validateForm()) return;
 
     setSaving(true);
-    // Simulate API call
+
     await new Promise(resolve => setTimeout(resolve, 1500));
     setSaving(false);
     onSuccess();
@@ -80,7 +80,7 @@ export function RecordPayment({
       <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 animate-fade-in" onClick={onClose} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-6 overflow-y-auto">
         <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full my-8 animate-slide-in">
-          {/* Header */}
+          {}
           <div className="p-6 border-b border-slate-200 flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-black text-slate-900">Record Payment</h2>
@@ -94,9 +94,9 @@ export function RecordPayment({
             </button>
           </div>
 
-          {/* Content */}
+          {}
           <div className="p-6 space-y-6">
-            {/* Invoice Summary */}
+            {}
             <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 border border-purple-200 rounded-2xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <FileText className="w-5 h-5 text-purple-600" strokeWidth={2.5} />
@@ -130,9 +130,9 @@ export function RecordPayment({
               </div>
             </div>
 
-            {/* Payment Details Form */}
+            {}
             <div className="space-y-4">
-              {/* Amount Received */}
+              {}
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                   Amount Received <span className="text-red-500">*</span>
@@ -163,7 +163,7 @@ export function RecordPayment({
                 )}
               </div>
 
-              {/* Received Date */}
+              {}
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                   Received Date <span className="text-red-500">*</span>
@@ -192,7 +192,7 @@ export function RecordPayment({
                 )}
               </div>
 
-              {/* Payment Method */}
+              {}
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                   Payment Method
@@ -212,7 +212,7 @@ export function RecordPayment({
                 </div>
               </div>
 
-              {/* Reference Number */}
+              {}
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                   Reference Number
@@ -226,7 +226,7 @@ export function RecordPayment({
                 />
               </div>
 
-              {/* Notes */}
+              {}
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                   Notes
@@ -241,7 +241,7 @@ export function RecordPayment({
               </div>
             </div>
 
-            {/* Status Update Preview */}
+            {}
             {amount > 0 && (
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
                 <div className="flex items-start gap-3">
@@ -259,7 +259,7 @@ export function RecordPayment({
             )}
           </div>
 
-          {/* Footer */}
+          {}
           <div className="p-6 border-t border-slate-200 flex items-center justify-end gap-3">
             <button
               onClick={onClose}

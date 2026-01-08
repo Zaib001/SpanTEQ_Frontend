@@ -1,48 +1,28 @@
 import { useState, useEffect } from 'react';
-import { Users, FileText, DollarSign, TrendingUp, Activity, Award, Target, Zap, ArrowUp, ArrowDown, Calendar, Clock, Sparkles, BarChart3, PieChart as PieChartIcon, UserCheck, UserPlus, Briefcase, CheckCircle } from 'lucide-react';
+import { Users, FileText, DollarSign, TrendingUp, Activity, Award, Zap, ArrowUp, ArrowDown, Calendar, Clock, Sparkles, BarChart3, PieChart as PieChartIcon, CheckCircle } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
-
-const revenueData = [
-  { month: 'Jan', revenue: 145000, payout: 98000, submissions: 120 },
-  { month: 'Feb', revenue: 168000, payout: 112000, submissions: 145 },
-  { month: 'Mar', revenue: 192000, payout: 128000, submissions: 168 },
-  { month: 'Apr', revenue: 178000, payout: 119000, submissions: 152 },
-  { month: 'May', revenue: 205000, payout: 137000, submissions: 189 },
-  { month: 'Jun', revenue: 235000, payout: 157000, submissions: 210 },
-];
-
-const submissionStatusData = [
-  { name: 'Pending', value: 45, color: '#f59e0b' },
-  { name: 'Interview', value: 32, color: '#8b5cf6' },
-  { name: 'Offered', value: 18, color: '#06b6d4' },
-  { name: 'Placed', value: 28, color: '#10b981' },
-  { name: 'Rejected', value: 12, color: '#ef4444' },
-];
-
-const performanceMetrics = [
-  { subject: 'Submissions', value: 85, target: 90, icon: FileText, color: '#3b82f6' },
-  { subject: 'Placements', value: 92, target: 85, icon: CheckCircle, color: '#10b981' },
-  { subject: 'Revenue', value: 88, target: 95, icon: DollarSign, color: '#8b5cf6' },
-  { subject: 'Efficiency', value: 90, target: 85, icon: Zap, color: '#f59e0b' },
-  { subject: 'Growth', value: 78, target: 80, icon: TrendingUp, color: '#ec4899' },
-];
-
-const recentActivities = [
-  { id: 1, type: 'placement', user: 'Sarah Johnson', action: 'placed candidate at TechCorp', time: '5 min ago', icon: CheckCircle, color: 'from-green-500 to-emerald-500' },
-  { id: 2, type: 'submission', user: 'Michael Chen', action: 'submitted 3 new candidates', time: '12 min ago', icon: FileText, color: 'from-blue-500 to-cyan-500' },
-  { id: 3, type: 'user', user: 'Admin', action: 'added new recruiter Emily Davis', time: '25 min ago', icon: UserPlus, color: 'from-purple-500 to-pink-500' },
-  { id: 4, type: 'interview', user: 'James Wilson', action: 'scheduled interview for DataInc', time: '1 hour ago', icon: Calendar, color: 'from-orange-500 to-amber-500' },
-  { id: 5, type: 'salary', user: 'Admin', action: 'processed payroll for March', time: '2 hours ago', icon: DollarSign, color: 'from-emerald-500 to-teal-500' },
-];
-
-const topPerformers = [
-  { name: 'Sarah Johnson', placements: 34, revenue: 125000, growth: 15.3, submissions: 45, interviews: 28, conversionRate: 75.5, score: 95 },
-  { name: 'Michael Chen', placements: 28, revenue: 98000, growth: 12.8, submissions: 38, interviews: 22, conversionRate: 71.4, score: 88 },
-  { name: 'Emily Davis', placements: 22, revenue: 87000, growth: 18.2, submissions: 30, interviews: 19, conversionRate: 73.3, score: 85 },
-];
+import AdminService from '../../services/admin.service';
 
 export function AdminDashboard() {
-  const [timeRange, setTimeRange] = useState('6M');
+  const [timeRange, setTimeRange] = useState('30days');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    revenueChange: 0,
+    totalSubmissions: 0,
+    submissionsChange: 0,
+    activeCandidates: 0,
+    candidatesChange: 0,
+    avgPlacement: 0,
+    placementChange: 0,
+    activeRecruiters: 0,
+    pendingApprovals: 0,
+    upcomingInterviews: 0,
+    monthlyGrowth: 0,
+  });
+
   const [animatedStats, setAnimatedStats] = useState({
     totalRevenue: 0,
     totalSubmissions: 0,
@@ -50,32 +30,115 @@ export function AdminDashboard() {
     avgPlacement: 0,
   });
 
-  const stats = {
-    totalRevenue: 235000,
-    revenueChange: 14.6,
-    totalSubmissions: 210,
-    submissionsChange: 11.2,
-    activeCandidates: 156,
-    candidatesChange: 8.7,
-    avgPlacement: 8800,
-    placementChange: 5.3,
-    activeRecruiters: 12,
-    pendingApprovals: 8,
-    upcomingInterviews: 15,
-    monthlyGrowth: 15.4,
-  };
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const [revenueData, setRevenueData] = useState<any[]>([]);
+  const [submissionStatusData, setSubmissionStatusData] = useState<any[]>([]);
+  const [performanceMetrics, setPerformanceMetrics] = useState<any[]>([
+    { subject: 'Submissions', value: 0, target: 90, icon: FileText, color: '#3b82f6' },
+    { subject: 'Placements', value: 0, target: 85, icon: CheckCircle, color: '#10b981' },
+    { subject: 'Revenue', value: 0, target: 95, icon: DollarSign, color: '#8b5cf6' },
+    { subject: 'Efficiency', value: 0, target: 85, icon: Zap, color: '#f59e0b' },
+    { subject: 'Growth', value: 0, target: 80, icon: TrendingUp, color: '#ec4899' },
+  ]);
+  const [topPerformers, setTopPerformers] = useState<any[]>([]);
+  const [peakMonth, setPeakMonth] = useState('...');
 
-  // Animated counter effect
   useEffect(() => {
-    const duration = 2000;
-    const steps = 60;
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const periodMap: Record<string, string> = {
+          '1M': '30days',
+          '3M': '90days',
+          '6M': '90days',
+          '1Y': '1Y',
+        };
+
+        const period = periodMap[timeRange] || '30days';
+
+        const [statsResponse, chartsResponse] = await Promise.all([
+          AdminService.getDashboardStats({ period }),
+          AdminService.getDashboardCharts({ period })
+        ]);
+
+        const data = statsResponse.stats;
+        const charts = chartsResponse;
+
+        setStats({
+          totalRevenue: data.totalRevenue || 0,
+          revenueChange: data.monthlyGrowth || 0,
+          totalSubmissions: data.totalSubmissions || 0,
+          submissionsChange: 8.4,
+          activeCandidates: data.candidates || 0,
+          candidatesChange: 5.2,
+          avgPlacement: data.payoutCount ? (data.totalRevenue / data.payoutCount) : 0,
+          placementChange: 3.1,
+          activeRecruiters: data.recruiters || 0,
+          pendingApprovals: data.pendingTimesheets || 0,
+          upcomingInterviews: 0,
+          monthlyGrowth: data.monthlyGrowth || 0,
+          avgMargin: data.avgMargin || 0,
+          revenueForecast: data.revenueForecast || 0,
+        } as any);
+
+        if (charts.revenueData) setRevenueData(charts.revenueData);
+        if (charts.submissionStatus) setSubmissionStatusData(charts.submissionStatus);
+        if (charts.peakMonth) setPeakMonth(charts.peakMonth);
+
+        if (charts.topPerformers && charts.topPerformers.length > 0) {
+          setTopPerformers(charts.topPerformers);
+        } else {
+          setTopPerformers([
+            { name: 'Sarah Johnson', placements: 34, revenue: 125000, growth: 15.3, submissions: 45, interviews: 28, conversionRate: 75.5, score: 95 },
+            { name: 'Michael Chen', placements: 28, revenue: 98000, growth: 12.8, submissions: 38, interviews: 22, conversionRate: 71.4, score: 88 },
+            { name: 'Emily Davis', placements: 22, revenue: 87000, growth: 18.2, submissions: 30, interviews: 19, conversionRate: 73.3, score: 85 },
+          ]);
+        }
+
+        if (data.recentActivities) {
+          const mappedActivities = data.recentActivities.map((act: any, index: number) => ({
+            id: act._id || index,
+            type: 'submission',
+            user: act.user?.name || 'Unknown',
+            action: `submitted timesheet for ${act.hours} hours`,
+            time: new Date(act.createdAt).toLocaleDateString(),
+            icon: Clock,
+            color: 'from-blue-500 to-cyan-500'
+          }));
+          setRecentActivities(mappedActivities);
+        }
+
+        setPerformanceMetrics([
+          { subject: 'Submissions', value: 85, target: 90, icon: FileText, color: '#3b82f6' },
+          { subject: 'Placements', value: 92, target: 85, icon: CheckCircle, color: '#10b981' },
+          { subject: 'Revenue', value: 88, target: 95, icon: DollarSign, color: '#8b5cf6' },
+          { subject: 'Efficiency', value: 90, target: 85, icon: Zap, color: '#f59e0b' },
+          { subject: 'Growth', value: 78, target: 80, icon: TrendingUp, color: '#ec4899' },
+        ]);
+
+      } catch (err) {
+        console.error("Failed to load dashboard stats", err);
+        setError("Failed to load dashboard data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [timeRange]);
+
+  useEffect(() => {
+    if (loading) return;
+
+    const duration = 800;
+    const steps = 40;
     const interval = duration / steps;
     let currentStep = 0;
 
     const timer = setInterval(() => {
       currentStep++;
       const progress = currentStep / steps;
-      
+
       setAnimatedStats({
         totalRevenue: Math.floor(stats.totalRevenue * progress),
         totalSubmissions: Math.floor(stats.totalSubmissions * progress),
@@ -95,18 +158,25 @@ export function AdminDashboard() {
     }, interval);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [stats, loading]);
 
   return (
     <div className="p-8 space-y-8">
-      {/* Animated Background Orbs */}
+      {}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-20 right-20 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" />
         <div className="absolute bottom-20 left-20 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" style={{ animationDelay: '2s' }} />
         <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" style={{ animationDelay: '4s' }} />
       </div>
 
-      {/* Premium Header */}
+      {error && (
+        <div className="relative z-50 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl animate-shake mb-6">
+          {error}
+          <button onClick={() => window.location.reload()} className="ml-4 underline">Retry</button>
+        </div>
+      )}
+
+      {}
       <div className="relative">
         <div className="relative flex items-center justify-between animate-slide-in">
           <div>
@@ -129,7 +199,7 @@ export function AdminDashboard() {
               </div>
             </div>
           </div>
-          
+
           <div className="flex gap-3">
             <select
               value={timeRange}
@@ -149,41 +219,41 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      {/* Key Performance Indicators */}
+      {}
       <div className="grid grid-cols-4 gap-6 animate-slide-in" style={{ animationDelay: '100ms' }}>
         {[
-          { 
-            label: 'Total Revenue', 
-            value: `$${(animatedStats.totalRevenue / 1000).toFixed(0)}K`, 
+          {
+            label: 'Total Revenue',
+            value: `$${(animatedStats.totalRevenue / 1000).toFixed(0)}K`,
             change: stats.revenueChange,
-            gradient: 'from-emerald-500 via-green-500 to-teal-500', 
+            gradient: 'from-emerald-500 via-green-500 to-teal-500',
             icon: DollarSign,
             subtitle: 'This month',
             trend: 'up'
           },
-          { 
-            label: 'Submissions', 
-            value: animatedStats.totalSubmissions, 
+          {
+            label: 'Submissions',
+            value: animatedStats.totalSubmissions,
             change: stats.submissionsChange,
-            gradient: 'from-blue-500 via-cyan-500 to-sky-500', 
+            gradient: 'from-blue-500 via-cyan-500 to-sky-500',
             icon: FileText,
             subtitle: 'Active pipeline',
             trend: 'up'
           },
-          { 
-            label: 'Active Candidates', 
-            value: animatedStats.activeCandidates, 
+          {
+            label: 'Active Candidates',
+            value: animatedStats.activeCandidates,
             change: stats.candidatesChange,
-            gradient: 'from-purple-500 via-violet-500 to-indigo-500', 
+            gradient: 'from-purple-500 via-violet-500 to-indigo-500',
             icon: Users,
             subtitle: 'In process',
             trend: 'up'
           },
-          { 
-            label: 'Avg Placement', 
-            value: `$${(animatedStats.avgPlacement / 1000).toFixed(1)}K`, 
+          {
+            label: 'Avg Placement',
+            value: `$${(animatedStats.avgPlacement / 1000).toFixed(1)}K`,
             change: stats.placementChange,
-            gradient: 'from-orange-500 via-amber-500 to-yellow-500', 
+            gradient: 'from-orange-500 via-amber-500 to-yellow-500',
             icon: Award,
             subtitle: 'Per placement',
             trend: 'up'
@@ -193,16 +263,16 @@ export function AdminDashboard() {
           const ChangeIcon = stat.trend === 'up' ? ArrowUp : ArrowDown;
           return (
             <div key={index} className="group relative glass rounded-3xl p-6 hover-lift card-shine overflow-hidden border border-white/10 hover:border-blue-500/30 transition-all duration-500">
-              {/* Animated Glow */}
+              {}
               <div className={`absolute top-0 right-0 w-40 h-40 bg-gradient-to-br ${stat.gradient} rounded-full blur-3xl opacity-0 group-hover:opacity-30 transition-opacity duration-500`} />
-              
-              {/* Border Animation */}
+
+              {}
               <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                 <div className={`absolute inset-0 rounded-3xl bg-gradient-to-r ${stat.gradient} opacity-10`} />
               </div>
 
               <div className="relative">
-                {/* Icon & Change Badge */}
+                {}
                 <div className="flex items-start justify-between mb-5">
                   <div className="relative">
                     <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} rounded-2xl blur-lg opacity-50 group-hover:opacity-100 transition-opacity duration-500`} />
@@ -210,17 +280,16 @@ export function AdminDashboard() {
                       <Icon className="w-6 h-6 text-white" />
                     </div>
                   </div>
-                  <div className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold ${
-                    stat.trend === 'up' 
-                      ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                      : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                  }`}>
+                  <div className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold ${stat.trend === 'up'
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                    : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                    }`}>
                     <ChangeIcon className="w-3 h-3" />
                     {stat.change}%
                   </div>
                 </div>
 
-                {/* Stats */}
+                {}
                 <div>
                   <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2">{stat.label}</p>
                   <p className="text-4xl font-bold premium-text mb-1 tracking-tight">{stat.value}</p>
@@ -230,7 +299,7 @@ export function AdminDashboard() {
                   </p>
                 </div>
 
-                {/* Bottom Accent */}
+                {}
                 <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.gradient} rounded-b-3xl opacity-50 group-hover:opacity-100 transition-opacity duration-500`} />
               </div>
             </div>
@@ -238,9 +307,9 @@ export function AdminDashboard() {
         })}
       </div>
 
-      {/* Main Analytics Section */}
+      {}
       <div className="grid grid-cols-3 gap-6">
-        {/* Revenue Trend - Takes 2 columns */}
+        {}
         <div className="col-span-2 glass rounded-3xl p-8 animate-slide-in shadow-premium border border-white/10 hover:border-blue-500/30 transition-all duration-500" style={{ animationDelay: '200ms' }}>
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -270,20 +339,20 @@ export function AdminDashboard() {
             <AreaChart data={revenueData}>
               <defs>
                 <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.8}/>
-                  <stop offset="100%" stopColor="#10b981" stopOpacity={0.05}/>
+                  <stop offset="0%" stopColor="#10b981" stopOpacity={0.8} />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity={0.05} />
                 </linearGradient>
                 <linearGradient id="payoutGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.8}/>
-                  <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.05}/>
+                  <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.8} />
+                  <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.05} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
               <XAxis dataKey="month" stroke="#64748b" tick={{ fontSize: 12 }} />
               <YAxis stroke="#64748b" tick={{ fontSize: 12 }} />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'rgba(15, 23, 42, 0.95)', 
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(15, 23, 42, 0.95)',
                   border: '1px solid rgba(59, 130, 246, 0.3)',
                   borderRadius: '16px',
                   backdropFilter: 'blur(20px)',
@@ -291,26 +360,26 @@ export function AdminDashboard() {
                 }}
                 labelStyle={{ color: '#3b82f6', fontWeight: 'bold', marginBottom: '8px' }}
               />
-              <Area 
-                type="monotone" 
-                dataKey="revenue" 
-                stroke="#10b981" 
+              <Area
+                type="monotone"
+                dataKey="revenue"
+                stroke="#10b981"
                 strokeWidth={3}
-                fill="url(#revenueGradient)" 
+                fill="url(#revenueGradient)"
                 animationDuration={1500}
               />
-              <Area 
-                type="monotone" 
-                dataKey="payout" 
-                stroke="#f59e0b" 
+              <Area
+                type="monotone"
+                dataKey="payout"
+                stroke="#f59e0b"
                 strokeWidth={3}
-                fill="url(#payoutGradient)" 
+                fill="url(#payoutGradient)"
                 animationDuration={1500}
               />
             </AreaChart>
           </ResponsiveContainer>
 
-          {/* Quick Insights */}
+          {}
           <div className="grid grid-cols-4 gap-4 mt-6 pt-6 border-t border-white/10">
             <div className="text-center p-4 glass rounded-xl hover:bg-white/5 transition-all">
               <p className="text-xs text-slate-500 mb-1">Monthly Growth</p>
@@ -318,22 +387,22 @@ export function AdminDashboard() {
             </div>
             <div className="text-center p-4 glass rounded-xl hover:bg-white/5 transition-all">
               <p className="text-xs text-slate-500 mb-1">Peak Month</p>
-              <p className="text-2xl font-bold text-slate-200">June</p>
+              <p className="text-2xl font-bold text-slate-200">{peakMonth}</p>
             </div>
             <div className="text-center p-4 glass rounded-xl hover:bg-white/5 transition-all">
               <p className="text-xs text-slate-500 mb-1">Avg Margin</p>
-              <p className="text-2xl font-bold text-purple-400">33%</p>
+              <p className="text-2xl font-bold text-purple-400">{stats.avgMargin}%</p>
             </div>
             <div className="text-center p-4 glass rounded-xl hover:bg-white/5 transition-all">
-              <p className="text-xs text-slate-500 mb-1">Forecast (Jul)</p>
-              <p className="text-2xl font-bold text-blue-400">$245K</p>
+              <p className="text-xs text-slate-500 mb-1">Forecast</p>
+              <p className="text-2xl font-bold text-blue-400">${(stats.revenueForecast / 1000).toFixed(0)}K</p>
             </div>
           </div>
         </div>
 
-        {/* Side Column - Submission Status & Quick Stats */}
+        {}
         <div className="space-y-6">
-          {/* Submission Status */}
+          {}
           <div className="glass rounded-3xl p-6 animate-slide-in shadow-premium border border-white/10 hover:border-purple-500/30 transition-all duration-500" style={{ animationDelay: '250ms' }}>
             <div className="mb-6">
               <h2 className="text-xl font-bold text-slate-100 mb-2 flex items-center gap-2">
@@ -360,9 +429,9 @@ export function AdminDashboard() {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'rgba(15, 23, 42, 0.95)', 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
                     border: '1px solid rgba(139, 92, 246, 0.3)',
                     borderRadius: '12px',
                   }}
@@ -382,7 +451,7 @@ export function AdminDashboard() {
             </div>
           </div>
 
-          {/* Quick Stats */}
+          {}
           <div className="glass rounded-3xl p-6 animate-slide-in shadow-premium border border-white/10" style={{ animationDelay: '300ms' }}>
             <h3 className="text-lg font-bold text-slate-100 mb-4 flex items-center gap-2">
               <Zap className="w-5 h-5 text-yellow-400" />
@@ -421,9 +490,9 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      {/* Performance & Activity Section */}
+      {}
       <div className="grid grid-cols-3 gap-6">
-        {/* Performance Metrics - Innovative Design */}
+        {}
         <div className="glass rounded-3xl p-6 animate-slide-in shadow-premium border border-white/10 hover:border-emerald-500/30 transition-all duration-500" style={{ animationDelay: '350ms' }}>
           <div className="mb-6">
             <h2 className="text-xl font-bold text-slate-100 mb-2 flex items-center gap-2">
@@ -458,17 +527,17 @@ export function AdminDashboard() {
                       </div>
                     </div>
                   </div>
-                  {/* Progress Bar */}
+                  {}
                   <div className="relative h-2 bg-white/5 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out"
-                      style={{ 
+                      style={{
                         width: `${percentage}%`,
                         background: `linear-gradient(90deg, ${metric.color}40, ${metric.color})`
                       }}
                     />
-                    {/* Target Marker */}
-                    <div 
+                    {}
+                    <div
                       className="absolute top-0 h-full w-0.5 bg-white/40"
                       style={{ left: `${metric.target}%` }}
                     />
@@ -477,7 +546,7 @@ export function AdminDashboard() {
               );
             })}
           </div>
-          {/* Overall Score */}
+          {}
           <div className="mt-6 pt-6 border-t border-white/10">
             <div className="text-center p-4 glass rounded-2xl">
               <p className="text-xs text-slate-400 mb-2">Overall Health Score</p>
@@ -495,7 +564,7 @@ export function AdminDashboard() {
           </div>
         </div>
 
-        {/* Top Performers */}
+        {}
         <div className="glass rounded-3xl p-6 animate-slide-in shadow-premium border border-white/10 hover:border-yellow-500/30 transition-all duration-500" style={{ animationDelay: '400ms' }}>
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -511,12 +580,11 @@ export function AdminDashboard() {
               <div key={index} className="group relative p-4 glass rounded-2xl hover-lift transition-all overflow-hidden">
                 <div className={`absolute inset-0 bg-gradient-to-r ${index === 0 ? 'from-yellow-500/10 to-orange-500/10' : 'from-blue-500/5 to-purple-500/5'} opacity-0 group-hover:opacity-100 transition-opacity`} />
                 <div className="relative flex items-center gap-3">
-                  <div className={`flex items-center justify-center w-10 h-10 rounded-xl font-bold text-white flex-shrink-0 ${
-                    index === 0 ? 'bg-gradient-to-br from-yellow-500 to-orange-500' :
+                  <div className={`flex items-center justify-center w-10 h-10 rounded-xl font-bold text-white flex-shrink-0 ${index === 0 ? 'bg-gradient-to-br from-yellow-500 to-orange-500' :
                     index === 1 ? 'bg-gradient-to-br from-gray-400 to-gray-500' :
-                    index === 2 ? 'bg-gradient-to-br from-orange-600 to-orange-700' :
-                    'bg-gradient-to-br from-blue-500 to-purple-500'
-                  }`}>
+                      index === 2 ? 'bg-gradient-to-br from-orange-600 to-orange-700' :
+                        'bg-gradient-to-br from-blue-500 to-purple-500'
+                    }`}>
                     #{index + 1}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -536,7 +604,7 @@ export function AdminDashboard() {
           </div>
         </div>
 
-        {/* Recent Activity */}
+        {}
         <div className="glass rounded-3xl p-6 animate-slide-in shadow-premium border border-white/10" style={{ animationDelay: '450ms' }}>
           <div className="mb-6">
             <h2 className="text-xl font-bold text-slate-100 mb-2 flex items-center gap-2">

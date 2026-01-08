@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 import { HomePage } from "./components/Public/HomePage";
 import { LoginPage } from "./components/Public/LoginPage";
+import { ResetPasswordPage } from "./components/Public/ResetPasswordPage";
 import { PrivacyPolicy } from "./components/Public/PrivacyPolicy";
 import { TermsAndConditions } from "./components/Public/TermsAndConditions";
 import { AdminLayout } from "./components/Layout/AdminLayout";
@@ -32,6 +33,16 @@ import { ClientBillingProfiles } from "./components/Finance/ClientBillingProfile
 import { Invoices } from "./components/Finance/Invoices";
 import { InvoiceDetail } from "./components/Finance/InvoiceDetail";
 import { Payments } from "./components/Finance/Payments";
+import { RecruiterDashboard } from "./components/Recruiter/RecruiterDashboard";
+import { RecruiterCandidates } from "./components/Recruiter/RecruiterCandidates";
+import { RecruiterSubmissions } from "./components/Recruiter/RecruiterSubmissions";
+import { RecruiterTimesheets } from "./components/Recruiter/RecruiterTimesheets";
+import { RecruiterPTO } from "./components/Recruiter/RecruiterPTO";
+import { CandidateDashboard } from "./components/Candidate/CandidateDashboard";
+import { CandidateSubmissions } from "./components/Candidate/CandidateSubmissions";
+import { CandidateTimesheet } from "./components/Candidate/CandidateTimesheet";
+import { ProfilePage } from "./components/Shared/ProfilePage";
+import { SettingsPage } from "./components/Shared/SettingsPage";
 import "./styles/globals.css";
 
 export default function App() {
@@ -40,6 +51,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         <Route
           path="/privacy-policy"
           element={<PrivacyPolicy />}
@@ -125,8 +137,10 @@ export default function App() {
             path="create-user"
             element={<CreateUserPage />}
           />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="settings" element={<SettingsPage />} />
 
-          {/* Finance Routes */}
+          {}
           <Route path="finance" element={<FinanceLayout />}>
             <Route index element={<FinanceDashboard />} />
             <Route
@@ -144,6 +158,30 @@ export default function App() {
             />
             <Route path="payments" element={<Payments />} />
           </Route>
+        </Route>
+
+        {}
+        <Route path="/recruiter" element={<AdminLayout />}>
+          <Route index element={<Navigate to="/recruiter/dashboard" replace />} />
+          <Route path="dashboard" element={<RecruiterDashboard />} />
+          <Route path="candidates" element={<RecruiterCandidates />} />
+          <Route path="submissions" element={<RecruiterSubmissions />} />
+          <Route path="timesheets" element={<RecruiterTimesheets />} />
+          <Route path="timesheets" element={<RecruiterTimesheets />} />
+          <Route path="pto" element={<RecruiterPTO />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="settings" element={<SettingsPage />} />
+        </Route>
+
+        {}
+        <Route path="/candidate" element={<AdminLayout />}>
+          <Route index element={<Navigate to="/candidate/dashboard" replace />} />
+          <Route path="dashboard" element={<CandidateDashboard />} />
+          <Route path="submissions" element={<CandidateSubmissions />} />
+          <Route path="submissions" element={<CandidateSubmissions />} />
+          <Route path="timesheet" element={<CandidateTimesheet />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>
     </Router>

@@ -92,7 +92,7 @@ export function SubmissionsPage() {
 
   return (
     <div className="p-8 space-y-6">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl mb-2">Submissions Management</h1>
@@ -110,7 +110,7 @@ export function SubmissionsPage() {
         </div>
       </div>
 
-      {/* Stats Row */}
+      {}
       <div className="grid grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <div className="flex items-center justify-between">
@@ -156,7 +156,7 @@ export function SubmissionsPage() {
         </div>
       </div>
 
-      {/* Filters Bar */}
+      {}
       <div className="bg-white p-4 rounded-xl border border-gray-200">
         <div className="flex items-center gap-4">
           <div className="flex-1 relative">
@@ -192,7 +192,7 @@ export function SubmissionsPage() {
         </div>
       </div>
 
-      {/* Submissions Table */}
+      {}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -258,7 +258,7 @@ export function SubmissionsPage() {
           </table>
         </div>
 
-        {/* Pagination */}
+        {}
         <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
           <p className="text-sm text-gray-600">Showing {filteredSubmissions.length} of {submissionsData.length} submissions</p>
           <div className="flex gap-2">

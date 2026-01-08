@@ -1,25 +1,81 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, Sparkles, ArrowRight, ArrowLeft, Shield, Zap, CheckCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Sparkles, ArrowRight, ArrowLeft, Shield, Zap, CheckCircle, X, Loader2, AlertCircle } from 'lucide-react';
+import AuthService from '../../services/auth.service';
 
 export function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
+  const [forgotPasswordError, setForgotPasswordError] = useState('');
+  const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // For demo purposes, navigate directly to admin dashboard
-    navigate('/admin/dashboard');
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await AuthService.login({ email, password, rememberMe });
+
+      const role = response.user.role;
+      switch (role) {
+        case 'recruiter':
+          navigate('/recruiter/dashboard');
+          break;
+        case 'candidate':
+          navigate('/candidate/dashboard');
+          break;
+        case 'admin':
+        default:
+          navigate('/admin/dashboard');
+          break;
+      }
+    } catch (err: any) {
+      setError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotPasswordError('');
+    setForgotPasswordLoading(true);
+    setForgotPasswordSuccess(false);
+
+    try {
+      await AuthService.forgotPassword({ email: forgotPasswordEmail });
+      setForgotPasswordSuccess(true);
+      setForgotPasswordEmail('');
+    } catch (err: any) {
+      setForgotPasswordError(err.message || 'Failed to send reset email. Please try again.');
+    } finally {
+      setForgotPasswordLoading(false);
+    }
+  };
+
+  const closeForgotPasswordModal = () => {
+    setShowForgotPasswordModal(false);
+    setForgotPasswordEmail('');
+    setForgotPasswordError('');
+    setForgotPasswordSuccess(false);
   };
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Ultra Premium Background */}
+      {}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {/* Animated Gradient Orbs */}
-        <div 
+        {}
+        <div
           className="absolute w-[800px] h-[800px] rounded-full opacity-20 blur-3xl"
           style={{
             background: 'radial-gradient(circle, rgba(168,85,247,0.4) 0%, rgba(59,130,246,0.2) 50%, transparent 70%)',
@@ -28,7 +84,7 @@ export function LoginPage() {
             animation: 'float 20s ease-in-out infinite',
           }}
         />
-        <div 
+        <div
           className="absolute w-[600px] h-[600px] rounded-full opacity-25 blur-3xl"
           style={{
             background: 'radial-gradient(circle, rgba(236,72,153,0.4) 0%, rgba(251,146,60,0.2) 50%, transparent 70%)',
@@ -37,8 +93,8 @@ export function LoginPage() {
             animation: 'float 25s ease-in-out infinite',
           }}
         />
-        
-        {/* Dot Pattern */}
+
+        {}
         <div className="absolute inset-0 opacity-[0.02]">
           <svg width="100%" height="100%">
             <defs>
@@ -51,7 +107,7 @@ export function LoginPage() {
         </div>
       </div>
 
-      {/* Back to Home Button */}
+      {}
       <button
         onClick={() => navigate('/')}
         className="absolute top-8 left-8 z-20 flex items-center gap-2 px-5 py-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 text-slate-700 hover:text-slate-900 shadow-lg hover:shadow-xl group"
@@ -60,11 +116,11 @@ export function LoginPage() {
         <span className="text-sm font-bold">Back to Home</span>
       </button>
 
-      {/* Main Content Grid */}
+      {}
       <div className="relative z-10 w-full max-w-6xl grid lg:grid-cols-2 gap-12 items-center">
-        {/* Left Side - Branding & Features */}
+        {}
         <div className="hidden lg:block space-y-8 animate-slide-in">
-          {/* Logo & Title */}
+          {}
           <div>
             <div className="flex items-center gap-3 mb-6">
               <div className="relative">
@@ -78,7 +134,7 @@ export function LoginPage() {
                 <div className="text-sm font-bold text-slate-500 uppercase tracking-wider">Platform</div>
               </div>
             </div>
-            
+
             <h2 className="text-5xl font-black tracking-tight text-slate-900 mb-4 leading-tight">
               Welcome back to your
               <br />
@@ -91,7 +147,7 @@ export function LoginPage() {
             </p>
           </div>
 
-          {/* Feature Pills */}
+          {}
           <div className="space-y-4">
             {[
               {
@@ -135,7 +191,7 @@ export function LoginPage() {
             })}
           </div>
 
-          {/* Stats */}
+          {}
           <div className="grid grid-cols-3 gap-4 pt-4">
             {[
               { value: '99.9%', label: 'Uptime' },
@@ -152,10 +208,10 @@ export function LoginPage() {
           </div>
         </div>
 
-        {/* Right Side - Login Form */}
+        {}
         <div className="w-full max-w-md mx-auto lg:mx-0">
           <div className="bg-white border border-slate-200 rounded-3xl p-10 shadow-2xl shadow-slate-900/10 animate-slide-in" style={{ animationDelay: '200ms' }}>
-            {/* Mobile Logo */}
+            {}
             <div className="lg:hidden flex justify-center mb-8">
               <div className="flex items-center gap-3">
                 <div className="relative">
@@ -171,15 +227,23 @@ export function LoginPage() {
               </div>
             </div>
 
-            {/* Title */}
+            {}
             <div className="text-center mb-8">
               <h1 className="text-3xl font-black text-slate-900 mb-2 tracking-tight">Admin Sign In</h1>
               <p className="text-slate-600 font-medium">Enter your credentials to access the portal</p>
             </div>
 
-            {/* Form */}
+            {}
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
+                <p className="text-sm text-red-800 font-semibold">{error}</p>
+              </div>
+            )}
+
+            {}
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Email */}
+              {}
               <div className="space-y-2">
                 <label className="block text-sm text-slate-700 font-bold">Email Address</label>
                 <div className="relative group">
@@ -191,11 +255,12 @@ export function LoginPage() {
                     placeholder="admin@spanteq.com"
                     className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 text-slate-900 placeholder-slate-400 transition-all duration-300 hover:bg-white font-medium"
                     required
+                    disabled={loading}
                   />
                 </div>
               </div>
 
-              {/* Password */}
+              {}
               <div className="space-y-2">
                 <label className="block text-sm text-slate-700 font-bold">Password</label>
                 <div className="relative group">
@@ -207,57 +272,70 @@ export function LoginPage() {
                     placeholder="••••••••"
                     className="w-full pl-12 pr-12 py-4 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 text-slate-900 placeholder-slate-400 transition-all duration-300 hover:bg-white font-medium"
                     required
+                    disabled={loading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-600 transition-colors"
+                    disabled={loading}
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" strokeWidth={2.5} /> : <Eye className="w-5 h-5" strokeWidth={2.5} />}
                   </button>
                 </div>
               </div>
 
-              {/* Remember & Forgot */}
+              {}
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 cursor-pointer group">
                   <input
                     type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
                     className="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-2 focus:ring-purple-500/50"
+                    disabled={loading}
                   />
                   <span className="text-sm text-slate-600 group-hover:text-slate-900 transition-colors font-semibold">Remember me</span>
                 </label>
-                <a href="#" className="text-sm text-purple-600 hover:text-purple-700 transition-colors font-bold">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPasswordModal(true)}
+                  className="text-sm text-purple-600 hover:text-purple-700 transition-colors font-bold"
+                  disabled={loading}
+                >
                   Forgot password?
-                </a>
+                </button>
               </div>
 
-              {/* Submit Button */}
+              {}
               <button
                 type="submit"
-                className="w-full py-4 bg-slate-900 text-white rounded-xl hover:shadow-xl hover:shadow-slate-900/30 transition-all duration-300 flex items-center justify-center gap-2 group relative overflow-hidden font-bold text-lg"
+                disabled={loading}
+                className="w-full py-4 bg-slate-900 text-white rounded-xl hover:shadow-xl hover:shadow-slate-900/30 transition-all duration-300 flex items-center justify-center gap-2 group relative overflow-hidden font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <span className="relative z-10">Sign In</span>
-                <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" strokeWidth={2.5} />
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 relative z-10 animate-spin" strokeWidth={2.5} />
+                    <span className="relative z-10">Signing In...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="relative z-10">Sign In</span>
+                    <ArrowRight className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" strokeWidth={2.5} />
+                  </>
+                )}
               </button>
             </form>
 
-            {/* Demo Info */}
-            <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
-              <p className="text-xs text-slate-700 text-center font-semibold">
-                <span className="text-blue-600 font-black">Demo Mode:</span> Enter any email and password to access the admin portal
-              </p>
-            </div>
-
-            {/* Divider */}
+            {}
             <div className="my-6 flex items-center gap-4">
               <div className="flex-1 h-px bg-slate-200" />
               <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Or</span>
               <div className="flex-1 h-px bg-slate-200" />
             </div>
 
-            {/* Additional Options */}
+            {}
             <div className="text-center">
               <p className="text-sm text-slate-600 font-medium">
                 Don't have an account?{' '}
@@ -271,7 +349,7 @@ export function LoginPage() {
             </div>
           </div>
 
-          {/* Footer Info */}
+          {}
           <div className="mt-6 text-center">
             <p className="text-xs text-slate-500 font-semibold flex items-center justify-center gap-2">
               <Shield className="w-3.5 h-3.5 text-emerald-500" strokeWidth={2.5} />
@@ -280,6 +358,104 @@ export function LoginPage() {
           </div>
         </div>
       </div>
+
+      {}
+      {showForgotPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-slide-in">
+            {}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-black text-slate-900">Reset Password</h2>
+              <button
+                onClick={closeForgotPasswordModal}
+                className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
+                disabled={forgotPasswordLoading}
+              >
+                <X className="w-5 h-5 text-slate-600" strokeWidth={2.5} />
+              </button>
+            </div>
+
+            {}
+            {forgotPasswordSuccess ? (
+              <div className="space-y-4">
+                <div className="p-4 bg-green-50 border border-green-200 rounded-xl flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
+                  <div>
+                    <p className="text-sm text-green-800 font-semibold mb-1">Reset link sent!</p>
+                    <p className="text-xs text-green-700">Check your email for instructions to reset your password.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={closeForgotPasswordModal}
+                  className="w-full py-3 bg-slate-900 text-white rounded-xl hover:shadow-xl transition-all duration-300 font-bold"
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <>
+                {}
+                <p className="text-slate-600 font-medium mb-6">
+                  Enter your email address and we'll send you a link to reset your password.
+                </p>
+
+                {}
+                {forgotPasswordError && (
+                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
+                    <p className="text-sm text-red-800 font-semibold">{forgotPasswordError}</p>
+                  </div>
+                )}
+
+                {}
+                <form onSubmit={handleForgotPassword} className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="block text-sm text-slate-700 font-bold">Email Address</label>
+                    <div className="relative group">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-purple-600 transition-colors" strokeWidth={2.5} />
+                      <input
+                        type="email"
+                        value={forgotPasswordEmail}
+                        onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                        placeholder="admin@spanteq.com"
+                        className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 text-slate-900 placeholder-slate-400 transition-all duration-300 hover:bg-white font-medium"
+                        required
+                        disabled={forgotPasswordLoading}
+                      />
+                    </div>
+                  </div>
+
+                  {}
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={closeForgotPasswordModal}
+                      className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-all duration-300 font-bold"
+                      disabled={forgotPasswordLoading}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={forgotPasswordLoading}
+                      className="flex-1 py-3 bg-slate-900 text-white rounded-xl hover:shadow-xl hover:shadow-slate-900/30 transition-all duration-300 flex items-center justify-center gap-2 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {forgotPasswordLoading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" strokeWidth={2.5} />
+                          <span>Sending...</span>
+                        </>
+                      ) : (
+                        <span>Send Reset Link</span>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

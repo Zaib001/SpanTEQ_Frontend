@@ -1,24 +1,11 @@
-import { useState } from 'react';
-import { Plus, Filter, Edit2, Trash2, X, PartyPopper } from 'lucide-react';
-
-interface Holiday {
-    id: string;
-    name: string;
-    date: string;
-    country: 'IN' | 'US';
-    type: 'Company' | 'Public';
-}
-
-const mockHolidays: Holiday[] = [
-    { id: '1', name: 'New Year\'s Day', date: '2025-01-01', country: 'US', type: 'Public' },
-    { id: '2', name: 'Republic Day', date: '2025-01-26', country: 'IN', type: 'Public' },
-    { id: '3', name: 'Independence Day', date: '2025-07-04', country: 'US', type: 'Public' },
-    { id: '4', name: 'Independence Day', date: '2025-08-15', country: 'IN', type: 'Public' },
-    { id: '5', name: 'Company Foundation Day', date: '2025-09-15', country: 'US', type: 'Company' },
-];
+import { useState, useEffect } from 'react';
+import { Plus, Filter, Edit2, Trash2, X, PartyPopper, Loader2, AlertCircle } from 'lucide-react';
+import HolidayService, { type Holiday } from '../../services/holiday.service';
 
 export function CompanyHolidays() {
-    const [holidays, setHolidays] = useState<Holiday[]>(mockHolidays);
+    const [holidays, setHolidays] = useState<Holiday[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [editingHoliday, setEditingHoliday] = useState<Holiday | null>(null);
     const [filters, setFilters] = useState({
@@ -32,52 +19,92 @@ export function CompanyHolidays() {
         name: '',
         date: '',
         country: 'US' as 'IN' | 'US',
-        type: 'Public' as 'Company' | 'Public',
+        holidayType: 'PUBLIC' as 'COMPANY' | 'PUBLIC',
     });
+
+    useEffect(() => {
+        fetchHolidays();
+    }, []);
+
+    const fetchHolidays = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const data = await HolidayService.getAllHolidays();
+            setHolidays(data);
+        } catch (err: any) {
+            console.error('Error fetching holidays:', err);
+            setError('Failed to load holidays. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleOpenModal = (holiday?: Holiday) => {
         if (holiday) {
             setEditingHoliday(holiday);
             setFormData({
                 name: holiday.name,
-                date: holiday.date,
+                date: new Date(holiday.date).toISOString().split('T')[0],
                 country: holiday.country,
-                type: holiday.type,
+                holidayType: holiday.holidayType,
             });
         } else {
             setEditingHoliday(null);
-            setFormData({ name: '', date: '', country: 'US', type: 'Public' });
+            setFormData({ name: '', date: '', country: 'US', holidayType: 'PUBLIC' });
         }
         setShowModal(true);
     };
 
-    const handleSave = () => {
-        if (editingHoliday) {
-            setHolidays(holidays.map(h => h.id === editingHoliday.id
-                ? { ...h, ...formData }
-                : h
-            ));
-        } else {
-            setHolidays([...holidays, { id: Date.now().toString(), ...formData }]);
+    const handleSave = async () => {
+        try {
+            setError(null);
+            if (editingHoliday?._id) {
+                const updated = await HolidayService.updateHoliday(editingHoliday._id, formData);
+                setHolidays(holidays.map(h => h._id === editingHoliday._id ? updated : h));
+            } else {
+                const created = await HolidayService.createHoliday(formData);
+                setHolidays([...holidays, created]);
+            }
+            setShowModal(false);
+        } catch (err: any) {
+            console.error('Error saving holiday:', err);
+            setError(err.message || 'Failed to save holiday.');
         }
-        setShowModal(false);
     };
 
-    const handleDelete = (id: string) => {
-        setHolidays(holidays.filter(h => h.id !== id));
+    const handleDelete = async (id: string) => {
+        if (!window.confirm('Are you sure you want to delete this holiday?')) return;
+        try {
+            setError(null);
+            await HolidayService.deleteHoliday(id);
+            setHolidays(holidays.filter(h => h._id !== id));
+        } catch (err: any) {
+            console.error('Error deleting holiday:', err);
+            setError('Failed to delete holiday.');
+        }
     };
 
     const filteredHolidays = holidays.filter(holiday => {
         if (filters.country && holiday.country !== filters.country) return false;
         if (filters.fromDate && holiday.date < filters.fromDate) return false;
         if (filters.toDate && holiday.date > filters.toDate) return false;
-        if (filters.upcomingOnly && holiday.date < new Date().toISOString().split('T')[0]) return false;
+        if (filters.upcomingOnly && new Date(holiday.date) < new Date()) return false;
         return true;
     });
 
+    if (loading && holidays.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-white/10 m-8">
+                <Loader2 className="w-12 h-12 text-purple-500 animate-spin mb-4" />
+                <p className="text-purple-200 font-bold">Synchronizing Holidays...</p>
+            </div>
+        );
+    }
+
     return (
         <div className="p-8 space-y-6">
-            {/* Header */}
+            {}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <div className="w-14 h-14 bg-gradient-to-br from-purple-500 via-blue-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-glow-purple">
@@ -97,7 +124,14 @@ export function CompanyHolidays() {
                 </button>
             </div>
 
-            {/* Filters */}
+            {error && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-200 px-6 py-4 rounded-2xl flex items-center gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-400" />
+                    <span className="font-semibold">{error}</span>
+                </div>
+            )}
+
+            {}
             <div className="glass rounded-2xl p-6 border border-white/10">
                 <div className="flex items-center gap-3 mb-4">
                     <Filter className="w-5 h-5 text-purple-400" />
@@ -139,7 +173,7 @@ export function CompanyHolidays() {
                 </div>
             </div>
 
-            {/* Table */}
+            {}
             <div className="glass rounded-2xl border border-white/10 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
@@ -154,7 +188,7 @@ export function CompanyHolidays() {
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {filteredHolidays.map((holiday) => (
-                                <tr key={holiday.id} className="hover:bg-white/5 transition-colors">
+                                <tr key={holiday._id} className="hover:bg-white/5 transition-colors">
                                     <td className="px-6 py-4">
                                         <span className="text-slate-200 font-medium">{holiday.name}</span>
                                     </td>
@@ -163,18 +197,18 @@ export function CompanyHolidays() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`px-3 py-1 rounded-lg text-xs font-medium ${holiday.country === 'US'
-                                                ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                                                : 'bg-orange-500/20 text-orange-300 border border-orange-500/30'
+                                            ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                                            : 'bg-orange-500/20 text-orange-300 border border-orange-500/30'
                                             }`}>
                                             {holiday.country === 'US' ? 'United States' : 'India'}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-3 py-1 rounded-lg text-xs font-medium ${holiday.type === 'Public'
-                                                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                                                : 'bg-green-500/20 text-green-300 border border-green-500/30'
+                                        <span className={`px-3 py-1 rounded-lg text-xs font-medium ${holiday.holidayType === 'PUBLIC'
+                                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                                            : 'bg-green-500/20 text-green-300 border border-green-500/30'
                                             }`}>
-                                            {holiday.type}
+                                            {holiday.holidayType}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
@@ -186,7 +220,7 @@ export function CompanyHolidays() {
                                                 <Edit2 className="w-4 h-4" />
                                             </button>
                                             <button
-                                                onClick={() => handleDelete(holiday.id)}
+                                                onClick={() => holiday._id && handleDelete(holiday._id)}
                                                 className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -200,7 +234,7 @@ export function CompanyHolidays() {
                 </div>
             </div>
 
-            {/* Modal */}
+            {}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
                     <div className="glass rounded-2xl border border-white/10 max-w-lg w-full shadow-premium">
@@ -247,13 +281,13 @@ export function CompanyHolidays() {
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">Holiday Type</label>
                                 <select
-                                    value={formData.type}
-                                    onChange={(e) => setFormData({ ...formData, type: e.target.value as 'Company' | 'Public' })}
+                                    value={formData.holidayType}
+                                    onChange={(e) => setFormData({ ...formData, holidayType: e.target.value as 'COMPANY' | 'PUBLIC' })}
                                     className="w-full px-4 py-3 bg-slate-800/90 border border-white/10 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                                     style={{ colorScheme: 'dark' }}
                                 >
-                                    <option value="Public" className="bg-slate-800 text-slate-100">Public</option>
-                                    <option value="Company" className="bg-slate-800 text-slate-100">Company</option>
+                                    <option value="PUBLIC" className="bg-slate-800 text-slate-100">Public</option>
+                                    <option value="COMPANY" className="bg-slate-800 text-slate-100">Company</option>
                                 </select>
                             </div>
                         </div>

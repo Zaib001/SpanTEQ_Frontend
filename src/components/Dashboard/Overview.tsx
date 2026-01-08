@@ -91,7 +91,7 @@ const quickActions = [
 export function Overview() {
   return (
     <div className="p-8 space-y-6 relative">
-      {/* Hero Header */}
+      {}
       <div className="relative overflow-hidden">
         <div className="glass rounded-3xl p-8 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-pink-500/10" />
@@ -132,7 +132,7 @@ export function Overview() {
         </div>
       </div>
 
-      {/* Quick Actions - Floating Cards */}
+      {}
       <div className="grid grid-cols-6 gap-3 animate-slide-in" style={{ animationDelay: '150ms' }}>
         {quickActions.map((action, index) => {
           const Icon = action.icon;
@@ -154,7 +154,7 @@ export function Overview() {
         })}
       </div>
 
-      {/* Main Metrics - Large Impact Cards */}
+      {}
       <div className="grid grid-cols-4 gap-6">
         {metricsData.map((metric, index) => {
           const Icon = metric.icon;
@@ -164,24 +164,24 @@ export function Overview() {
               className="relative glass rounded-3xl p-6 hover-lift card-shine group overflow-hidden animate-slide-in"
               style={{ animationDelay: `${300 + index * 75}ms` }}
             >
-              {/* Background Gradient */}
+              {}
               <div className={`absolute inset-0 bg-gradient-to-br ${metric.bg} opacity-50`} />
               
-              {/* Floating Icon Background */}
+              {}
               <div className="absolute -right-8 -top-8 w-32 h-32 opacity-10">
                 <Icon className="w-full h-full text-white" />
               </div>
 
               <div className="relative z-10">
-                {/* Icon */}
+                {}
                 <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${metric.gradient} shadow-glow-purple mb-4`}>
                   <Icon className="w-7 h-7 text-white" />
                 </div>
 
-                {/* Label */}
+                {}
                 <p className="text-sm text-slate-400 mb-2">{metric.label}</p>
                 
-                {/* Value */}
+                {}
                 <div className="flex items-baseline gap-3 mb-2">
                   <h3 className="text-5xl bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
                     {metric.value}
@@ -194,10 +194,10 @@ export function Overview() {
                   </div>
                 </div>
 
-                {/* Subtitle */}
+                {}
                 <p className="text-xs text-slate-500 mb-4">{metric.subtitle}</p>
 
-                {/* Mini Sparkline */}
+                {}
                 <div className="flex items-end gap-1 h-12">
                   {metric.sparkline.map((value, i) => (
                     <div
@@ -213,9 +213,9 @@ export function Overview() {
         })}
       </div>
 
-      {/* Charts Section */}
+      {}
       <div className="grid grid-cols-3 gap-6">
-        {/* Revenue Chart - Large */}
+        {}
         <div className="col-span-2 glass rounded-3xl p-6 animate-slide-in hover-lift card-shine" style={{ animationDelay: '500ms' }}>
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -260,7 +260,7 @@ export function Overview() {
           </ResponsiveContainer>
         </div>
 
-        {/* Performance Distribution */}
+        {}
         <div className="glass rounded-3xl p-6 animate-slide-in hover-lift card-shine" style={{ animationDelay: '550ms' }}>
           <div className="mb-6">
             <h2 className="text-2xl text-slate-100 mb-1">Team Performance</h2>
@@ -305,9 +305,9 @@ export function Overview() {
         </div>
       </div>
 
-      {/* Bottom Section */}
+      {}
       <div className="grid grid-cols-3 gap-6">
-        {/* Top Performers */}
+        {}
         <div className="col-span-2 glass rounded-3xl p-6 animate-slide-in hover-lift card-shine" style={{ animationDelay: '600ms' }}>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -332,7 +332,7 @@ export function Overview() {
                 className="glass rounded-2xl p-4 hover:bg-white/10 transition-all duration-300 group cursor-pointer"
               >
                 <div className="flex items-center gap-4">
-                  {/* Rank Badge */}
+                  {}
                   <div className="relative">
                     <div className="w-14 h-14 bg-gradient-to-br from-purple-500 via-blue-500 to-pink-500 rounded-xl flex items-center justify-center text-white shadow-glow-purple text-lg">
                       {performer.avatar}
@@ -342,7 +342,7 @@ export function Overview() {
                     </div>
                   </div>
                   
-                  {/* Info */}
+                  {}
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="text-lg text-slate-100">{performer.name}</h3>
@@ -353,7 +353,7 @@ export function Overview() {
                     <p className="text-sm text-slate-400">{performer.role}</p>
                   </div>
                   
-                  {/* Performance */}
+                  {}
                   <div className="text-right">
                     <p className="text-2xl text-slate-100 mb-1">{performer.revenue}</p>
                     <div className="flex items-center gap-1 text-green-400 justify-end">
@@ -362,7 +362,7 @@ export function Overview() {
                     </div>
                   </div>
 
-                  {/* View Button */}
+                  {}
                   <button className="p-3 glass rounded-xl hover:bg-purple-500/10 transition-all group-hover:scale-110 duration-300">
                     <Eye className="w-5 h-5 text-slate-400 group-hover:text-purple-400 transition-colors" />
                   </button>
@@ -372,7 +372,7 @@ export function Overview() {
           </div>
         </div>
 
-        {/* Live Activity Feed */}
+        {}
         <div className="glass rounded-3xl p-6 animate-slide-in hover-lift card-shine" style={{ animationDelay: '650ms' }}>
           <div className="flex items-center gap-2 mb-6">
             <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg">

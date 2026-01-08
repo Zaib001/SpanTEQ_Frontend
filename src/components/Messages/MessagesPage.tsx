@@ -96,7 +96,7 @@ export function MessagesPage() {
   return (
     <div className="p-8 h-[calc(100vh-5rem)]">
       <div className="glass rounded-2xl h-full flex overflow-hidden shadow-premium">
-        {/* Conversations List */}
+        {}
         <div className="w-80 border-r border-white/5 flex flex-col">
           <div className="p-4 border-b border-white/5">
             <div className="flex items-center justify-between mb-4">
@@ -155,9 +155,9 @@ export function MessagesPage() {
           </div>
         </div>
 
-        {/* Chat Window */}
+        {}
         <div className="flex-1 flex flex-col">
-          {/* Chat Header */}
+          {}
           <div className="p-4 border-b border-white/5 glass-dark">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -189,7 +189,7 @@ export function MessagesPage() {
             </div>
           </div>
 
-          {/* Messages */}
+          {}
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {messages.map((message) => (
               <div
@@ -216,7 +216,7 @@ export function MessagesPage() {
             ))}
           </div>
 
-          {/* Message Input */}
+          {}
           <div className="p-4 border-t border-white/5 glass-dark">
             <div className="flex items-end gap-3">
               <button className="p-3 glass rounded-xl hover:bg-white/10 transition-all group">

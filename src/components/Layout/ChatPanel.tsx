@@ -57,14 +57,12 @@ export function ChatPanel() {
     setInputValue('');
     setIsTyping(true);
 
-    // Update message status
     setTimeout(() => {
       setMessages(prev => prev.map(m => 
         m.id === newMessage.id ? { ...m, status: 'sent' as const } : m
       ));
     }, 500);
 
-    // Simulate bot response
     setTimeout(() => {
       setIsTyping(false);
       const botResponse: Message = {
@@ -88,7 +86,7 @@ export function ChatPanel() {
 
   return (
     <>
-      {/* Floating Chat Button */}
+      {}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
@@ -99,21 +97,21 @@ export function ChatPanel() {
           <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full border-2 border-slate-900 animate-pulse flex items-center justify-center">
             <div className="w-2 h-2 bg-white rounded-full" />
           </div>
-          {/* Pulse rings */}
+          {}
           <div className="absolute inset-0 rounded-2xl border-2 border-purple-400 animate-ping opacity-20" />
         </button>
       )}
 
-      {/* Chat Panel */}
+      {}
       {isOpen && (
         <div className={`fixed right-8 z-40 glass-dark rounded-3xl shadow-premium border border-white/20 overflow-hidden transition-all duration-300 ${
           isMinimized 
             ? 'bottom-8 w-96 h-20' 
             : 'bottom-8 w-[28rem] h-[700px]'
         }`}>
-          {/* Header */}
+          {}
           <div className="relative border-b border-white/10">
-            {/* Gradient background */}
+            {}
             <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-pink-500/20" />
             <div className="absolute top-0 right-0 w-40 h-40 bg-purple-500/30 rounded-full blur-3xl" />
             
@@ -161,11 +159,11 @@ export function ChatPanel() {
             </div>
           </div>
 
-          {/* Messages */}
+          {}
           {!isMinimized && (
             <>
               <div className="h-[calc(700px-220px)] overflow-y-auto p-5 space-y-4 custom-scrollbar bg-gradient-to-b from-transparent to-slate-900/20">
-                {/* Quick Actions */}
+                {}
                 {messages.length === 1 && (
                   <div className="space-y-3">
                     <p className="text-xs text-slate-500 uppercase tracking-wider font-bold">Quick Actions</p>
@@ -191,7 +189,7 @@ export function ChatPanel() {
                   </div>
                 )}
 
-                {/* Messages */}
+                {}
                 {messages.map((message) => (
                   <div
                     key={message.id}
@@ -245,7 +243,7 @@ export function ChatPanel() {
                   </div>
                 ))}
 
-                {/* Typing indicator */}
+                {}
                 {isTyping && (
                   <div className="flex gap-3 animate-slide-in">
                     <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -264,7 +262,7 @@ export function ChatPanel() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input Area */}
+              {}
               <div className="relative border-t border-white/10 p-5 bg-gradient-to-t from-slate-900/50 to-transparent">
                 <div className="flex items-end gap-3">
                   <div className="flex-1 relative">

@@ -37,9 +37,9 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
-      {/* Ultra Creative Background */}
+      {}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {/* Animated Gradient Orbs */}
+        {}
         <div 
           className="absolute w-[1000px] h-[1000px] rounded-full opacity-30 blur-3xl transition-all duration-1000"
           style={{
@@ -59,7 +59,7 @@ export function HomePage() {
           }}
         />
         
-        {/* Geometric Pattern Overlay */}
+        {}
         <div className="absolute inset-0 opacity-[0.02]">
           <svg width="100%" height="100%">
             <defs>
@@ -75,7 +75,7 @@ export function HomePage() {
           </svg>
         </div>
 
-        {/* Radial Gradient Spotlight */}
+        {}
         <div 
           className="absolute w-[600px] h-[600px] rounded-full opacity-20 blur-3xl"
           style={{
@@ -88,7 +88,7 @@ export function HomePage() {
         />
       </div>
 
-      {/* Floating Navigation */}
+      {}
       <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-500">
         <div className="relative">
           <div className="absolute inset-0 bg-white/80 backdrop-blur-2xl rounded-2xl border border-slate-200/50 shadow-2xl shadow-slate-900/10" />
@@ -134,13 +134,13 @@ export function HomePage() {
         </div>
       </nav>
 
-      {/* Hero Section - Ultra Creative */}
+      {}
       <section ref={heroRef} className="relative pt-48 pb-40">
         <div className="max-w-7xl mx-auto px-8">
           <div className="grid lg:grid-cols-2 gap-24 items-center">
-            {/* Left Content */}
+            {}
             <div className="space-y-10 animate-slide-in">
-              {/* Animated Badge */}
+              {}
               <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-50 via-blue-50 to-pink-50 border border-purple-200/50 rounded-full shadow-xl shadow-purple-500/10">
                 <div className="relative flex items-center gap-2">
                   <div className="relative">
@@ -155,7 +155,7 @@ export function HomePage() {
                 <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Next-Gen Platform</span>
               </div>
 
-              {/* Headline with 3D Effect */}
+              {}
               <div className="space-y-6">
                 <h1 className="text-7xl lg:text-8xl font-black leading-[0.95] tracking-tighter">
                   <span className="text-slate-900 block" style={{ textShadow: '2px 2px 0px rgba(0,0,0,0.03)' }}>
@@ -184,7 +184,7 @@ export function HomePage() {
                 </p>
               </div>
 
-              {/* CTA Buttons */}
+              {}
               <div className="flex flex-wrap gap-4">
                 <button
                   onClick={() => navigate('/login')}
@@ -208,7 +208,7 @@ export function HomePage() {
                 </button>
               </div>
 
-              {/* Rotating Feature Pills */}
+              {}
               <div className="flex flex-wrap gap-3 pt-4">
                 {[
                   { icon: Zap, label: 'Instant Setup', gradient: 'from-yellow-500 to-orange-500' },
@@ -232,9 +232,9 @@ export function HomePage() {
               </div>
             </div>
 
-            {/* Right Side - 3D Isometric Dashboard */}
+            {}
             <div className="relative animate-slide-in perspective-1000" style={{ animationDelay: '200ms' }}>
-              {/* 3D Container */}
+              {}
               <div 
                 className="relative"
                 style={{
@@ -243,7 +243,7 @@ export function HomePage() {
                   transition: 'transform 0.1s ease-out',
                 }}
               >
-                {/* Floating Particles */}
+                {}
                 {[...Array(8)].map((_, i) => (
                   <div
                     key={i}
@@ -257,9 +257,9 @@ export function HomePage() {
                   />
                 ))}
 
-                {/* Main Dashboard */}
+                {}
                 <div className="relative bg-white border border-slate-200/50 rounded-3xl overflow-hidden shadow-2xl shadow-slate-900/20 transform hover:scale-[1.02] transition-all duration-700">
-                  {/* Gradient Header */}
+                  {}
                   <div className="relative bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 p-10">
                     <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjAzIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30" />
                     
@@ -283,7 +283,7 @@ export function HomePage() {
                       </div>
                     </div>
 
-                    {/* Animated Stats Grid */}
+                    {}
                     <div className="relative grid grid-cols-3 gap-4">
                       {[
                         { icon: Users, value: '247', label: 'Active', change: '+12%', color: 'emerald' },
@@ -310,7 +310,7 @@ export function HomePage() {
                     </div>
                   </div>
 
-                  {/* Chart Section with Gradient */}
+                  {}
                   <div className="relative p-10 bg-gradient-to-b from-slate-50 via-white to-slate-50">
                     <div className="flex items-center justify-between mb-6">
                       <div>
@@ -349,7 +349,7 @@ export function HomePage() {
                   </div>
                 </div>
 
-                {/* 3D Floating Elements */}
+                {}
                 <div 
                   className="absolute -top-10 -left-10 z-20 animate-float"
                   style={{ 
@@ -392,17 +392,17 @@ export function HomePage() {
                 </div>
               </div>
 
-              {/* Ambient Glow */}
+              {}
               <div className="absolute -inset-20 bg-gradient-to-br from-purple-500/10 via-blue-500/10 to-pink-500/10 rounded-full blur-3xl -z-10 animate-pulse-glow" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section - Creative Bento */}
+      {}
       <section id="features" className="relative py-40 bg-gradient-to-b from-slate-50 to-white">
         <div className="max-w-7xl mx-auto px-8">
-          {/* Section Header */}
+          {}
           <div className="text-center mb-24">
             <div className="inline-flex items-center gap-3 px-6 py-3 bg-white border border-slate-200 rounded-full shadow-xl shadow-slate-900/5 mb-8">
               <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full animate-pulse" />
@@ -419,9 +419,9 @@ export function HomePage() {
             </p>
           </div>
 
-          {/* Creative Bento Grid */}
+          {}
           <div className="grid md:grid-cols-12 gap-6">
-            {/* Large Feature - Spans 8 columns and 2 rows */}
+            {}
             <div className="md:col-span-8 md:row-span-2 group relative bg-slate-900 rounded-3xl p-12 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-600/30 via-blue-600/20 to-pink-600/30 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
               <div className="absolute inset-0 opacity-10">
@@ -478,7 +478,7 @@ export function HomePage() {
               </div>
             </div>
 
-            {/* Smaller Feature Cards */}
+            {}
             {[
               {
                 icon: FileText,
@@ -544,7 +544,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Interactive Showcase - Ultra Creative */}
+      {}
       <section className="relative py-40">
         <div className="max-w-7xl mx-auto px-8">
           <div className="text-center mb-20">
@@ -558,7 +558,7 @@ export function HomePage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Workflow Animation Card */}
+            {}
             <div className="group relative bg-slate-900 rounded-3xl p-12 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-blue-600/20 to-pink-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
               <div className="absolute inset-0 opacity-5">
@@ -611,7 +611,7 @@ export function HomePage() {
               </div>
             </div>
 
-            {/* Real-Time Intelligence Card */}
+            {}
             <div className="bg-white border border-slate-200 rounded-3xl p-12 hover:border-slate-300 hover:shadow-2xl hover:shadow-slate-900/10 transition-all duration-500">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-xl">
@@ -651,7 +651,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* About Section - Ultra Creative */}
+      {}
       <section id="about" className="relative py-40 bg-gradient-to-b from-white via-slate-50 to-white overflow-hidden">
         <div className="absolute inset-0 opacity-30">
           <div className="absolute inset-0" style={{
@@ -661,7 +661,7 @@ export function HomePage() {
         </div>
 
         <div className="relative max-w-7xl mx-auto px-8">
-          {/* Section Header */}
+          {}
           <div className="text-center mb-24">
             <div className="inline-flex items-center gap-3 px-6 py-3 bg-white border border-slate-200 rounded-full shadow-xl shadow-slate-900/5 mb-8">
               <HeartHandshake className="w-4 h-4 text-purple-600" strokeWidth={2.5} />
@@ -675,9 +675,9 @@ export function HomePage() {
             </h2>
           </div>
 
-          {/* Journey Timeline */}
+          {}
           <div className="relative grid lg:grid-cols-3 gap-8 mb-24">
-            {/* Connection Line */}
+            {}
             <div className="hidden lg:block absolute top-20 left-[16.66%] right-[16.66%] h-1 bg-gradient-to-r from-amber-300 via-blue-300 to-purple-300 opacity-20" />
             
             {[
@@ -731,7 +731,7 @@ export function HomePage() {
             })}
           </div>
 
-          {/* Mission Statement Card */}
+          {}
           <div className="relative bg-slate-900 rounded-3xl p-20 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-blue-600/20 to-pink-600/20" />
             <div className="absolute inset-0" style={{
@@ -756,10 +756,10 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Solutions Section */}
+      {}
       <section id="solutions" className="relative py-40">
         <div className="max-w-7xl mx-auto px-8">
-          {/* Section Header */}
+          {}
           <div className="text-center mb-24">
             <div className="inline-flex items-center gap-3 px-6 py-3 bg-white border border-slate-200 rounded-full shadow-xl shadow-slate-900/5 mb-8">
               <Building2 className="w-4 h-4 text-purple-600" strokeWidth={2.5} />
@@ -773,7 +773,7 @@ export function HomePage() {
             </h2>
           </div>
 
-          {/* Solution Cards */}
+          {}
           <div className="grid lg:grid-cols-3 gap-8">
             {[
               {
@@ -825,7 +825,7 @@ export function HomePage() {
                   key={i}
                   className="group bg-white border border-slate-200 rounded-3xl overflow-hidden hover:border-slate-300 hover:shadow-2xl hover:shadow-slate-900/10 hover:-translate-y-2 transition-all duration-500"
                 >
-                  {/* Header */}
+                  {}
                   <div className={`relative bg-gradient-to-br ${solution.bgGradient} p-10 border-b border-slate-200`}>
                     <div className={`w-20 h-20 bg-gradient-to-br ${solution.gradient} rounded-3xl flex items-center justify-center shadow-2xl mb-8 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500`}>
                       <Icon className="w-10 h-10 text-white" strokeWidth={2.5} />
@@ -835,7 +835,7 @@ export function HomePage() {
                     <p className="text-slate-600 leading-relaxed font-medium text-lg">{solution.description}</p>
                   </div>
 
-                  {/* Features */}
+                  {}
                   <div className="p-10">
                     <div className="space-y-4 mb-8">
                       {solution.features.map((feature, j) => (
@@ -859,7 +859,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section - Ultra Creative */}
+      {}
       <section className="relative py-40">
         <div className="max-w-6xl mx-auto px-8">
           <div className="relative bg-slate-900 rounded-3xl p-24 overflow-hidden">
@@ -924,11 +924,11 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Footer - Ultra Premium */}
+      {}
       <footer className="relative border-t border-slate-200 bg-white py-24">
         <div className="max-w-7xl mx-auto px-8">
           <div className="grid md:grid-cols-4 gap-16 mb-20">
-            {/* Brand */}
+            {}
             <div className="md:col-span-2">
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-600 via-blue-600 to-pink-600 rounded-2xl flex items-center justify-center shadow-xl">
@@ -948,7 +948,7 @@ export function HomePage() {
               </div>
             </div>
             
-            {/* Links */}
+            {}
             {[
               { title: 'Product', links: ['Features', 'Solutions', 'Security', 'Integrations'] },
               { title: 'Company', links: ['About', 'Careers', 'Contact', 'Blog'] },
