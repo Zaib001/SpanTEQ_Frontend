@@ -162,7 +162,9 @@ export function RecruiterPTO() {
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {filteredRequests.map((req, index) => {
-                                const days = Math.ceil((new Date(req.endDate).getTime() - new Date(req.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                                const days = (req.startDate && req.endDate)
+                                    ? Math.ceil((new Date(req.endDate).getTime() - new Date(req.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1
+                                    : 0;
                                 return (
                                     <tr key={req._id} className="hover:bg-white/5 transition-colors group animate-slide-in" style={{ animationDelay: `${index * 20}ms` }}>
                                         <td className="px-8 py-5">
@@ -184,9 +186,9 @@ export function RecruiterPTO() {
                                         <td className="px-8 py-5">
                                             <div className="flex flex-col">
                                                 <span className="text-slate-200 text-sm font-medium">
-                                                    {new Date(req.startDate).toLocaleDateString()}
+                                                    {req.startDate ? new Date(req.startDate).toLocaleDateString() : 'N/A'}
                                                 </span>
-                                                <span className="text-[10px] text-slate-500 uppercase font-black">to {new Date(req.endDate).toLocaleDateString()}</span>
+                                                <span className="text-[10px] text-slate-500 uppercase font-black">to {req.endDate ? new Date(req.endDate).toLocaleDateString() : 'N/A'}</span>
                                             </div>
                                         </td>
                                         <td className="px-8 py-5">
@@ -261,7 +263,7 @@ export function RecruiterPTO() {
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-black text-white">{selectedRequest.requestedBy?.name}</h3>
-                                    <p className="text-slate-400 text-sm">Requested on {new Date(selectedRequest.createdAt).toLocaleDateString()}</p>
+                                    <p className="text-slate-400 text-sm">Requested on {selectedRequest.createdAt ? new Date(selectedRequest.createdAt).toLocaleDateString() : 'N/A'}</p>
                                 </div>
                             </div>
 
@@ -273,7 +275,9 @@ export function RecruiterPTO() {
                                 <div className="glass rounded-3xl p-4 border border-white/5">
                                     <p className="text-[10px] text-slate-500 mb-1 uppercase font-black">Total Duration</p>
                                     <p className="text-slate-100 font-bold font-mono">
-                                        {Math.ceil((new Date(selectedRequest.endDate).getTime() - new Date(selectedRequest.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1} Days
+                                        {(selectedRequest.startDate && selectedRequest.endDate)
+                                            ? Math.ceil((new Date(selectedRequest.endDate).getTime() - new Date(selectedRequest.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1
+                                            : 0} Days
                                     </p>
                                 </div>
                             </div>
