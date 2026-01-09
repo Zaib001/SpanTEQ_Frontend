@@ -165,7 +165,7 @@ export function RecruiterSubmissions() {
 
     return (
         <div className="p-8 space-y-6">
-            {}
+            { }
             <div className="relative">
                 <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" />
                 <div className="relative flex items-center justify-between mb-4 animate-slide-in">
@@ -188,7 +188,7 @@ export function RecruiterSubmissions() {
                 </div>
             </div>
 
-            {}
+            { }
             <div className="grid grid-cols-4 gap-6 animate-slide-in" style={{ animationDelay: '100ms' }}>
                 {[
                     { label: 'Total Submissions', value: stats.total, gradient: 'from-blue-500 to-cyan-500', icon: FileText },
@@ -214,7 +214,7 @@ export function RecruiterSubmissions() {
                 })}
             </div>
 
-            {}
+            { }
             <div className="glass rounded-3xl p-6 space-y-4 animate-slide-in shadow-premium" style={{ animationDelay: '200ms' }}>
                 <div className="flex items-center gap-4">
                     <div className="flex-1 relative group">
@@ -254,7 +254,7 @@ export function RecruiterSubmissions() {
                 </div>
             </div>
 
-            {}
+            { }
             <div className="glass rounded-3xl overflow-hidden shadow-premium animate-slide-in relative z-20" style={{ animationDelay: '300ms' }}>
                 <div className="overflow-x-auto">
                     <table className="w-full">
@@ -305,7 +305,7 @@ export function RecruiterSubmissions() {
                                             {submission.role}
                                         </td>
                                         <td className="px-8 py-5 whitespace-nowrap text-slate-500 text-xs font-bold font-mono">
-                                            {new Date(submission.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            {submission.date ? new Date(submission.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
                                         </td>
                                         <td className="px-8 py-5 whitespace-nowrap">
                                             <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${statusColors[submission.status]?.bg || 'bg-slate-500/20'} ${statusColors[submission.status]?.text || 'text-slate-400'} border ${statusColors[submission.status]?.border || 'border-slate-500/30'}`}>
@@ -354,7 +354,7 @@ export function RecruiterSubmissions() {
                 </div>
             </div>
 
-            {}
+            { }
             {showDetailModal && selectedSubmission && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
                     <div className="glass-dark max-w-2xl w-full rounded-[40px] p-10 border border-white/20 shadow-2xl relative overflow-hidden animate-scale-in">
@@ -400,7 +400,7 @@ export function RecruiterSubmissions() {
                                                 <Calendar className="flex-shrink-0 w-4 h-4 text-purple-400" />
                                                 <span className="text-sm font-bold">Submitted On</span>
                                             </div>
-                                            <span className="text-sm text-slate-400 font-mono">{new Date(selectedSubmission.date).toLocaleDateString()}</span>
+                                            <span className="text-sm text-slate-400 font-mono">{selectedSubmission.date ? new Date(selectedSubmission.date).toLocaleDateString() : 'N/A'}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -454,7 +454,7 @@ export function RecruiterSubmissions() {
                 </div>
             )}
 
-            {}
+            { }
             {showFormModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowFormModal(false)} />
