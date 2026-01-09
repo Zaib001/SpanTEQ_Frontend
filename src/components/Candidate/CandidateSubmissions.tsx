@@ -106,7 +106,7 @@ export function CandidateSubmissions() {
                                         {sub.role || 'N/A'}
                                     </td>
                                     <td className="px-8 py-5 text-slate-400 text-sm">
-                                        {new Date(sub.date).toLocaleDateString()}
+                                        {sub.date ? new Date(sub.date).toLocaleDateString() : 'N/A'}
                                     </td>
                                     <td className="px-8 py-5">
                                         <span className={`px-3 py-1 rounded-lg text-xs font-semibold uppercase badge-glow bg-blue-500/20 text-blue-400`}>

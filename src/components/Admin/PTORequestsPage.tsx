@@ -53,8 +53,8 @@ export function PTORequestsPage() {
         user: r.requestedBy?.name || 'Unknown',
         role: r.role as any,
         type: (r.type as any) || 'Time Off',
-        startDate: new Date(r.from || r.startDate).toISOString().split('T')[0],
-        endDate: new Date(r.to || r.endDate).toISOString().split('T')[0],
+        startDate: new Date(r.from || r.startDate || new Date()).toISOString().split('T')[0],
+        endDate: new Date(r.to || r.endDate || new Date()).toISOString().split('T')[0],
         totalDays: r.days || r.totalDays || 0,
         status: r.status,
         reason: r.reason
