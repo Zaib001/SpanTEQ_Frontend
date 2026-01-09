@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Users, FileText, DollarSign, TrendingUp, Activity, Award, Zap, ArrowUp, ArrowDown, Calendar, Clock, Sparkles, BarChart3, PieChart as PieChartIcon, CheckCircle } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import AdminService from '../../services/admin.service';
 
 export function AdminDashboard() {
@@ -21,6 +21,8 @@ export function AdminDashboard() {
     pendingApprovals: 0,
     upcomingInterviews: 0,
     monthlyGrowth: 0,
+    avgMargin: 0,
+    revenueForecast: 0,
   });
 
   const [animatedStats, setAnimatedStats] = useState({
@@ -162,7 +164,7 @@ export function AdminDashboard() {
 
   return (
     <div className="p-8 space-y-8">
-      {}
+      { }
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-20 right-20 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" />
         <div className="absolute bottom-20 left-20 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" style={{ animationDelay: '2s' }} />
@@ -176,7 +178,7 @@ export function AdminDashboard() {
         </div>
       )}
 
-      {}
+      { }
       <div className="relative">
         <div className="relative flex items-center justify-between animate-slide-in">
           <div>
@@ -219,7 +221,7 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      {}
+      { }
       <div className="grid grid-cols-4 gap-6 animate-slide-in" style={{ animationDelay: '100ms' }}>
         {[
           {
@@ -263,16 +265,16 @@ export function AdminDashboard() {
           const ChangeIcon = stat.trend === 'up' ? ArrowUp : ArrowDown;
           return (
             <div key={index} className="group relative glass rounded-3xl p-6 hover-lift card-shine overflow-hidden border border-white/10 hover:border-blue-500/30 transition-all duration-500">
-              {}
+              { }
               <div className={`absolute top-0 right-0 w-40 h-40 bg-gradient-to-br ${stat.gradient} rounded-full blur-3xl opacity-0 group-hover:opacity-30 transition-opacity duration-500`} />
 
-              {}
+              { }
               <div className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                 <div className={`absolute inset-0 rounded-3xl bg-gradient-to-r ${stat.gradient} opacity-10`} />
               </div>
 
               <div className="relative">
-                {}
+                { }
                 <div className="flex items-start justify-between mb-5">
                   <div className="relative">
                     <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} rounded-2xl blur-lg opacity-50 group-hover:opacity-100 transition-opacity duration-500`} />
@@ -289,7 +291,7 @@ export function AdminDashboard() {
                   </div>
                 </div>
 
-                {}
+                { }
                 <div>
                   <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2">{stat.label}</p>
                   <p className="text-4xl font-bold premium-text mb-1 tracking-tight">{stat.value}</p>
@@ -299,7 +301,7 @@ export function AdminDashboard() {
                   </p>
                 </div>
 
-                {}
+                { }
                 <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.gradient} rounded-b-3xl opacity-50 group-hover:opacity-100 transition-opacity duration-500`} />
               </div>
             </div>
@@ -307,9 +309,9 @@ export function AdminDashboard() {
         })}
       </div>
 
-      {}
+      { }
       <div className="grid grid-cols-3 gap-6">
-        {}
+        { }
         <div className="col-span-2 glass rounded-3xl p-8 animate-slide-in shadow-premium border border-white/10 hover:border-blue-500/30 transition-all duration-500" style={{ animationDelay: '200ms' }}>
           <div className="flex items-center justify-between mb-8">
             <div>
@@ -379,7 +381,7 @@ export function AdminDashboard() {
             </AreaChart>
           </ResponsiveContainer>
 
-          {}
+          { }
           <div className="grid grid-cols-4 gap-4 mt-6 pt-6 border-t border-white/10">
             <div className="text-center p-4 glass rounded-xl hover:bg-white/5 transition-all">
               <p className="text-xs text-slate-500 mb-1">Monthly Growth</p>
@@ -400,9 +402,9 @@ export function AdminDashboard() {
           </div>
         </div>
 
-        {}
+        { }
         <div className="space-y-6">
-          {}
+          { }
           <div className="glass rounded-3xl p-6 animate-slide-in shadow-premium border border-white/10 hover:border-purple-500/30 transition-all duration-500" style={{ animationDelay: '250ms' }}>
             <div className="mb-6">
               <h2 className="text-xl font-bold text-slate-100 mb-2 flex items-center gap-2">
@@ -451,7 +453,7 @@ export function AdminDashboard() {
             </div>
           </div>
 
-          {}
+          { }
           <div className="glass rounded-3xl p-6 animate-slide-in shadow-premium border border-white/10" style={{ animationDelay: '300ms' }}>
             <h3 className="text-lg font-bold text-slate-100 mb-4 flex items-center gap-2">
               <Zap className="w-5 h-5 text-yellow-400" />
@@ -490,9 +492,9 @@ export function AdminDashboard() {
         </div>
       </div>
 
-      {}
+      { }
       <div className="grid grid-cols-3 gap-6">
-        {}
+        { }
         <div className="glass rounded-3xl p-6 animate-slide-in shadow-premium border border-white/10 hover:border-emerald-500/30 transition-all duration-500" style={{ animationDelay: '350ms' }}>
           <div className="mb-6">
             <h2 className="text-xl font-bold text-slate-100 mb-2 flex items-center gap-2">
@@ -527,7 +529,7 @@ export function AdminDashboard() {
                       </div>
                     </div>
                   </div>
-                  {}
+                  { }
                   <div className="relative h-2 bg-white/5 rounded-full overflow-hidden">
                     <div
                       className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out"
@@ -536,7 +538,7 @@ export function AdminDashboard() {
                         background: `linear-gradient(90deg, ${metric.color}40, ${metric.color})`
                       }}
                     />
-                    {}
+                    { }
                     <div
                       className="absolute top-0 h-full w-0.5 bg-white/40"
                       style={{ left: `${metric.target}%` }}
@@ -546,7 +548,7 @@ export function AdminDashboard() {
               );
             })}
           </div>
-          {}
+          { }
           <div className="mt-6 pt-6 border-t border-white/10">
             <div className="text-center p-4 glass rounded-2xl">
               <p className="text-xs text-slate-400 mb-2">Overall Health Score</p>
@@ -564,7 +566,7 @@ export function AdminDashboard() {
           </div>
         </div>
 
-        {}
+        { }
         <div className="glass rounded-3xl p-6 animate-slide-in shadow-premium border border-white/10 hover:border-yellow-500/30 transition-all duration-500" style={{ animationDelay: '400ms' }}>
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -604,7 +606,7 @@ export function AdminDashboard() {
           </div>
         </div>
 
-        {}
+        { }
         <div className="glass rounded-3xl p-6 animate-slide-in shadow-premium border border-white/10" style={{ animationDelay: '450ms' }}>
           <div className="mb-6">
             <h2 className="text-xl font-bold text-slate-100 mb-2 flex items-center gap-2">

@@ -40,18 +40,18 @@ export interface User {
 
 export interface UserStats {
     total: number;
-    totalUsers: number;
+    totalUsers?: number;
     recruiters: number;
     candidates: number;
     active: number;
-    activeUsers: number;
-    pendingPTO: number;
-    pendingDocRequests: number;
-    totalSubmissions: number;
-    pendingSubmissionsCount: number;
-    pendingTimesheets: number;
-    newCandidatesCount: number;
-    newRecruitersCount: number;
+    activeUsers?: number;
+    pendingPTO?: number;
+    pendingDocRequests?: number;
+    totalSubmissions?: number;
+    pendingSubmissionsCount?: number;
+    pendingTimesheets?: number;
+    newCandidatesCount?: number;
+    newRecruitersCount?: number;
 }
 
 export interface CreateUserPayload {
@@ -100,7 +100,7 @@ export interface GetUsersResponse {
 }
 
 export const UserService = {
-    
+
     async getAllUsers(params: GetUsersParams = {}): Promise<GetUsersResponse> {
         const response = await apiClient.get<GetUsersResponse>('/api/admin/users', { params });
         return response.data;

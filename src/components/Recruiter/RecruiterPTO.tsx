@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
     Calendar, CheckCircle, XCircle, ChevronDown, Clock,
-    Search, Filter, User, Briefcase, Sparkles, TrendingUp, X, Clock3
+    Search, Filter, User, Briefcase, Sparkles, TrendingUp, X, Clock3, Eye
 } from 'lucide-react';
 import RecruiterService from '../../services/recruiter.service';
 import type { PTORequest } from '../../services/pto.service';
@@ -75,7 +75,7 @@ export function RecruiterPTO() {
 
     return (
         <div className="p-8 space-y-6">
-            {}
+            { }
             <div className="relative">
                 <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" />
                 <div className="relative flex items-center justify-between mb-8 animate-slide-in">
@@ -91,7 +91,7 @@ export function RecruiterPTO() {
                 </div>
             </div>
 
-            {}
+            { }
             <div className="grid grid-cols-4 gap-6 animate-slide-in" style={{ animationDelay: '100ms' }}>
                 {[
                     { label: 'Total Requests', value: stats.total, gradient: 'from-purple-500 to-indigo-500', icon: Calendar },
@@ -117,7 +117,7 @@ export function RecruiterPTO() {
                 })}
             </div>
 
-            {}
+            { }
             <div className="glass rounded-3xl p-6 space-y-4 animate-slide-in shadow-premium" style={{ animationDelay: '200ms' }}>
                 <div className="flex items-center gap-4">
                     <div className="flex-1 relative group">
@@ -146,7 +146,7 @@ export function RecruiterPTO() {
                 </div>
             </div>
 
-            {}
+            { }
             <div className="glass rounded-3xl overflow-hidden shadow-premium animate-slide-in" style={{ animationDelay: '300ms' }}>
                 <div className="overflow-x-auto">
                     <table className="w-full">
@@ -232,7 +232,7 @@ export function RecruiterPTO() {
                 </div>
             </div>
 
-            {}
+            { }
             {!loading && filteredRequests.length === 0 && (
                 <div className="glass rounded-3xl p-20 text-center animate-slide-in">
                     <Calendar className="w-16 h-16 text-slate-600 mx-auto mb-4" />
@@ -241,7 +241,7 @@ export function RecruiterPTO() {
                 </div>
             )}
 
-            {}
+            { }
             {showOrderModal && selectedRequest && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
                     <div className="glass-dark max-w-xl w-full rounded-[40px] p-10 border border-white/20 shadow-2xl relative overflow-hidden animate-scale-in">

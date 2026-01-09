@@ -40,12 +40,12 @@ function NavItem({ item, isNested = false }: NavItemProps) {
     >
       {({ isActive }) => (
         <>
-          {}
+          { }
           {isActive && (
             <div className="absolute inset-0 bg-gradient-to-r from-white/10 via-white/5 to-transparent rounded-2xl" />
           )}
 
-          {}
+          { }
           <div className={`relative flex items-center justify-center flex-shrink-0 transition-all duration-300 ${isNested ? 'w-9 h-9 rounded-xl' : 'w-11 h-11 rounded-xl'
             } ${isActive
               ? `bg-gradient-to-br ${item.gradient} shadow-glow-purple`
@@ -58,13 +58,13 @@ function NavItem({ item, isNested = false }: NavItemProps) {
             )}
           </div>
 
-          {}
+          { }
           <span className={`relative z-10 font-medium transition-all ${isNested ? 'text-sm' : 'text-sm'
             } ${isActive ? 'text-white' : ''}`}>
             {item.label}
           </span>
 
-          {}
+          { }
           {item.badge !== null && item.badge !== undefined && item.badge !== 0 && (
             <span className={`ml-auto px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${isActive
               ? 'bg-white/20 text-white'
@@ -74,7 +74,7 @@ function NavItem({ item, isNested = false }: NavItemProps) {
             </span>
           )}
 
-          {}
+          { }
           {isActive && (
             <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1.5 ${isNested ? 'h-6' : 'h-10'
               } bg-gradient-to-b ${item.gradient} rounded-r-full shadow-glow-purple`} />
@@ -85,7 +85,12 @@ function NavItem({ item, isNested = false }: NavItemProps) {
   );
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  currentPage?: string;
+  onNavigate?: (page: string) => void;
+}
+
+export function Sidebar({ currentPage: _currentPage, onNavigate: _onNavigate }: SidebarProps) {
   const location = useLocation();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({
@@ -589,16 +594,16 @@ export function Sidebar() {
 
   return (
     <aside className="h-full w-full flex flex-col relative overflow-hidden">
-      {}
+      { }
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900/98 via-slate-800/98 to-slate-900/98 backdrop-blur-3xl" />
       <div className="absolute inset-0 bg-gradient-to-br from-purple-500/8 via-blue-500/8 to-pink-500/8" />
       <div className="absolute right-0 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-purple-500/30 to-transparent" />
 
-      {}
+      { }
       <div className="absolute top-20 right-10 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-40 left-10 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl animate-float" />
 
-      {}
+      { }
       <div className="relative p-6 mb-2">
         <div className="flex items-center gap-4 group cursor-pointer">
           <div className="relative w-14 h-14 bg-gradient-to-br from-purple-500 via-blue-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-glow-purple overflow-hidden transform transition-all duration-500 group-hover:scale-105 group-hover:rotate-3">
@@ -619,7 +624,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      {}
+      { }
       {isAdmin && (
         <div className="relative px-4 mb-4">
           <div className="glass rounded-2xl p-4 border border-white/10">
@@ -647,7 +652,7 @@ export function Sidebar() {
         </div>
       )}
 
-      {}
+      { }
       <nav className="flex-1 px-4 overflow-y-auto custom-scrollbar">
         <div className="space-y-6 pb-6">
           {isRecruiter && renderRecruiterLinks()}
@@ -656,7 +661,7 @@ export function Sidebar() {
         </div>
       </nav>
 
-      {}
+      { }
       <div className="p-4 border-t border-white/5">
         <div className="relative p-5 rounded-2xl overflow-hidden group cursor-pointer hover-lift transition-all duration-300">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-blue-500/20 to-pink-500/20" />

@@ -10,7 +10,6 @@ export const CandidateService = {
     },
 
     async createSubmission(data: {
-        recruiter: string;
         client: string;
         vendor?: string;
         date: string;

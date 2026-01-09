@@ -8,9 +8,7 @@ export function CandidateSubmissions() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    const [recruiters, setRecruiters] = useState<Array<{ _id: string; name: string; email: string }>>([]);
     const [formData, setFormData] = useState({
-        recruiter: '',
         client: '',
         vendor: '',
         date: new Date().toISOString().split('T')[0]
@@ -18,7 +16,6 @@ export function CandidateSubmissions() {
 
     useEffect(() => {
         fetchSubmissions();
-        fetchRecruiters();
     }, []);
 
     const fetchSubmissions = async () => {
@@ -34,19 +31,9 @@ export function CandidateSubmissions() {
         }
     };
 
-    const fetchRecruiters = async () => {
-        try {
-            const data = await CandidateService.getRecruiters();
-            setRecruiters(data);
-        } catch (err) {
-            void err;
-            console.error('Failed to fetch recruiters', err);
-        }
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.recruiter || !formData.client || !formData.date) {
+        if (!formData.client || !formData.date) {
             alert('Please fill all required fields');
             return;
         }
@@ -54,22 +41,21 @@ export function CandidateSubmissions() {
         try {
             setSubmitting(true);
             await CandidateService.createSubmission({
-                recruiter: formData.recruiter,
                 client: formData.client,
                 vendor: formData.vendor || undefined,
                 date: formData.date,
-                status: 'pending'
+                status: 'SUBMITTED'
             });
 
             // Refresh and reset
             await fetchSubmissions();
-            setFormData({ recruiter: '', client: '', vendor: '', date: new Date().toISOString().split('T')[0] });
+            setFormData({ client: '', vendor: '', date: new Date().toISOString().split('T')[0] });
             setShowModal(false);
             alert('Submission created successfully!');
-        } catch (err) {
-            void err;
+        } catch (err: any) {
             console.error('Failed to create submission', err);
-            alert('Failed to create submission. Please try again.');
+            const errorMessage = err?.response?.data?.message || err?.message || 'Failed to create submission. Please try again.';
+            alert(errorMessage);
         } finally {
             setSubmitting(false);
         }
@@ -156,23 +142,6 @@ export function CandidateSubmissions() {
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-400 mb-2">Recruiter *</label>
-                                <select
-                                    required
-                                    value={formData.recruiter}
-                                    onChange={(e) => setFormData({ ...formData, recruiter: e.target.value })}
-                                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-100"
-                                >
-                                    <option value="">Select a recruiter</option>
-                                    {recruiters.map((rec) => (
-                                        <option key={rec._id} value={rec._id} className="bg-slate-900">
-                                            {rec.name} ({rec.email})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
                             <div>
                                 <label className="block text-sm font-semibold text-slate-400 mb-2">Client Name *</label>
                                 <input

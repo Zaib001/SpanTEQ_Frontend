@@ -9,6 +9,10 @@ export interface DashboardStats {
     pendingTimesheets: number;
     totalPayouts: number;
     payoutCount: number;
+    totalRevenue: number;
+    monthlyGrowth: number;
+    avgMargin: number;
+    revenueForecast: number;
     recentActivities: any[];
     dateRange: {
         from: string;
@@ -23,6 +27,7 @@ export interface DashboardChartData {
     submissionData?: any[];
     submissionStatus?: any[];
     topPerformers?: any[];
+    peakMonth?: string;
     dateRange: {
         from: string;
         to: string;
@@ -31,7 +36,7 @@ export interface DashboardChartData {
 }
 
 export const AdminService = {
-    
+
     async getDashboardStats(params: any = {}): Promise<{ success: boolean; stats: DashboardStats }> {
         const response = await apiClient.get('/api/admin/admin', { params });
         return response.data;

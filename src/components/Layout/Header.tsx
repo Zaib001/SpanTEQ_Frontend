@@ -97,7 +97,12 @@ const pageSubtitle = (pathname: string): string => {
   return subtitles[pathname] || 'Admin Portal';
 };
 
-export function Header() {
+interface HeaderProps {
+  currentPage?: string;
+  onLogout?: () => void;
+}
+
+export function Header({ currentPage: _currentPage, onLogout: _onLogout }: HeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -159,14 +164,14 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 backdrop-blur-2xl">
-      {}
+      { }
       <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-800/95 to-slate-900/95" />
       <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-blue-500/5 to-pink-500/5" />
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
 
       <div className="relative px-8 py-5">
         <div className="flex items-center justify-between gap-8">
-          {}
+          { }
           <div className="flex-1">
             <div className="flex items-center gap-4">
               <div>
@@ -176,7 +181,7 @@ export function Header() {
             </div>
           </div>
 
-          {}
+          { }
           <div className="flex-1 max-w-xl">
             <div className={`relative group transition-all duration-300 ${searchFocused ? 'scale-105' : ''}`}>
               <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors duration-300 ${searchFocused ? 'text-purple-400' : 'text-slate-400'
@@ -194,15 +199,15 @@ export function Header() {
             </div>
           </div>
 
-          {}
+          { }
           <div className="flex items-center gap-3">
-            {}
+            { }
             <button className="group relative p-3 glass rounded-xl hover:bg-white/10 transition-all duration-300 overflow-hidden">
               <Zap className="w-5 h-5 text-slate-400 group-hover:text-yellow-400 transition-colors relative z-10" />
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/0 via-yellow-500/10 to-yellow-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
             </button>
 
-            {}
+            { }
             <div ref={notificationsRef} className="relative">
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
@@ -218,7 +223,7 @@ export function Header() {
                 )}
               </button>
 
-              {}
+              { }
               {showNotifications && (
                 <div className="absolute right-0 top-full mt-3 w-96 glass-dark rounded-3xl shadow-premium border border-white/20 overflow-hidden animate-slide-in">
                   <div className="p-5 border-b border-white/10 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-pink-500/10">
@@ -261,7 +266,7 @@ export function Header() {
               )}
             </div>
 
-            {}
+            { }
             <div ref={settingsRef} className="relative">
               <button
                 onClick={() => setShowSettings(!showSettings)}
@@ -272,7 +277,7 @@ export function Header() {
                   }`} />
               </button>
 
-              {}
+              { }
               {showSettings && (
                 <div className="absolute right-0 top-full mt-3 w-80 glass-dark rounded-3xl shadow-premium border border-white/20 overflow-hidden animate-slide-in">
                   <div className="p-5 border-b border-white/10 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-pink-500/10">
@@ -307,10 +312,10 @@ export function Header() {
               )}
             </div>
 
-            {}
+            { }
             <div className="w-px h-8 bg-gradient-to-b from-transparent via-slate-600 to-transparent" />
 
-            {}
+            { }
             <div ref={userMenuRef} className="relative">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
@@ -328,7 +333,7 @@ export function Header() {
                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${showUserMenu ? 'rotate-180' : ''}`} />
               </button>
 
-              {}
+              { }
               {showUserMenu && (
                 <div className="absolute right-0 top-full mt-3 w-64 glass-dark rounded-3xl shadow-premium border border-white/20 overflow-hidden animate-slide-in">
                   <div className="p-4 border-b border-white/10 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-pink-500/10">
