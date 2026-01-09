@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import UserService from '../../services/user.service';
 import type { User as ApiUser, UserStats } from '../../services/user.service';
+import UserDetailModal from './UserDetailModal';
 
 type UserRole = 'admin' | 'recruiter' | 'candidate';
 type PayModel = 'Fixed' | 'Hourly' | 'Percentage' | 'Hybrid';
@@ -62,6 +63,7 @@ export function UsersPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [showColumns, setShowColumns] = useState(false);
 
@@ -181,9 +183,21 @@ export function UsersPage() {
     setShowEditModal(true);
   };
 
+  const handleExport = async () => {
+    try {
+      setLoading(true);
+      await UserService.exportUsers();
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert('Failed to export users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="p-8 space-y-6">
-      {}
+      { }
       <div className="relative">
         <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" />
         <div className="absolute -top-10 -left-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" style={{ animationDelay: '1s' }} />
@@ -219,7 +233,7 @@ export function UsersPage() {
         </div>
       </div>
 
-      {}
+      { }
       <div className="grid grid-cols-4 gap-6 animate-slide-in" style={{ animationDelay: '100ms' }}>
         {[
           { label: 'Total Users', value: stats.total, icon: UsersIcon, gradient: 'from-purple-500 to-blue-500', color: 'purple' },
@@ -250,9 +264,9 @@ export function UsersPage() {
         })}
       </div>
 
-      {}
+      { }
       <div className="glass rounded-3xl p-6 space-y-4 animate-slide-in shadow-premium relative z-30" style={{ animationDelay: '200ms' }}>
-        {}
+        { }
         <div className="flex items-center gap-4">
           <div className="flex-1 relative group">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-purple-400 transition-all duration-300" />
@@ -286,7 +300,7 @@ export function UsersPage() {
               <span className="relative z-10 text-slate-300 font-medium">Columns</span>
             </button>
 
-            {}
+            { }
             {showColumns && (
               <div className="absolute top-full right-0 mt-3 w-64 glass rounded-2xl border border-white/10 shadow-premium p-4 z-50 animate-slide-in">
                 <div className="flex items-center gap-2 mb-4 pb-3 border-b border-white/10">
@@ -313,14 +327,18 @@ export function UsersPage() {
             )}
           </div>
 
-          <button className="group relative px-6 py-4 glass rounded-2xl hover:bg-white/10 transition-all duration-300 flex items-center gap-3 overflow-hidden">
+          <button
+            onClick={handleExport}
+            disabled={loading}
+            className="group relative px-6 py-4 glass rounded-2xl hover:bg-white/10 transition-all duration-300 flex items-center gap-3 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <Download className="w-5 h-5 relative z-10 text-slate-400 group-hover:text-purple-400 transition-colors" />
-            <span className="relative z-10 text-slate-300 font-medium">Export</span>
+            <span className="relative z-10 text-slate-300 font-medium">{loading ? 'Exporting...' : 'Export'}</span>
           </button>
         </div>
 
-        {}
+        { }
         {showFilters && (
           <div className="grid grid-cols-3 gap-6 pt-6 border-t border-white/10 animate-slide-in">
             {[
@@ -364,7 +382,7 @@ export function UsersPage() {
         )}
       </div>
 
-      {}
+      { }
       <div className="glass rounded-3xl overflow-hidden shadow-premium animate-slide-in relative z-20" style={{ animationDelay: '300ms' }}>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -521,7 +539,10 @@ export function UsersPage() {
                     {visibleColumns.actions && (
                       <td className="px-8 py-5 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-2 transition-all duration-300">
-                          <button className="p-3 glass rounded-xl hover:bg-blue-500/20 hover:text-blue-400 hover:shadow-glow-blue transition-all duration-300 transform hover:scale-110">
+                          <button
+                            onClick={() => { setSelectedUser(user); setShowDetailModal(true); }}
+                            className="p-3 glass rounded-xl hover:bg-blue-500/20 hover:text-blue-400 hover:shadow-glow-blue transition-all duration-300 transform hover:scale-110"
+                          >
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
@@ -544,7 +565,7 @@ export function UsersPage() {
           </table>
         </div>
 
-        {}
+        { }
         <div className="glass-dark px-8 py-5 flex items-center justify-between border-t border-white/10">
           <div className="flex items-center gap-3">
             <p className="text-sm text-slate-400">
@@ -573,7 +594,7 @@ export function UsersPage() {
         </div>
       </div>
 
-      {}
+      { }
       {(showAddModal || showEditModal) && (
         <UserFormModal
           user={selectedUser}
@@ -614,6 +635,16 @@ export function UsersPage() {
               console.error("Failed to save user", err);
               alert("Failed to save user. Check console for details.");
             }
+          }}
+        />
+      )}
+
+      {showDetailModal && selectedUser && (
+        <UserDetailModal
+          user={selectedUser}
+          onClose={() => {
+            setShowDetailModal(false);
+            setSelectedUser(null);
           }}
         />
       )}
@@ -675,12 +706,12 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
     <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-[9999] p-6 animate-slide-in overflow-y-auto">
       <div className="relative w-full max-w-6xl my-8">
         <div className="glass rounded-3xl p-10 shadow-premium border-2 border-white/10">
-          {}
+          { }
           <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" />
           <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-float" style={{ animationDelay: '1s' }} />
 
           <div className="relative">
-            {}
+            { }
             <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/10">
               <div className="flex items-center gap-4">
                 <div className="p-4 bg-gradient-to-br from-purple-500 via-blue-500 to-pink-500 rounded-2xl shadow-glow-purple">
@@ -701,13 +732,13 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
               </button>
             </div>
 
-            {}
+            { }
             <div className="flex items-center gap-4 mb-8">
               <div className={`flex-1 h-2 rounded-full transition-all ${currentStep >= 1 ? 'bg-gradient-to-r from-purple-500 to-blue-500' : 'bg-white/10'}`} />
               <div className={`flex-1 h-2 rounded-full transition-all ${currentStep >= 2 ? 'bg-gradient-to-r from-blue-500 to-pink-500' : 'bg-white/10'}`} />
             </div>
 
-            {}
+            { }
             {currentStep === 1 && (
               <div className="space-y-6 animate-slide-in">
                 <div className="grid grid-cols-2 gap-6">
@@ -870,10 +901,10 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
               </div>
             )}
 
-            {}
+            { }
             {currentStep === 2 && (
               <div className="space-y-6 animate-slide-in max-h-[60vh] overflow-y-auto pr-4">
-                {}
+                { }
                 {!formData.role && (
                   <div className="text-center py-12">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-800 flex items-center justify-center">
@@ -890,7 +921,7 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                   </div>
                 )}
 
-                {}
+                { }
                 {formData.role === 'admin' && (
                   <div className="text-center py-12">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-500/20 flex items-center justify-center">
@@ -901,10 +932,10 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                   </div>
                 )}
 
-                {}
+                { }
                 {formData.role === 'recruiter' && (
                   <div className="space-y-6">
-                    {}
+                    { }
                     <div className="glass-dark rounded-2xl p-6 border border-blue-500/30">
                       <div className="flex items-center gap-3 mb-6">
                         <div className="p-2 bg-blue-500 rounded-lg">
@@ -948,7 +979,7 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                         </div>
                       </div>
 
-                      {}
+                      { }
                       <div className="mt-6 space-y-4">
                         <div className="flex items-center justify-between p-4 glass rounded-xl border border-white/10">
                           <div className="flex items-center gap-3">
@@ -1052,7 +1083,7 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                       </div>
                     </div>
 
-                    {}
+                    { }
                     <div className="glass-dark rounded-2xl p-6 border border-purple-500/30">
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
@@ -1150,10 +1181,10 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                   </div>
                 )}
 
-                {}
+                { }
                 {formData.role === 'candidate' && (
                   <div className="space-y-6">
-                    {}
+                    { }
                     <div>
                       <label className="block text-sm text-slate-300 font-medium mb-3">
                         Candidate Compensation Model
@@ -1186,7 +1217,7 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                       </div>
                     </div>
 
-                    {}
+                    { }
                     {formData.candidatePayModel === 'Fixed' && (
                       <div className="glass-dark rounded-2xl p-6 border border-emerald-500/30 animate-slide-in">
                         <div className="flex items-center gap-3 mb-6">
@@ -1214,7 +1245,7 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                       </div>
                     )}
 
-                    {}
+                    { }
                     {formData.candidatePayModel === 'Hourly' && (
                       <div className="glass-dark rounded-2xl p-6 border border-blue-500/30 animate-slide-in">
                         <div className="flex items-center gap-3 mb-6">
@@ -1243,7 +1274,7 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                       </div>
                     )}
 
-                    {}
+                    { }
                     {formData.candidatePayModel === 'Percentage' && (
                       <div className="glass-dark rounded-2xl p-6 border border-purple-500/30 animate-slide-in">
                         <div className="flex items-center gap-3 mb-6">
@@ -1290,7 +1321,7 @@ function UserFormModal({ user, onClose, onSave }: UserFormModalProps) {
                       </div>
                     )}
 
-                    {}
+                    { }
                     {formData.candidatePayModel === 'Hybrid' && (
                       <div className="glass-dark rounded-2xl p-6 border border-orange-500/30 animate-slide-in">
                         <div className="flex items-center gap-3 mb-6">

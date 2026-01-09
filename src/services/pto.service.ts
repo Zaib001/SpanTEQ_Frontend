@@ -7,13 +7,19 @@ export interface PTORequest {
         name: string;
         email: string;
     };
-    startDate: string;
-    endDate: string;
-    type: 'vacation' | 'sick' | 'personal';
+    role: 'recruiter' | 'candidate' | 'admin';
+    from: string;
+    to: string;
+    days: number;
     reason?: string;
     status: 'pending' | 'approved' | 'rejected';
     createdAt: string;
     updatedAt: string;
+
+    // Legacy mapping support 
+    startDate?: string;
+    endDate?: string;
+    type?: string;
     totalDays?: number;
 }
 

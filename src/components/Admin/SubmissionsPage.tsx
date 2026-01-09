@@ -4,8 +4,8 @@ import {
   FileText, User, Briefcase, Calendar, Sparkles,
   ChevronDown, ArrowUpDown
 } from 'lucide-react';
-import SubmissionService from '../../services/submission.service';
-import type { Submission } from '../../services/submission.service';
+import SubmissionService, { type Submission } from '../../services/submission.service';
+import InterviewManagementModal from './InterviewManagementModal';
 
 type SubmissionData = Submission & { id: string };
 
@@ -35,6 +35,7 @@ export function SubmissionsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showInterviewsModal, setShowInterviewsModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<SubmissionData | null>(null);
   const [recruiters, setRecruiters] = useState<{ id: string, name: string }[]>([]);
 
@@ -48,6 +49,8 @@ export function SubmissionsPage() {
     dateFrom: '',
     dateTo: '',
   });
+
+  const [analytics, setAnalytics] = useState<any>(null);
 
   useEffect(() => {
     const fetchSubmissions = async () => {
@@ -66,7 +69,6 @@ export function SubmissionsPage() {
         const response = await SubmissionService.getAllSubmissions(params);
 
         const mappedSubmissions = response.submissions.map(sub => {
-
           const candidate = sub.candidate;
           const recruiter = sub.recruiter;
 
@@ -74,7 +76,6 @@ export function SubmissionsPage() {
             ...sub,
             id: sub._id,
             notes: sub.notes || '',
-
             candidateName: candidate && typeof candidate === 'object' ? (candidate as any).name : (candidate || 'N/A'),
             recruiterName: recruiter && typeof recruiter === 'object' ? (recruiter as any).name : (recruiter || 'N/A'),
           };
@@ -88,7 +89,17 @@ export function SubmissionsPage() {
       }
     };
 
+    const fetchAnalytics = async () => {
+      try {
+        const data = await SubmissionService.getAnalytics();
+        setAnalytics(data.analytics);
+      } catch (err) {
+        console.error('Failed to fetch analytics:', err);
+      }
+    };
+
     fetchSubmissions();
+    fetchAnalytics();
   }, [filters, searchQuery]);
 
   useEffect(() => {
@@ -117,7 +128,7 @@ export function SubmissionsPage() {
       techStr.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesFilters =
-      (filters.recruiter === 'all' || recruiterStr === filters.recruiter) &&
+      (filters.recruiter === 'all' || (sub.recruiter && typeof sub.recruiter === 'object' && sub.recruiter._id === filters.recruiter)) &&
       (filters.client === 'all' || clientStr === filters.client) &&
       (filters.technology === 'all' || techStr === filters.technology) &&
       (filters.status === 'all' || sub.status === filters.status);
@@ -137,11 +148,11 @@ export function SubmissionsPage() {
     }
   };
 
-  const stats = {
-    total: submissions.length,
-    pending: submissions.filter(s => s.status === 'pending' || s.status === 'SUBMITTED').length,
-    interview: submissions.filter(s => s.status === 'interview' || s.status === 'INTERVIEWING').length,
-    placed: submissions.filter(s => s.status === 'placed' || s.status === 'PLACED').length,
+  const dashboardStats = {
+    total: analytics?.total || submissions.length,
+    pending: analytics?.status?.SUBMITTED || submissions.filter(s => s.status === 'SUBMITTED').length,
+    interview: analytics?.status?.INTERVIEWING || submissions.filter(s => s.status === 'INTERVIEWING').length,
+    placed: analytics?.status?.PLACED || submissions.filter(s => s.status === 'PLACED').length,
   };
 
   const handleExportCSV = async () => {
@@ -213,7 +224,7 @@ export function SubmissionsPage() {
         </div>
       )}
 
-      {}
+      { }
       <div className="relative">
         <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" />
 
@@ -243,13 +254,13 @@ export function SubmissionsPage() {
         </div>
       </div>
 
-      {}
+      { }
       <div className="grid grid-cols-4 gap-6 animate-slide-in" style={{ animationDelay: '100ms' }}>
         {[
-          { label: 'Total Submissions', value: stats.total, gradient: 'from-blue-500 to-cyan-500', icon: FileText },
-          { label: 'Pending', value: stats.pending, gradient: 'from-yellow-500 to-orange-500', icon: Calendar },
-          { label: 'In Interview', value: stats.interview, gradient: 'from-purple-500 to-pink-500', icon: User },
-          { label: 'Placed', value: stats.placed, gradient: 'from-green-500 to-emerald-500', icon: Sparkles },
+          { label: 'Total Submissions', value: dashboardStats.total, gradient: 'from-blue-500 to-cyan-500', icon: FileText },
+          { label: 'Pending', value: dashboardStats.pending, gradient: 'from-yellow-500 to-orange-500', icon: Calendar },
+          { label: 'In Interview', value: dashboardStats.interview, gradient: 'from-purple-500 to-pink-500', icon: User },
+          { label: 'Placed', value: dashboardStats.placed, gradient: 'from-green-500 to-emerald-500', icon: Sparkles },
         ].map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -269,7 +280,7 @@ export function SubmissionsPage() {
         })}
       </div>
 
-      {}
+      { }
       <div className="glass rounded-3xl p-6 space-y-4 animate-slide-in shadow-premium" style={{ animationDelay: '200ms' }}>
         <div className="flex items-center gap-4">
           <div className="flex-1 relative group">
@@ -327,7 +338,7 @@ export function SubmissionsPage() {
           </button>
         </div>
 
-        {}
+        { }
         {showFilters && (
           <div className="grid grid-cols-4 gap-4 pt-6 border-t border-white/10 animate-slide-in">
             <div>
@@ -365,7 +376,7 @@ export function SubmissionsPage() {
         )}
       </div>
 
-      {}
+      { }
       <div className="glass rounded-3xl overflow-hidden shadow-premium animate-slide-in" style={{ animationDelay: '300ms' }}>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -439,7 +450,7 @@ export function SubmissionsPage() {
                     </span>
                   </td>
                   <td className="px-8 py-5 whitespace-nowrap text-slate-400 text-sm">
-                    {new Date(submission.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {new Date(submission.submissionDate || submission.date || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </td>
                   <td className="px-8 py-5 whitespace-nowrap">
                     <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider badge-glow ${statusColors[submission.status]?.bg || 'bg-slate-500/20'} ${statusColors[submission.status]?.text || 'text-slate-400'} border ${statusColors[submission.status]?.border || 'border-slate-500/30'}`}>
@@ -449,6 +460,13 @@ export function SubmissionsPage() {
                   </td>
                   <td className="px-8 py-5 whitespace-nowrap text-right">
                     <div className="flex items-center justify-end gap-2 transition-all duration-300">
+                      <button
+                        onClick={() => { setSelectedSubmission(submission); setShowInterviewsModal(true); }}
+                        className="p-3 glass rounded-xl hover:bg-purple-500/20 hover:text-purple-400 hover:shadow-glow-purple transition-all duration-300 transform hover:scale-110"
+                        title="Manage Interviews"
+                      >
+                        <Calendar className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => {
                           setSelectedSubmission(submission);
@@ -481,7 +499,7 @@ export function SubmissionsPage() {
           </table>
         </div>
 
-        {}
+        { }
         <div className="glass-dark px-8 py-5 flex items-center justify-between border-t border-white/10">
           <p className="text-sm text-slate-400">
             Showing <span className="text-blue-400 font-semibold">{filteredSubmissions.length}</span> of <span className="text-slate-300 font-semibold">{submissions.length}</span> submissions
@@ -495,7 +513,7 @@ export function SubmissionsPage() {
         </div>
       </div>
 
-      {}
+      { }
       {showDetailModal && selectedSubmission && (
         <SubmissionDetailModal
           submission={selectedSubmission}
@@ -511,7 +529,18 @@ export function SubmissionsPage() {
         />
       )}
 
-      {}
+      {showInterviewsModal && selectedSubmission && (
+        <InterviewManagementModal
+          submissionId={selectedSubmission.id}
+          candidateName={(selectedSubmission as any).candidateName}
+          onClose={() => setShowInterviewsModal(false)}
+          onUpdate={() => {
+            // Optionally refresh submissions to get updated interview count
+          }}
+        />
+      )}
+
+      { }
       {showUploadModal && (
         <UploadExcelModal onClose={() => setShowUploadModal(false)} />
       )}
@@ -526,13 +555,40 @@ function SubmissionDetailModal({ submission, onClose, onUpdate }: {
 }) {
   const [status, setStatus] = useState(submission.status);
   const [notes, setNotes] = useState(submission.notes);
+  const [role, setRole] = useState(submission.role || '');
+  const [customFields, setCustomFields] = useState<Record<string, any>>(submission.customFields || {});
+  const [reviewer, setReviewer] = useState(typeof submission.reviewer === 'object' ? (submission.reviewer as any)?._id : (submission.reviewer || ''));
+  const [reviewers, setReviewers] = useState<{ id: string, name: string }[]>([]);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const fetchAdmins = async () => {
+      try {
+        const UserService = (await import('../../services/user.service')).default;
+        const response = await UserService.getAllUsers({ role: 'admin' });
+        setReviewers(response.users.map(u => ({ id: u._id, name: u.name })));
+      } catch (err) {
+        console.error('Failed to fetch admins:', err);
+      }
+    };
+    fetchAdmins();
+  }, []);
 
   const handleSave = async () => {
     try {
       setSaving(true);
-      await SubmissionService.updateSubmission(submission.id, { status, notes });
-      onUpdate(submission.id, { status, notes });
+      await SubmissionService.updateSubmission(submission.id, {
+        status,
+        notes,
+        role,
+        customFields
+      });
+
+      if (reviewer !== (typeof submission.reviewer === 'object' ? (submission.reviewer as any)?._id : submission.reviewer)) {
+        await SubmissionService.assignReviewer(submission.id, reviewer);
+      }
+
+      onUpdate(submission.id, { status, notes, role, customFields });
       onClose();
     } catch (err: any) {
       console.error('Update error:', err);
@@ -542,9 +598,13 @@ function SubmissionDetailModal({ submission, onClose, onUpdate }: {
     }
   };
 
+  const handleCustomFieldChange = (key: string, value: any) => {
+    setCustomFields(prev => ({ ...prev, [key]: value }));
+  };
+
   return (
     <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-[100] p-6 animate-slide-in">
-      <div className="relative glass rounded-3xl p-10 max-w-2xl w-full shadow-premium border-2 border-white/10">
+      <div className="relative glass rounded-3xl p-10 max-w-4xl w-full shadow-premium border-2 border-white/10 overflow-y-auto max-h-[90vh]">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <div className="p-4 bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 rounded-2xl shadow-glow-blue">
@@ -560,80 +620,132 @@ function SubmissionDetailModal({ submission, onClose, onUpdate }: {
           </button>
         </div>
 
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Candidate</label>
-              <p className="text-slate-200 text-lg">{(submission as any).candidateName}</p>
+        <div className="grid grid-cols-2 gap-8">
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Candidate</label>
+                <p className="text-slate-200 text-lg">{(submission as any).candidateName}</p>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Recruiter</label>
+                <p className="text-slate-200 text-lg">{(submission as any).recruiterName}</p>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Client</label>
+                <p className="text-slate-200 text-lg">{submission.client}</p>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Vendor</label>
+                <p className="text-slate-200 text-lg">{submission.vendor || 'Direct'}</p>
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Recruiter</label>
-              <p className="text-slate-200 text-lg">{(submission as any).recruiterName}</p>
-            </div>
-            <div className="space-y-2">
-              <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Client</label>
-              <p className="text-slate-200 text-lg">{submission.client}</p>
-            </div>
-            <div className="space-y-2">
-              <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Vendor</label>
-              <p className="text-slate-200 text-lg">{submission.vendor}</p>
-            </div>
-            <div className="space-y-2">
-              <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Technology</label>
-              <p className="text-slate-200 text-lg">{submission.technology}</p>
-            </div>
-            <div className="space-y-2">
-              <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Interview Rounds</label>
-              <p className="text-slate-200 text-lg">{Array.isArray(submission.interviews) ? submission.interviews.length : 0}</p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-slate-300 font-medium uppercase tracking-wider mb-2">Role/Position</label>
+                <input
+                  type="text"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-100 transition-all hover:bg-white/10"
+                  placeholder="e.g. Senior Frontend Developer"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-slate-300 font-medium uppercase tracking-wider mb-2">Assign Reviewer</label>
+                <select
+                  value={reviewer}
+                  onChange={(e) => setReviewer(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-100 appearance-none cursor-pointer transition-all hover:bg-white/10"
+                >
+                  <option value="">No Reviewer Assigned</option>
+                  {reviewers.map(r => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm text-slate-300 font-medium uppercase tracking-wider mb-2">Status</label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as any)}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-100 appearance-none cursor-pointer transition-all hover:bg-white/10 capitalize"
+                >
+                  <option value="SUBMITTED">Submitted</option>
+                  <option value="INTERVIEWING">Interviewing</option>
+                  <option value="OFFERED">Offered</option>
+                  <option value="PLACED">Placed</option>
+                  <option value="REJECTED">Rejected</option>
+                  <option value="ON_HOLD">On Hold</option>
+                  <option value="WITHDRAWN">Withdrawn</option>
+                  <option value="CLOSED">Closed</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="block text-sm text-slate-300 font-medium uppercase tracking-wider">Status</label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as any)}
-              className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-100 appearance-none cursor-pointer transition-all hover:bg-white/10 capitalize"
-            >
-              <option value="SUBMITTED">Submitted</option>
-              <option value="INTERVIEWING">Interviewing</option>
-              <option value="OFFERED">Offered</option>
-              <option value="PLACED">Placed</option>
-              <option value="REJECTED">Rejected</option>
-              <option value="ON_HOLD">On Hold</option>
-              <option value="WITHDRAWN">Withdrawn</option>
-              <option value="CLOSED">Closed</option>
-            </select>
-          </div>
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm text-slate-300 font-medium uppercase tracking-wider mb-3">Custom Fields</label>
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { label: 'Technology', key: 'Technology' },
+                  { label: 'Location', key: 'Location' },
+                  { label: 'Rate', key: 'Rate' },
+                  { label: 'Implementation', key: 'Implementation' }
+                ].map(field => (
+                  <div key={field.key} className="space-y-1">
+                    <label className="text-xs text-slate-500">{field.label}</label>
+                    <input
+                      type="text"
+                      value={customFields[field.key] || ''}
+                      onChange={(e) => handleCustomFieldChange(field.key, e.target.value)}
+                      className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500/50 text-sm text-slate-200 transition-all hover:bg-white/10"
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 p-4 glass rounded-xl bg-blue-500/5">
+                <p className="text-xs text-slate-500 mb-2">Interview History</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-300 text-sm">{Array.isArray(submission.interviews) ? submission.interviews.length : 0} rounds completed/scheduled</span>
+                  <Sparkles className="w-4 h-4 text-blue-400" />
+                </div>
+              </div>
+            </div>
 
-          <div className="space-y-2">
-            <label className="block text-sm text-slate-300 font-medium uppercase tracking-wider">Notes</label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={4}
-              className="w-full px-4 py-4 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-100 placeholder-slate-500 transition-all hover:bg-white/10 resize-none"
-              placeholder="Add notes about this submission..."
-            />
-          </div>
+            <div>
+              <label className="block text-sm text-slate-300 font-medium uppercase tracking-wider mb-2">Notes</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={4}
+                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-100 placeholder-slate-500 transition-all hover:bg-white/10 resize-none text-sm"
+                placeholder="Add notes about this submission..."
+              />
+            </div>
 
-          <div className="flex gap-4 pt-4">
-            <button
-              onClick={onClose}
-              className="flex-1 px-6 py-4 glass rounded-xl hover:bg-white/10 transition-all duration-300 text-slate-300 font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex-1 relative px-6 py-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 rounded-xl overflow-hidden shadow-premium hover:shadow-glow-blue transition-all duration-500 group disabled:opacity-50"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <span className="relative z-10 text-white font-semibold">
-                {saving ? 'Saving...' : 'Save Changes'}
-              </span>
-            </button>
+            <div className="flex gap-4 pt-4">
+              <button
+                onClick={onClose}
+                className="flex-1 px-6 py-4 glass rounded-xl hover:bg-white/10 transition-all duration-300 text-slate-300 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex-1 relative px-6 py-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 rounded-xl overflow-hidden shadow-premium hover:shadow-glow-blue transition-all duration-500 group disabled:opacity-50"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <span className="relative z-10 text-white font-semibold">
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

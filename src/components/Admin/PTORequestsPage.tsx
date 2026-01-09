@@ -10,8 +10,8 @@ import type { PTORequest as BackendPTORequest } from '../../services/pto.service
 interface PTORequest {
   id: string;
   user: string;
-  role: 'recruiter' | 'candidate';
-  type: 'vacation' | 'sick' | 'personal';
+  role: 'recruiter' | 'candidate' | 'admin';
+  type: string;
   startDate: string;
   endDate: string;
   totalDays: number;
@@ -23,6 +23,7 @@ const typeColors: Record<string, { bg: string, text: string, border: string }> =
   vacation: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
   sick: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' },
   personal: { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' },
+  'Time Off': { bg: 'bg-slate-500/20', text: 'text-slate-400', border: 'border-slate-500/30' },
 };
 
 const statusColors: Record<string, { bg: string, text: string, border: string }> = {
@@ -50,11 +51,11 @@ export function PTORequestsPage() {
       const mappedData: PTORequest[] = data.map((r: BackendPTORequest) => ({
         id: r._id,
         user: r.requestedBy?.name || 'Unknown',
-        role: (r as any).role || 'recruiter',
-        type: r.type as any,
-        startDate: new Date(r.startDate).toISOString().split('T')[0],
-        endDate: new Date(r.endDate).toISOString().split('T')[0],
-        totalDays: r.totalDays || 0,
+        role: r.role as any,
+        type: (r.type as any) || 'Time Off',
+        startDate: new Date(r.from || r.startDate).toISOString().split('T')[0],
+        endDate: new Date(r.to || r.endDate).toISOString().split('T')[0],
+        totalDays: r.days || r.totalDays || 0,
         status: r.status,
         reason: r.reason
       }));
@@ -131,7 +132,7 @@ export function PTORequestsPage() {
 
   return (
     <div className="p-8 space-y-6">
-      {}
+      { }
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-100 flex items-center gap-3">
@@ -150,7 +151,7 @@ export function PTORequestsPage() {
         </div>
       </div>
 
-      {}
+      { }
       <div className="grid grid-cols-4 gap-6 animate-slide-in" style={{ animationDelay: '100ms' }}>
         {[
           { label: 'Total Requests', value: stats.total, gradient: 'from-purple-500 to-pink-500', icon: Calendar },
@@ -176,7 +177,7 @@ export function PTORequestsPage() {
         })}
       </div>
 
-      {}
+      { }
       <div className="glass rounded-3xl overflow-hidden shadow-premium animate-slide-in" style={{ animationDelay: '200ms' }}>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -230,7 +231,7 @@ export function PTORequestsPage() {
                     </span>
                   </td>
                   <td className="px-8 py-5 whitespace-nowrap">
-                    <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider badge-glow ${typeColors[request.type].bg} ${typeColors[request.type].text} border ${typeColors[request.type].border}`}>
+                    <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider badge-glow ${typeColors[request.type]?.bg || typeColors['Time Off'].bg} ${typeColors[request.type]?.text || typeColors['Time Off'].text} border ${typeColors[request.type]?.border || typeColors['Time Off'].border}`}>
                       {request.type}
                     </span>
                   </td>
@@ -279,7 +280,7 @@ export function PTORequestsPage() {
         </div>
       </div>
 
-      {}
+      { }
       {showApproveModal && selectedRequest && (
         <PTOActionModal
           request={selectedRequest}
@@ -311,7 +312,7 @@ function PTOActionModal({
   const [comment, setComment] = useState('');
 
   return (
-    <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-6 animate-slide-in">
+    <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-[100] p-6 animate-slide-in">
       <div className="relative glass rounded-3xl p-10 max-w-lg w-full shadow-premium border-2 border-white/10">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">

@@ -3,16 +3,20 @@ import apiClient from '../config/api.config';
 export interface Submission {
     _id: string;
     candidate: string | { _id: string; name: string; email?: string; phone?: string };
-    recruiter: string | { name: string; email?: string };
+    recruiter: string | { _id: string; name: string; email?: string };
+    reviewer?: string | { _id: string; name: string; email?: string };
     client: string;
     vendor: string;
     technology: string;
     role: string;
-    date: string;
+    submissionDate: string;
+    date?: string; // Legacy
     status: 'SUBMITTED' | 'ON_HOLD' | 'INTERVIEWING' | 'REJECTED' | 'PLACED' | 'CLOSED' | 'WITHDRAWN' | 'OFFERED' | 'pending' | 'submitted' | 'interview' | 'offered' | 'placed' | 'rejected';
     notes?: string;
     rate?: string;
-    interviews?: number;
+    interviews?: any[]; // Detailed interview objects
+    interviewCount?: number;
+    customFields?: Record<string, any>;
     createdAt?: string;
     updatedAt?: string;
 }
@@ -40,7 +44,7 @@ export interface GetSubmissionsResponse {
 }
 
 export const SubmissionService = {
-    
+
     async getAllSubmissions(params: GetSubmissionsParams = {}): Promise<GetSubmissionsResponse> {
         const response = await apiClient.get<GetSubmissionsResponse>('/api/admin/submissions', { params });
         return response.data;

@@ -9,6 +9,7 @@ import type { Timesheet } from '../../services/timesheet.service';
 
 interface TimesheetData {
   id: string;
+  userId: string;
   consultant: string;
   client: string;
   weekEnding: string;
@@ -59,6 +60,7 @@ export function TimesheetsPage() {
       const response = await TimesheetService.getAllTimesheets();
       const mappedData: TimesheetData[] = response.timesheets.map((ts: Timesheet) => ({
         id: ts._id,
+        userId: ts.user?._id || '',
         consultant: ts.user?.name || 'Unknown',
         client: ts.client || 'General',
         weekEnding: new Date(ts.to).toISOString().split('T')[0],
@@ -210,6 +212,28 @@ export function TimesheetsPage() {
     }).format(value);
   };
 
+  const handleExportPDF = async (timesheet?: TimesheetData) => {
+    try {
+      const target = timesheet || timesheets[0];
+      if (!target) {
+        alert('No timesheets available to export.');
+        return;
+      }
+      if (!target.userId) {
+        alert('User ID missing for export.');
+        return;
+      }
+
+      const date = new Date(target.weekEnding);
+      const monthStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+      await TimesheetService.generatePDF(target.userId, monthStr);
+    } catch (err) {
+      console.error("Export failed", err);
+      alert("Failed to export PDF");
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-[400px]">
@@ -241,7 +265,7 @@ export function TimesheetsPage() {
 
   return (
     <div className="p-8 space-y-6">
-      {}
+      { }
       <div className="relative">
         <div className="absolute -top-20 -right-20 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" />
 
@@ -259,7 +283,7 @@ export function TimesheetsPage() {
           </div>
 
           <div className="flex gap-3">
-            {}
+            { }
             <div className="glass rounded-2xl p-1 flex gap-1">
               <button
                 onClick={() => setViewMode('grouped')}
@@ -283,7 +307,10 @@ export function TimesheetsPage() {
               </button>
             </div>
 
-            <button className="group relative px-6 py-4 glass rounded-2xl hover:bg-white/10 transition-all duration-300 flex items-center gap-3 overflow-hidden">
+            <button
+              onClick={() => handleExportPDF()}
+              className="group relative px-6 py-4 glass rounded-2xl hover:bg-white/10 transition-all duration-300 flex items-center gap-3 overflow-hidden"
+            >
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-rose-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <Download className="w-5 h-5 relative z-10 text-slate-400 group-hover:text-purple-400 transition-colors" />
               <span className="relative z-10 text-slate-300 font-medium">Export Report</span>
@@ -292,7 +319,7 @@ export function TimesheetsPage() {
         </div>
       </div>
 
-      {}
+      { }
       <div className="grid grid-cols-6 gap-6 animate-slide-in" style={{ animationDelay: '100ms' }}>
         {[
           { label: 'Total Submissions', value: stats.total, gradient: 'from-purple-500 to-pink-500', icon: Clock },
@@ -320,7 +347,7 @@ export function TimesheetsPage() {
         })}
       </div>
 
-      {}
+      { }
       <div className="glass rounded-3xl p-6 space-y-4 animate-slide-in shadow-premium" style={{ animationDelay: '200ms' }}>
         <div className="flex items-center gap-4">
           <div className="flex-1 relative group">
@@ -357,7 +384,7 @@ export function TimesheetsPage() {
           </button>
         </div>
 
-        {}
+        { }
         {showFilters && (
           <div className="grid grid-cols-4 gap-4 pt-6 border-t border-white/10 animate-slide-in">
             {[
@@ -392,7 +419,7 @@ export function TimesheetsPage() {
         )}
       </div>
 
-      {}
+      { }
       {viewMode === 'grouped' && (
         <div className="space-y-4 animate-slide-in" style={{ animationDelay: '300ms' }}>
           {groupedTimesheets().map((group) => {
@@ -401,7 +428,7 @@ export function TimesheetsPage() {
 
             return (
               <div key={key} className="glass rounded-3xl overflow-hidden border border-white/10 hover:border-purple-500/30 transition-all duration-300">
-                {}
+                { }
                 <div
                   className="p-6 cursor-pointer group"
                   onClick={() => toggleConsultant(key)}
@@ -426,7 +453,7 @@ export function TimesheetsPage() {
                       </div>
                     </div>
 
-                    {}
+                    { }
                     <div className="flex items-center gap-3 mr-6">
                       <div className="text-right">
                         <p className="text-xs text-slate-500 mb-1">Total Hours</p>
@@ -443,11 +470,11 @@ export function TimesheetsPage() {
                       )}
                     </div>
 
-                    {}
+                    { }
                     <ChevronRight className={`w-6 h-6 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''} group-hover:text-purple-400`} />
                   </div>
 
-                  {}
+                  { }
                   {group.pendingCount > 0 && (
                     <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
                       <p className="text-sm text-slate-400">Quick Actions:</p>
@@ -465,7 +492,7 @@ export function TimesheetsPage() {
                   )}
                 </div>
 
-                {}
+                { }
                 {isExpanded && (
                   <div className="border-t border-white/10 bg-white/5">
                     <div className="p-6 space-y-3">
@@ -562,7 +589,7 @@ export function TimesheetsPage() {
         </div>
       )}
 
-      {}
+      { }
       {viewMode === 'list' && (
         <div className="grid grid-cols-1 gap-4 animate-slide-in" style={{ animationDelay: '300ms' }}>
           {filteredTimesheets.map((ts) => (
@@ -675,7 +702,7 @@ export function TimesheetsPage() {
         </div>
       )}
 
-      {}
+      { }
       {showDetailModal && selectedTimesheet && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop animate-slide-in">
           <div className="glass-dark rounded-3xl max-w-3xl w-full p-8 shadow-premium border border-white/20 relative overflow-hidden">
@@ -684,12 +711,21 @@ export function TimesheetsPage() {
             <div className="relative">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-3xl premium-text">Timesheet Details</h3>
-                <button
-                  onClick={() => setShowDetailModal(false)}
-                  className="p-2 glass rounded-xl hover:bg-white/10 transition-all duration-300"
-                >
-                  <X className="w-5 h-5 text-slate-400" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleExportPDF(selectedTimesheet)}
+                    className="p-2 glass rounded-xl hover:bg-white/10 transition-all duration-300 group"
+                    title="Download PDF"
+                  >
+                    <Download className="w-5 h-5 text-slate-400 group-hover:text-purple-400" />
+                  </button>
+                  <button
+                    onClick={() => setShowDetailModal(false)}
+                    className="p-2 glass rounded-xl hover:bg-white/10 transition-all duration-300"
+                  >
+                    <X className="w-5 h-5 text-slate-400" />
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-6">

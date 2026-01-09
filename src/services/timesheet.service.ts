@@ -7,7 +7,7 @@ export interface Timesheet {
         name: string;
         email: string;
         role: string;
-    };
+    } | null;
     submittedByRole: string;
     from: string;
     to: string;
@@ -16,8 +16,9 @@ export interface Timesheet {
     totalPay: number;
     status: 'pending' | 'approved' | 'rejected' | 'submitted';
     approvedBy?: {
+        _id?: string;
         name: string;
-    };
+    } | null;
     approvedAt?: string;
     calculatedAmount?: number;
     createdAt: string;
@@ -34,6 +35,17 @@ export interface GetTimesheetsResponse {
     timesheets: Timesheet[];
 }
 
+export interface CreateTimesheetPayload {
+    user: string;
+    submittedByRole: 'candidate' | 'recruiter';
+    from: string;
+    to: string;
+    hours: number;
+    filename?: string;
+    totalPay?: number;
+    status?: 'pending' | 'approved' | 'rejected';
+}
+
 export const TimesheetService = {
     async getAllTimesheets(params: any = {}): Promise<GetTimesheetsResponse> {
         const response = await apiClient.get<GetTimesheetsResponse>('/api/admin/timesheets', { params });
@@ -43,6 +55,11 @@ export const TimesheetService = {
     async getTimesheetById(id: string): Promise<Timesheet> {
         const response = await apiClient.get<{ success: boolean; timesheet: Timesheet }>(`/api/admin/timesheets/${id}`);
         return response.data.timesheet;
+    },
+
+    async createTimesheet(data: CreateTimesheetPayload): Promise<{ success: boolean; timesheet: Timesheet }> {
+        const response = await apiClient.post('/api/admin/timesheets', data);
+        return response.data;
     },
 
     async updateTimesheet(id: string, data: any): Promise<any> {
@@ -55,11 +72,25 @@ export const TimesheetService = {
         return response.data;
     },
 
-    async generatePDF(userId: string, month: string): Promise<Blob> {
+    async generatePDF(userId: string, month: string): Promise<void> {
         const response = await apiClient.get(`/api/admin/timesheets/${userId}/${month}`, {
             responseType: 'blob'
         });
-        return response.data;
+
+        // Create blob link to download
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `Timesheet_${userId}_${month}.pdf`);
+
+        // Append to html link element page
+        document.body.appendChild(link);
+
+        // Start download
+        link.click();
+
+        // Clean up and remove the link
+        link.parentNode?.removeChild(link);
     }
 };
 

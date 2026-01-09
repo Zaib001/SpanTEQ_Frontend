@@ -150,6 +150,46 @@ export const UserService = {
     async toggleVerification(id: string): Promise<{ success: boolean; message: string; isVerified: boolean }> {
         const response = await apiClient.patch(`/api/admin/users/${id}/verify`);
         return response.data;
+    },
+
+    async exportUsers(): Promise<void> {
+        try {
+            const response = await this.getAllUsers({ limit: 1000 }); // Fetch up to 1000 users for export
+            const users = response.users;
+
+            if (!users || users.length === 0) {
+                throw new Error('No users to export');
+            }
+
+            const headers = ['Name', 'Email', 'Role', 'Status', 'Verified', 'Phone', 'Department', 'Location', 'Joined Date'];
+            const csvContent = [
+                headers.join(','),
+                ...users.map(user => [
+                    `"${user.name}"`,
+                    `"${user.email}"`,
+                    user.role,
+                    user.status,
+                    user.isVerified ? 'Yes' : 'No',
+                    `"${user.phone || ''}"`,
+                    `"${(user as any).department || ''}"`,
+                    `"${(user as any).location || ''}"`,
+                    new Date(user.createdAt).toLocaleDateString()
+                ].join(','))
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `users_export_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error('Export failed:', error);
+            throw error;
+        }
     }
 };
 
