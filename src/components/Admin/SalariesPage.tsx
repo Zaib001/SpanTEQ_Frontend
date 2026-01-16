@@ -63,7 +63,7 @@ export function SalariesPage() {
     try {
       setLoading(true);
       // Primary source: Payroll Snapshots
-      const { data } = await SalaryService.getSnapshots();
+      const data = await SalaryService.getSnapshots();
 
       let mappedData: SalaryData[] = [];
 
@@ -90,8 +90,8 @@ export function SalariesPage() {
         const legacyData = await SalaryService.getAllSalaries();
         mappedData = legacyData.map((s: Salary) => ({
           id: s._id,
-          employee: s.userId?.name || 'Unknown',
-          role: (s.userId?.role || 'Candidate') as any,
+          employee: (typeof s.userId === 'object' && s.userId?.name) ? s.userId.name : 'Unknown',
+          role: ((typeof s.userId === 'object' ? s.userId?.role : 'Candidate') || 'Candidate') as any,
           department: (s as any).department || 'General',
           baseSalary: s.base || 0,
           bonus: s.bonus || 0,
@@ -101,7 +101,7 @@ export function SalariesPage() {
           paymentDate: s.createdAt ? new Date(s.createdAt).toISOString().split('T')[0] : 'N/A',
           status: (s as any).status || 'pending',
           bankAccount: s.bankAccount || '****0000',
-          position: (s as any).position || s.userId?.role || 'Staff',
+          position: (s as any).position || (typeof s.userId === 'object' ? s.userId?.role : 'Staff') || 'Staff',
           // IMPORTANT: Attach raw salary data as snapshot for recalculate functionality
           snapshot: s
         }));
@@ -429,7 +429,7 @@ export function SalariesPage() {
                     onClick={async () => {
                       setSelectedSalary(sal);
                       setShowDetailModal(true);
-                      if (sal.snapshot?.userId?._id) {
+                      if (sal.snapshot?.userId && typeof sal.snapshot.userId === 'object' && sal.snapshot.userId._id) {
                         try {
                           setLoadingHistory(true);
                           const historyData = await SalaryService.getSalaryHistory(sal.snapshot.userId._id);
@@ -508,17 +508,17 @@ export function SalariesPage() {
 
                           setSelectedSalary({
                             ...selectedSalary,
-                            snapshot: {
+                            snapshot: selectedSalary.snapshot ? {
                               ...selectedSalary.snapshot,
-                              baseSalary: calculatedData.baseSalary || calculatedData.base || selectedSalary.snapshot?.baseSalary,
+                              baseSalary: calculatedData.baseSalary || calculatedData.base || selectedSalary.snapshot.baseSalary,
                               finalPay: calculatedData.finalSalary || calculatedData.finalPay || calculatedData.netPay,
                               salaryDeduction: calculatedData.ptoDeduction || calculatedData.deductions,
                               approvedHours: calculatedData.approvedHours,
                               details: {
-                                ...selectedSalary.snapshot?.details,
+                                ...selectedSalary.snapshot.details,
                                 incentiveTotal: calculatedData.incentiveTotal || calculatedData.bonus || 0
                               }
-                            },
+                            } as Salary : undefined,
                             netPay: calculatedData.finalSalary || calculatedData.finalPay || calculatedData.netPay || selectedSalary.netPay,
                             baseSalary: calculatedData.baseSalary || calculatedData.base || selectedSalary.baseSalary,
                             bonus: calculatedData.incentiveTotal || calculatedData.bonus || selectedSalary.bonus,

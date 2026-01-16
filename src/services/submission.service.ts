@@ -11,6 +11,7 @@ export interface Submission {
     vendorNameNormalized?: string;
     primeVendorNameNormalized?: string;
     technology: string;
+    rate?: string;
     role: string;
     submissionDate: string;
     date?: string; // Legacy, aliased to submissionDate

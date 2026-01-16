@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
     Search, Filter, FileText, User as UserIcon, Briefcase, Calendar, Sparkles,
     ChevronDown, Eye, X, Globe, DollarSign, Cpu, Trash2, Edit, Users as UsersIcon,
-    Upload, Download, FileSpreadsheet
+    Upload, Download, FileSpreadsheet, Info
 } from 'lucide-react';
 import RecruiterService from '../../services/recruiter.service';
 import type { Submission } from '../../services/submission.service';
@@ -100,8 +100,8 @@ export function RecruiterSubmissions() {
     const stats = {
         total: submissions.length,
         active: submissions.filter(s => ['submitted', 'SUBMITTED', 'interview', 'INTERVIEWING', 'offered', 'OFFERED'].includes(s.status)).length,
-        placed: submissions.filter(s => s.status === 'placed' || s.status === 'PLACED').length,
-        rejected: submissions.filter(s => s.status === 'rejected' || s.status === 'REJECTED').length,
+        placed: submissions.filter(s => s.status.toUpperCase() === 'PLACED').length,
+        rejected: submissions.filter(s => s.status.toUpperCase() === 'REJECTED').length,
     };
 
     const handleFormSubmit = async (e: React.FormEvent) => {

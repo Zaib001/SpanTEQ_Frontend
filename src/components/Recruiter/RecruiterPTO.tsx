@@ -24,7 +24,7 @@ export function RecruiterPTO() {
     const fetchPTO = useCallback(async () => {
         try {
             setLoading(true);
-            const data = await RecruiterService.getPTORequests();
+            const data = await RecruiterService.getMyPTORequests();
             setRequests(data);
         } catch (err) {
             console.error(err);
