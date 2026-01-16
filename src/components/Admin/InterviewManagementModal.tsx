@@ -101,36 +101,36 @@ export default function InterviewManagementModal({ submissionId, candidateName, 
     };
 
     return (
-        <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-[110] p-6 animate-fade-in">
-            <div className="relative glass-dark rounded-[40px] p-10 max-w-4xl w-full shadow-2xl border border-white/20 overflow-hidden animate-scale-in">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full blur-3xl opacity-10 -mr-20 -mt-20" />
+        <div className="fixed inset-0 modal-backdrop flex items-center justify-center z-[110] p-4 md:p-6 animate-fade-in">
+            <div className="relative glass-dark rounded-[24px] md:rounded-[40px] p-5 md:p-10 max-w-4xl w-full shadow-2xl border border-white/20 overflow-hidden animate-scale-in flex flex-col max-h-[90vh]">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full blur-3xl opacity-10 -mr-20 -mt-20 pointer-events-none" />
 
-                <div className="flex items-center justify-between mb-8 relative z-10">
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 md:mb-8 relative z-10 gap-4 md:gap-0 shrink-0">
                     <div className="flex items-center gap-4">
-                        <div className="p-4 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl shadow-glow-purple">
-                            <Calendar className="w-6 h-6 text-white" />
+                        <div className="p-3 md:p-4 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl shadow-glow-purple shrink-0">
+                            <Calendar className="w-5 h-5 md:w-6 md:h-6 text-white" />
                         </div>
-                        <div>
-                            <h2 className="text-3xl text-gradient-premium">Manage Interviews</h2>
-                            <p className="text-sm text-slate-400 mt-1">{candidateName}</p>
+                        <div className="min-w-0">
+                            <h2 className="text-2xl md:text-3xl text-gradient-premium truncate">Manage Interviews</h2>
+                            <p className="text-sm text-slate-400 mt-1 truncate">{candidateName}</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 self-end md:self-auto">
                         <button
                             onClick={openAdd}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-xl transition-all font-semibold border border-blue-500/30"
+                            className="flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-xl transition-all font-semibold border border-blue-500/30 text-sm md:text-base whitespace-nowrap"
                         >
                             <Plus className="w-4 h-4" />
                             Add Round
                         </button>
-                        <button onClick={onClose} className="p-3 glass hover:bg-red-500/20 rounded-xl transition-all duration-300 group">
-                            <X className="w-6 h-6 text-slate-400 group-hover:text-red-400" />
+                        <button onClick={onClose} className="p-2 md:p-3 glass hover:bg-red-500/20 rounded-xl transition-all duration-300 group shrink-0">
+                            <X className="w-5 h-5 md:w-6 md:h-6 text-slate-400 group-hover:text-red-400" />
                         </button>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
-                    <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 relative z-10 overflow-hidden min-h-0">
+                    <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar min-h-0">
                         {loading ? (
                             <div className="flex flex-col items-center justify-center py-20 text-slate-500">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-4" />
@@ -144,7 +144,7 @@ export default function InterviewManagementModal({ submissionId, candidateName, 
                             </div>
                         ) : (
                             interviews.map((int, idx) => (
-                                <div key={int.id || (int as any)._id} className="group glass rounded-2xl p-5 border border-white/5 hover:border-blue-500/30 transition-all hover:bg-white/5 relative overflow-hidden">
+                                <div key={int.id || (int as any)._id} className="group glass rounded-2xl p-4 md:p-5 border border-white/5 hover:border-blue-500/30 transition-all hover:bg-white/5 relative overflow-hidden shrink-0">
                                     <div className={`absolute left-0 top-0 bottom-0 w-1 ${int.status === 'COMPLETED' ? 'bg-green-500' :
                                         int.status === 'CANCELLED' ? 'bg-red-500' : 'bg-blue-500'
                                         }`} />
@@ -155,7 +155,7 @@ export default function InterviewManagementModal({ submissionId, candidateName, 
                                             </span>
                                             <h4 className="font-bold text-slate-200">{int.stageLabel || 'Interview Round'}</h4>
                                         </div>
-                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button onClick={() => openEdit(int)} className="p-1.5 hover:bg-blue-500/20 text-blue-400 rounded-lg"><Edit2 className="w-4 h-4" /></button>
                                             <button onClick={() => handleDelete(int.id || (int as any)._id)} className="p-1.5 hover:bg-red-500/20 text-red-400 rounded-lg"><Trash2 className="w-4 h-4" /></button>
                                         </div>
@@ -193,7 +193,7 @@ export default function InterviewManagementModal({ submissionId, candidateName, 
                         )}
                     </div>
 
-                    <div className="glass rounded-3xl p-6 border border-white/10 h-fit bg-white/5">
+                    <div className={`glass rounded-[24px] md:rounded-3xl p-5 md:p-6 border border-white/10 h-fit bg-white/5 overflow-y-auto custom-scrollbar max-h-[400px] md:max-h-full ${showForm ? 'block' : 'hidden md:block'}`}>
                         <h3 className="text-xl font-bold text-slate-200 mb-6 flex items-center gap-2">
                             {editingInterview ? 'Edit Round' : 'Add New Round'}
                             <span className="text-blue-500 text-xs font-mono ml-auto tracking-widest uppercase">

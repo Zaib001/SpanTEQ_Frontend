@@ -1,22 +1,20 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Search, Filter, Download, Upload, X, Eye, Edit, Trash2,
   FileText, User, Briefcase, Calendar, Sparkles,
-  ChevronDown, ArrowUpDown
+  ChevronDown, ArrowUpDown, Video
 } from 'lucide-react';
 import SubmissionService, { type Submission } from '../../services/submission.service';
-import InterviewManagementModal from './InterviewManagementModal';
 
-type SubmissionData = Submission & { id: string };
+
+type SubmissionData = Submission & {
+  id: string;
+  candidateName: string;
+  recruiterName: string;
+};
 
 const statusColors: Record<string, { bg: string, text: string, border: string }> = {
-  pending: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30' },
-  submitted: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
-  interview: { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' },
-  offered: { bg: 'bg-cyan-500/20', text: 'text-cyan-400', border: 'border-cyan-500/30' },
-  placed: { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500/30' },
-  rejected: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' },
-
   SUBMITTED: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
   INTERVIEWING: { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' },
   OFFERED: { bg: 'bg-cyan-500/20', text: 'text-cyan-400', border: 'border-cyan-500/30' },
@@ -28,6 +26,7 @@ const statusColors: Record<string, { bg: string, text: string, border: string }>
 };
 
 export function SubmissionsPage() {
+  const navigate = useNavigate();
   const [submissions, setSubmissions] = useState<SubmissionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,9 +34,10 @@ export function SubmissionsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [showInterviewsModal, setShowInterviewsModal] = useState(false);
+
   const [selectedSubmission, setSelectedSubmission] = useState<SubmissionData | null>(null);
   const [recruiters, setRecruiters] = useState<{ id: string, name: string }[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const [filters, setFilters] = useState({
     recruiter: 'all',
@@ -58,7 +58,7 @@ export function SubmissionsPage() {
         setLoading(true);
         const params: any = {};
         if (filters.recruiter !== 'all') params.recruiterId = filters.recruiter;
-        if (filters.client !== 'all') params.client = filters.client;
+        if (filters.client !== 'all') params.client = filters.client; // Client-side filtering in practice, but passing just in case
         if (filters.vendor !== 'all') params.vendor = filters.vendor;
         if (filters.technology !== 'all') params.technology = filters.technology;
         if (filters.status !== 'all') params.status = filters.status;
@@ -128,22 +128,61 @@ export function SubmissionsPage() {
       techStr.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesFilters =
-      (filters.recruiter === 'all' || (sub.recruiter && typeof sub.recruiter === 'object' && sub.recruiter._id === filters.recruiter)) &&
-      (filters.client === 'all' || clientStr === filters.client) &&
-      (filters.technology === 'all' || techStr === filters.technology) &&
+      (filters.recruiter === 'all' || (
+        typeof sub.recruiter === 'object' ? sub.recruiter?._id === filters.recruiter : sub.recruiter === filters.recruiter
+      )) &&
+      (filters.client === 'all' || clientStr.toLowerCase() === filters.client.toLowerCase()) &&
+      (filters.technology === 'all' || techStr.toLowerCase() === filters.technology.toLowerCase()) &&
       (filters.status === 'all' || sub.status === filters.status);
 
     return matchesSearch && matchesFilters;
   });
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedIds(filteredSubmissions.map(s => s.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleToggleSelection = (id: string) => {
+    if (selectedIds.includes(id)) {
+      setSelectedIds(prev => prev.filter(i => i !== id));
+    } else {
+      setSelectedIds(prev => [...prev, id]);
+    }
+  };
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this submission?')) {
       try {
         await SubmissionService.deleteSubmission(id);
         setSubmissions(prev => prev.filter(s => s.id !== id));
+        if (selectedIds.includes(id)) {
+          setSelectedIds(prev => prev.filter(i => i !== id));
+        }
       } catch (err: any) {
         console.error('Delete error:', err);
         setError(err.message || 'Failed to delete submission');
+      }
+    }
+  };
+
+  const handleDeleteMultiple = async () => {
+    if (selectedIds.length === 0) return;
+
+    if (window.confirm(`Are you sure you want to delete ${selectedIds.length} submissions?`)) {
+      try {
+        setLoading(true);
+        await SubmissionService.deleteMultipleSubmissions(selectedIds);
+        setSubmissions(prev => prev.filter(s => !selectedIds.includes(s.id)));
+        setSelectedIds([]);
+      } catch (err: any) {
+        console.error('Delete multiple error:', err);
+        setError(err.message || 'Failed to delete submissions');
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -162,8 +201,8 @@ export function SubmissionsPage() {
       if (filters.recruiter !== 'all') params.recruiterId = filters.recruiter;
       if (filters.client !== 'all') params.client = filters.client;
       if (filters.status !== 'all') params.status = filters.status;
-      if (filters.dateFrom) params.fromDate = filters.dateFrom;
-      if (filters.dateTo) params.toDate = filters.dateTo;
+      if (filters.dateFrom) params.startDate = filters.dateFrom;
+      if (filters.dateTo) params.endDate = filters.dateTo;
 
       const blob = await SubmissionService.exportCSV(params);
       const url = window.URL.createObjectURL(blob);
@@ -189,8 +228,8 @@ export function SubmissionsPage() {
       if (filters.recruiter !== 'all') params.recruiterId = filters.recruiter;
       if (filters.client !== 'all') params.client = filters.client;
       if (filters.status !== 'all') params.status = filters.status;
-      if (filters.dateFrom) params.fromDate = filters.dateFrom;
-      if (filters.dateTo) params.toDate = filters.dateTo;
+      if (filters.dateFrom) params.startDate = filters.dateFrom;
+      if (filters.dateTo) params.endDate = filters.dateTo;
 
       const blob = await SubmissionService.exportPDF(params);
       const url = window.URL.createObjectURL(blob);
@@ -242,6 +281,16 @@ export function SubmissionsPage() {
           </div>
 
           <div className="flex gap-3">
+            {selectedIds.length > 0 && (
+              <button
+                onClick={handleDeleteMultiple}
+                className="group relative px-6 py-4 glass bg-red-500/10 rounded-2xl hover:bg-red-500/20 transition-all duration-300 flex items-center gap-3 overflow-hidden"
+              >
+                <Trash2 className="w-5 h-5 text-red-400" />
+                <span className="text-red-300 font-medium">Delete ({selectedIds.length})</span>
+              </button>
+            )}
+
             <button
               onClick={() => setShowUploadModal(true)}
               className="group relative px-6 py-4 glass rounded-2xl hover:bg-white/10 transition-all duration-300 flex items-center gap-3 overflow-hidden"
@@ -382,6 +431,16 @@ export function SubmissionsPage() {
           <table className="w-full">
             <thead className="glass-dark border-b border-white/10">
               <tr>
+                <th className="px-8 py-5 text-left w-12">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      onChange={handleSelectAll}
+                      checked={filteredSubmissions.length > 0 && selectedIds.length === filteredSubmissions.length}
+                      className="w-5 h-5 rounded-lg border-2 border-slate-500/50 bg-white/5 checked:bg-blue-500 transition-all cursor-pointer"
+                    />
+                  </div>
+                </th>
                 <th className="px-8 py-5 text-left">
                   <div className="flex items-center gap-2 text-xs text-slate-400 uppercase tracking-wider font-semibold group cursor-pointer hover:text-blue-400 transition-colors">
                     <span>Candidate</span>
@@ -400,7 +459,7 @@ export function SubmissionsPage() {
                 </th>
                 <th className="px-8 py-5 text-left">
                   <div className="flex items-center gap-2 text-xs text-slate-400 uppercase tracking-wider font-semibold">
-                    <span>Technology</span>
+                    <span>Interviews</span>
                   </div>
                 </th>
                 <th className="px-8 py-5 text-left">
@@ -423,31 +482,48 @@ export function SubmissionsPage() {
               {filteredSubmissions.map((submission, index) => (
                 <tr
                   key={submission.id}
-                  className="group hover:bg-gradient-to-r hover:from-blue-500/5 hover:via-cyan-500/5 hover:to-blue-500/5 transition-all duration-300 animate-slide-in"
+                  className={`group hover:bg-gradient-to-r hover:from-blue-500/5 hover:via-cyan-500/5 hover:to-blue-500/5 transition-all duration-300 animate-slide-in ${selectedIds.includes(submission.id) ? 'bg-blue-500/10' : ''}`}
                   style={{ animationDelay: `${index * 30}ms` }}
                 >
+                  <td className="px-8 py-5">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(submission.id)}
+                        onChange={() => handleToggleSelection(submission.id)}
+                        className="w-5 h-5 rounded-lg border-2 border-slate-500/50 bg-white/5 checked:bg-blue-500 transition-all cursor-pointer"
+                      />
+                    </div>
+                  </td>
                   <td className="px-8 py-5 whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 rounded-lg flex items-center justify-center text-white font-semibold shadow-glow-blue">
-                        {((submission as any).candidateName || '').split(' ').map((n: string) => n[0]).join('')}
+                        {(submission.candidateName || 'U').split(' ').map(n => n[0]).join('')}
                       </div>
                       <div>
-                        <p className="text-slate-200 font-medium">{(submission as any).candidateName}</p>
+                        <p className="text-slate-200 font-medium">{submission.candidateName}</p>
                         <p className="text-xs text-slate-500">{submission.role}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-8 py-5 whitespace-nowrap text-slate-400">{(submission as any).recruiterName}</td>
+                  <td className="px-8 py-5 whitespace-nowrap text-slate-400">{submission.recruiterName}</td>
                   <td className="px-8 py-5 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <Briefcase className="w-4 h-4 text-slate-500" />
-                      <span className="text-slate-300">{submission.client}</span>
+                      <div>
+                        <p className="text-slate-300">{submission.client}</p>
+                        <p className="text-[10px] text-blue-400 uppercase font-black tracking-tighter">{submission.technology}</p>
+                      </div>
                     </div>
                   </td>
                   <td className="px-8 py-5 whitespace-nowrap">
-                    <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-lg text-xs font-medium">
-                      {submission.technology}
-                    </span>
+                    <div
+                      onClick={() => navigate(`/admin/interviews?submissionId=${submission.id}`)}
+                      className="inline-flex items-center gap-2 px-3 py-1 bg-violet-500/20 text-violet-400 rounded-lg text-xs font-bold cursor-pointer hover:bg-violet-500/30 transition-all border border-violet-500/20 group/int"
+                    >
+                      <Video className="w-3.5 h-3.5 group-hover/int:scale-110 transition-transform" />
+                      <span>{Array.isArray(submission.interviews) ? submission.interviews.length : 0} Rounds</span>
+                    </div>
                   </td>
                   <td className="px-8 py-5 whitespace-nowrap text-slate-400 text-sm">
                     {new Date(submission.submissionDate || submission.date || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -460,34 +536,21 @@ export function SubmissionsPage() {
                   </td>
                   <td className="px-8 py-5 whitespace-nowrap text-right">
                     <div className="flex items-center justify-end gap-2 transition-all duration-300">
-                      <button
-                        onClick={() => { setSelectedSubmission(submission); setShowInterviewsModal(true); }}
-                        className="p-3 glass rounded-xl hover:bg-purple-500/20 hover:text-purple-400 hover:shadow-glow-purple transition-all duration-300 transform hover:scale-110"
-                        title="Manage Interviews"
-                      >
-                        <Calendar className="w-4 h-4" />
-                      </button>
+
                       <button
                         onClick={() => {
                           setSelectedSubmission(submission);
                           setShowDetailModal(true);
                         }}
                         className="p-3 glass rounded-xl hover:bg-blue-500/20 hover:text-blue-400 hover:shadow-glow-blue transition-all duration-300 transform hover:scale-110"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedSubmission(submission);
-                          setShowDetailModal(true);
-                        }}
-                        className="p-3 glass rounded-xl hover:bg-purple-500/20 hover:text-purple-400 hover:shadow-glow-purple transition-all duration-300 transform hover:scale-110"
+                        title="View/Edit Details"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(submission.id)}
                         className="p-3 glass rounded-xl hover:bg-red-500/20 hover:text-red-400 transition-all duration-300 transform hover:scale-110"
+                        title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -529,16 +592,7 @@ export function SubmissionsPage() {
         />
       )}
 
-      {showInterviewsModal && selectedSubmission && (
-        <InterviewManagementModal
-          submissionId={selectedSubmission.id}
-          candidateName={(selectedSubmission as any).candidateName}
-          onClose={() => setShowInterviewsModal(false)}
-          onUpdate={() => {
-            // Optionally refresh submissions to get updated interview count
-          }}
-        />
-      )}
+
 
       { }
       {showUploadModal && (
@@ -553,9 +607,12 @@ function SubmissionDetailModal({ submission, onClose, onUpdate }: {
   onClose: () => void;
   onUpdate: (id: string, data: Partial<Submission>) => void;
 }) {
+  const navigate = useNavigate();
   const [status, setStatus] = useState(submission.status);
   const [notes, setNotes] = useState(submission.notes);
   const [role, setRole] = useState(submission.role || '');
+  const [client, setClient] = useState(submission.client || '');
+  const [vendor, setVendor] = useState(submission.vendor || '');
   const [customFields, setCustomFields] = useState<Record<string, any>>(submission.customFields || {});
   const [reviewer, setReviewer] = useState(typeof submission.reviewer === 'object' ? (submission.reviewer as any)?._id : (submission.reviewer || ''));
   const [reviewers, setReviewers] = useState<{ id: string, name: string }[]>([]);
@@ -581,6 +638,8 @@ function SubmissionDetailModal({ submission, onClose, onUpdate }: {
         status,
         notes,
         role,
+        client,
+        vendor,
         customFields
       });
 
@@ -588,7 +647,7 @@ function SubmissionDetailModal({ submission, onClose, onUpdate }: {
         await SubmissionService.assignReviewer(submission.id, reviewer);
       }
 
-      onUpdate(submission.id, { status, notes, role, customFields });
+      onUpdate(submission.id, { status, notes, role, client, vendor, customFields });
       onClose();
     } catch (err: any) {
       console.error('Update error:', err);
@@ -623,21 +682,35 @@ function SubmissionDetailModal({ submission, onClose, onUpdate }: {
         <div className="grid grid-cols-2 gap-8">
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-6">
+              <div className="col-span-2 grid grid-cols-2 gap-6 p-4 glass rounded-xl bg-white/5">
+                <div className="space-y-2">
+                  <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Candidate</label>
+                  <p className="text-slate-200 text-lg font-semibold">{(submission as any).candidateName || 'N/A'}</p>
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Recruiter</label>
+                  <p className="text-slate-200 text-lg font-semibold">{(submission as any).recruiterName || 'N/A'}</p>
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Candidate</label>
-                <p className="text-slate-200 text-lg">{(submission as any).candidateName}</p>
+                <label className="block text-sm text-slate-300 font-medium uppercase tracking-wider mb-1">Client</label>
+                <input
+                  type="text"
+                  value={client}
+                  onChange={(e) => setClient(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-100 transition-all hover:bg-white/10"
+                />
               </div>
               <div className="space-y-2">
-                <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Recruiter</label>
-                <p className="text-slate-200 text-lg">{(submission as any).recruiterName}</p>
-              </div>
-              <div className="space-y-2">
-                <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Client</label>
-                <p className="text-slate-200 text-lg">{submission.client}</p>
-              </div>
-              <div className="space-y-2">
-                <label className="block text-xs text-slate-400 uppercase tracking-wider font-medium">Vendor</label>
-                <p className="text-slate-200 text-lg">{submission.vendor || 'Direct'}</p>
+                <label className="block text-sm text-slate-300 font-medium uppercase tracking-wider mb-1">Vendor</label>
+                <input
+                  type="text"
+                  value={vendor}
+                  onChange={(e) => setVendor(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-100 transition-all hover:bg-white/10"
+                  placeholder="Direct"
+                />
               </div>
             </div>
 
@@ -708,11 +781,19 @@ function SubmissionDetailModal({ submission, onClose, onUpdate }: {
                   </div>
                 ))}
               </div>
-              <div className="mt-4 p-4 glass rounded-xl bg-blue-500/5">
-                <p className="text-xs text-slate-500 mb-2">Interview History</p>
+              <div className="mt-4 p-5 glass rounded-2xl bg-violet-500/5 border border-violet-500/10 group cursor-pointer hover:bg-violet-500/10 transition-all shadow-lg shadow-violet-500/5">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Interview Pipeline Status</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-300 text-sm">{Array.isArray(submission.interviews) ? submission.interviews.length : 0} rounds completed/scheduled</span>
-                  <Sparkles className="w-4 h-4 text-blue-400" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center">
+                      <Video className="w-5 h-5 text-violet-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-200">{Array.isArray(submission.interviews) ? submission.interviews.length : 0} Scheduled Rounds</p>
+                      <p className="text-[10px] text-violet-400 uppercase font-black tracking-tighter cursor-pointer hover:underline" onClick={() => navigate(`/admin/interviews?submissionId=${submission.id}`)}>Manage Interviews →</p>
+                    </div>
+                  </div>
+                  <Sparkles className="w-4 h-4 text-violet-400 animate-pulse" />
                 </div>
               </div>
             </div>

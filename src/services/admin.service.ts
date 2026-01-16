@@ -38,12 +38,12 @@ export interface DashboardChartData {
 export const AdminService = {
 
     async getDashboardStats(params: any = {}): Promise<{ success: boolean; stats: DashboardStats }> {
-        const response = await apiClient.get('/api/admin/admin', { params });
+        const response = await apiClient.get('/api/admin/dashboard/stats', { params });
         return response.data;
     },
 
     async getDashboardCharts(params: any = {}): Promise<DashboardChartData & { success: boolean }> {
-        const response = await apiClient.get('/api/admin/charts', { params });
+        const response = await apiClient.get('/api/admin/dashboard/charts', { params });
         return response.data;
     }
 };

@@ -6,17 +6,18 @@ import {
   ArrowUp, Target, BarChart3, Activity, Loader2
 } from 'lucide-react';
 import FinanceService from '../../services/finance.service';
+import { AddBillingProfileModal } from './AddBillingProfileModal';
 
 interface ClientProfile {
-  id: string;
+  _id: string;
   clientName: string;
   billingEmails: { to: string[]; cc: string[] };
   paymentTerms: number;
   currency: string;
-  logo: string;
+  logo?: string;
   billingAddress: {
     line1: string;
-    line2: string;
+    line2?: string;
     city: string;
     state: string;
     zip: string;
@@ -25,7 +26,7 @@ interface ClientProfile {
   updatedAt: string;
   activeContracts?: number;
   totalRevenue?: number;
-  status?: 'active' | 'inactive' | 'pending';
+  status: 'active' | 'inactive';
 }
 
 export function ClientBillingProfiles() {
@@ -35,6 +36,7 @@ export function ClientBillingProfiles() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [profiles, setProfiles] = useState<ClientProfile[]>([]);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
     fetchProfiles();
@@ -44,47 +46,8 @@ export function ClientBillingProfiles() {
     try {
       setLoading(true);
       setError(null);
-      const submissions = await FinanceService.getSubmissions();
-
-      const clientMap: Record<string, any> = {};
-      submissions.forEach((s: any) => {
-        const clientName = s.client || 'Unknown Client';
-        if (!clientMap[clientName]) {
-          clientMap[clientName] = {
-            id: s._id,
-            clientName: clientName,
-            activeContracts: 0,
-            totalRevenue: 0,
-            status: 'active',
-            createdAt: s.createdAt
-          };
-        }
-        clientMap[clientName].activeContracts++;
-        clientMap[clientName].totalRevenue += 5000;
-      });
-
-      const mapped: ClientProfile[] = Object.values(clientMap).map(c => ({
-        id: c.id,
-        clientName: c.clientName,
-        billingEmails: { to: [`billing@${c.clientName.toLowerCase().replace(/\s/g, '')}.com`], cc: [] },
-        paymentTerms: 30,
-        currency: 'USD',
-        logo: '',
-        billingAddress: {
-          line1: '123 Business Way',
-          line2: '',
-          city: 'New York',
-          state: 'NY',
-          zip: '10001',
-          country: 'USA'
-        },
-        updatedAt: c.createdAt,
-        activeContracts: c.activeContracts,
-        totalRevenue: c.totalRevenue,
-        status: 'active'
-      }));
-
-      setProfiles(mapped);
+      const data = await FinanceService.getClientBillingProfiles();
+      setProfiles(data);
     } catch (err: any) {
       console.error('Error fetching client profiles:', err);
       setError('Failed to load client billing profiles.');
@@ -124,7 +87,7 @@ export function ClientBillingProfiles() {
 
   return (
     <div className="space-y-6">
-      {}
+      { }
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8 border border-purple-500/20">
         <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/30 rounded-full blur-3xl animate-pulse" />
 
@@ -140,7 +103,10 @@ export function ClientBillingProfiles() {
               </div>
             </div>
 
-            <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl hover:shadow-xl transition-all font-black">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl hover:shadow-xl transition-all font-black"
+            >
               <Plus className="w-5 h-5 inline mr-2" />
               Add Client
             </button>
@@ -182,7 +148,7 @@ export function ClientBillingProfiles() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {filteredProfiles.map((profile) => (
-          <div key={profile.id} className="relative overflow-hidden rounded-2xl bg-slate-900/50 border border-white/10 p-6 hover:border-purple-500/30 transition-all group">
+          <div key={profile._id} className="relative overflow-hidden rounded-2xl bg-slate-900/50 border border-white/10 p-6 hover:border-purple-500/30 transition-all group">
             <div className="flex items-start justify-between mb-6">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
@@ -285,6 +251,16 @@ export function ClientBillingProfiles() {
             </div>
           </div>
         </div>
+      )}
+
+      {showAddModal && (
+        <AddBillingProfileModal
+          onClose={() => setShowAddModal(false)}
+          onSuccess={() => {
+            setShowAddModal(false);
+            fetchProfiles();
+          }}
+        />
       )}
     </div>
   );

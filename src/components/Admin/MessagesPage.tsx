@@ -1,62 +1,105 @@
-import { useState } from 'react';
-import { MessageSquare, Send, Search, User, Shield, Briefcase, Sparkles, Paperclip } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { MessageSquare, Send, Search, User, Shield, Briefcase, Sparkles, Paperclip, Loader2 } from 'lucide-react';
+import ChatService, { type ChatMessage, type Conversation as APIConversation } from '../../services/chat.service';
+import { AuthService } from '../../services/auth.service';
 
-interface Conversation {
-  id: string;
-  participant: string;
-  role: 'admin' | 'recruiter' | 'candidate';
-  lastMessage: string;
-  timestamp: string;
-  unread: number;
-  avatar: string;
-}
-
-interface Message {
-  id: string;
-  sender: string;
-  content: string;
-  timestamp: string;
-  isOwn: boolean;
-}
-
-const mockConversations: Conversation[] = [
-  { id: '1', participant: 'Sarah Johnson', role: 'recruiter', lastMessage: 'Thanks for the update on the TechCorp submission', timestamp: '2 min ago', unread: 2, avatar: 'SJ' },
-  { id: '2', participant: 'Michael Chen', role: 'recruiter', lastMessage: 'Can we discuss the new candidate pipeline?', timestamp: '1 hour ago', unread: 0, avatar: 'MC' },
-  { id: '3', participant: 'Emily Davis', role: 'candidate', lastMessage: 'When will my timesheet be approved?', timestamp: '3 hours ago', unread: 1, avatar: 'ED' },
-  { id: '4', participant: 'James Wilson', role: 'candidate', lastMessage: 'Received the offer letter, thank you!', timestamp: '1 day ago', unread: 0, avatar: 'JW' },
-];
-
-const mockMessages: Message[] = [
-  { id: '1', sender: 'Sarah Johnson', content: 'Hi! I wanted to check on the status of the TechCorp submission.', timestamp: '10:30 AM', isOwn: false },
-  { id: '2', sender: 'You', content: 'Hi Sarah! The submission is currently in the interview stage. They scheduled second round for next week.', timestamp: '10:32 AM', isOwn: true },
-  { id: '3', sender: 'Sarah Johnson', content: 'Thats great news! Should I prepare any additional documents?', timestamp: '10:35 AM', isOwn: false },
-  { id: '4', sender: 'You', content: 'Yes, please have the candidate prepare their technical portfolio and be ready to discuss their recent projects.', timestamp: '10:38 AM', isOwn: true },
-  { id: '5', sender: 'Sarah Johnson', content: 'Thanks for the update on the TechCorp submission', timestamp: '10:40 AM', isOwn: false },
-];
+// No mock data needed anymore, using real API via ChatService
 
 export function MessagesPage() {
-  const [selectedConversation, setSelectedConversation] = useState<Conversation>(mockConversations[0]);
+  const user = AuthService.getCurrentUser();
+  const [conversations, setConversations] = useState<APIConversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<APIConversation | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [messageText, setMessageText] = useState('');
-  const [messages, setMessages] = useState<Message[]>(mockMessages);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [foundUsers, setFoundUsers] = useState<any[]>([]);
+  const [isSearchingNew, setIsSearchingNew] = useState(false);
 
-  const filteredConversations = mockConversations.filter(conv =>
-    conv.participant.toLowerCase().includes(searchQuery.toLowerCase())
+  useEffect(() => {
+    fetchConversations();
+  }, []);
+
+  useEffect(() => {
+    if (selectedConversation) {
+      fetchMessages(selectedConversation.userId);
+    }
+  }, [selectedConversation]);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery.trim().length > 1) {
+        searchNewUsers();
+      } else {
+        setFoundUsers([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
+  const searchNewUsers = async () => {
+    try {
+      setIsSearchingNew(true);
+      const users = await ChatService.searchUsers(searchQuery);
+      // Filter out users who are already in conversations
+      const newUsers = users.filter(u => !conversations.some(c => c.userId === u._id) && u._id !== user?.id);
+      setFoundUsers(newUsers);
+    } catch (err) {
+      console.error('Error searching users:', err);
+    } finally {
+      setIsSearchingNew(false);
+    }
+  };
+
+  const fetchConversations = async () => {
+    try {
+      setLoading(true);
+      const data = await ChatService.getConversations();
+      setConversations(data);
+      if (data.length > 0 && !selectedConversation) {
+        setSelectedConversation(data[0]);
+      }
+    } catch (err) {
+      console.error('Error fetching conversations:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMessages = async (userId: string) => {
+    try {
+      setLoadingMessages(true);
+      const data = await ChatService.getMessages(userId);
+      setMessages(data.messages);
+    } catch (err) {
+      console.error('Error fetching messages:', err);
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
+
+  const filteredConversations = conversations.filter(conv =>
+    conv.userName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleSend = () => {
-    if (!messageText.trim()) return;
-    
-    const newMessage: Message = {
-      id: String(messages.length + 1),
-      sender: 'You',
-      content: messageText,
-      timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-      isOwn: true,
-    };
-    
-    setMessages([...messages, newMessage]);
-    setMessageText('');
+  const handleSend = async () => {
+    if (!messageText.trim() || !selectedConversation) return;
+
+    try {
+      const sentMessage = await ChatService.sendMessage(selectedConversation.userId, messageText);
+      setMessages([...messages, sentMessage]);
+      setMessageText('');
+      // Update last message in sidebar
+      setConversations(prev => prev.map(c =>
+        c.userId === selectedConversation.userId
+          ? { ...c, lastMessage: { ...c.lastMessage, message: messageText, createdAt: new Date().toISOString() } }
+          : c
+      ));
+    } catch (err) {
+      console.error('Error sending message:', err);
+    }
   };
 
   const getRoleIcon = (role: string) => {
@@ -79,10 +122,10 @@ export function MessagesPage() {
 
   return (
     <div className="p-8 space-y-6">
-      {}
+      { }
       <div className="relative animate-slide-in">
         <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" />
-        
+
         <div className="relative flex items-center gap-3 mb-3">
           <div className="p-3 bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 rounded-2xl shadow-glow-blue animate-pulse-glow">
             <MessageSquare className="w-7 h-7 text-white" />
@@ -94,9 +137,9 @@ export function MessagesPage() {
         </div>
       </div>
 
-      {}
+      { }
       <div className="grid grid-cols-3 gap-6 h-[calc(100vh-280px)] animate-slide-in" style={{ animationDelay: '100ms' }}>
-        {}
+        { }
         <div className="glass rounded-3xl overflow-hidden shadow-premium flex flex-col">
           <div className="p-6 border-b border-white/10">
             <div className="relative">
@@ -110,112 +153,192 @@ export function MessagesPage() {
               />
             </div>
           </div>
-          
+
           <div className="flex-1 overflow-y-auto">
-            {filteredConversations.map((conv, index) => {
-              const RoleIcon = getRoleIcon(conv.role);
-              const isActive = selectedConversation.id === conv.id;
-              
-              return (
-                <button
-                  key={conv.id}
-                  onClick={() => setSelectedConversation(conv)}
-                  className={`w-full p-4 flex items-start gap-3 hover:bg-white/5 transition-all duration-300 border-l-4 ${
-                    isActive 
-                      ? 'bg-gradient-to-r from-blue-500/10 to-transparent border-blue-500' 
-                      : 'border-transparent'
-                  }`}
-                  style={{ animationDelay: `${index * 30}ms` }}
-                >
-                  <div className="relative">
-                    <div className={`w-12 h-12 bg-gradient-to-br ${getRoleColor(conv.role)} rounded-xl flex items-center justify-center text-white font-semibold shadow-glow-blue`}>
-                      {conv.avatar}
-                    </div>
-                    {conv.unread > 0 && (
-                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-pink-500 to-rose-500 rounded-full flex items-center justify-center text-white text-xs font-bold animate-pulse-glow">
-                        {conv.unread}
+            {loading ? (
+              <div className="flex items-center justify-center h-40">
+                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+              </div>
+            ) : (
+              <>
+                {filteredConversations.map((conv, index) => {
+                  const RoleIcon = getRoleIcon(conv.userRole);
+                  const isActive = selectedConversation?.userId === conv.userId;
+
+                  return (
+                    <button
+                      key={conv.userId}
+                      onClick={() => setSelectedConversation(conv)}
+                      className={`w-full p-4 flex items-start gap-3 hover:bg-white/5 transition-all duration-300 border-l-4 ${isActive
+                          ? 'bg-gradient-to-r from-blue-500/10 to-transparent border-blue-500'
+                          : 'border-transparent'
+                        }`}
+                      style={{ animationDelay: `${index * 30}ms` }}
+                    >
+                      <div className="relative">
+                        <div className={`w-12 h-12 bg-gradient-to-br ${getRoleColor(conv.userRole)} rounded-xl flex items-center justify-center text-white font-semibold shadow-glow-blue uppercase`}>
+                          {conv.userName.substring(0, 2)}
+                        </div>
+                        {conv.unreadCount > 0 && (
+                          <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-pink-500 to-rose-500 rounded-full flex items-center justify-center text-white text-xs font-bold animate-pulse-glow">
+                            {conv.unreadCount}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 text-left">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-slate-200 font-medium">{conv.participant}</p>
-                      <span className="text-xs text-slate-500">{conv.timestamp}</span>
+
+                      <div className="flex-1 text-left">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-slate-200 font-medium">{conv.userName}</p>
+                          <span className="text-xs text-slate-500">
+                            {new Date(conv.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <RoleIcon className="w-3 h-3 text-slate-500" />
+                          <span className="text-xs text-slate-500 capitalize">{conv.userRole}</span>
+                        </div>
+                        <p className={`text-sm truncate ${conv.unreadCount > 0 ? 'text-slate-300 font-medium' : 'text-slate-500'}`}>
+                          {conv.lastMessage.message}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+
+                {foundUsers.length > 0 && (
+                  <div className="border-t border-white/10">
+                    <div className="p-4 bg-white/5 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-blue-400" />
+                      <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black">Search Results</p>
                     </div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <RoleIcon className="w-3 h-3 text-slate-500" />
-                      <span className="text-xs text-slate-500 capitalize">{conv.role}</span>
+                    <div className="flex flex-col">
+                      {foundUsers.map((u) => {
+                        const RoleIcon = getRoleIcon(u.role);
+                        return (
+                          <button
+                            key={u._id}
+                            onClick={() => {
+                              const newConv: APIConversation = {
+                                userId: u._id,
+                                userName: u.name,
+                                userEmail: u.email,
+                                userRole: u.role,
+                                lastMessage: {
+                                  _id: 'new',
+                                  message: 'Start a conversation...',
+                                  createdAt: new Date().toISOString(),
+                                  readAt: null
+                                },
+                                unreadCount: 0
+                              };
+                              setSelectedConversation(newConv);
+                              setMessages([]);
+                              setFoundUsers([]);
+                              setSearchQuery('');
+                            }}
+                            className="w-full p-4 flex items-center gap-3 hover:bg-white/5 transition-all text-left border-l-4 border-transparent"
+                          >
+                            <div className={`w-10 h-10 bg-gradient-to-br ${getRoleColor(u.role)} rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm uppercase`}>
+                              {u.name.substring(0, 2)}
+                            </div>
+                            <div className="flex-1 overflow-hidden">
+                              <p className="text-sm text-slate-200 font-bold truncate group-hover:text-blue-400 transition-colors">{u.name}</p>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <RoleIcon className="w-3 h-3 text-slate-500" />
+                                <span className="text-[10px] text-slate-500 capitalize">{u.role}</span>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
-                    <p className={`text-sm truncate ${conv.unread > 0 ? 'text-slate-300 font-medium' : 'text-slate-500'}`}>
-                      {conv.lastMessage}
-                    </p>
                   </div>
-                </button>
-              );
-            })}
+                )}
+
+                {searchQuery.trim().length > 1 && filteredConversations.length === 0 && foundUsers.length === 0 && !isSearchingNew && (
+                  <div className="p-10 text-center animate-fadeIn">
+                    <p className="text-slate-500 text-sm italic">No users found matching "{searchQuery}"</p>
+                  </div>
+                )}
+              </>
+            )
+            }
           </div>
         </div>
 
-        {}
+        { }
         <div className="col-span-2 glass rounded-3xl overflow-hidden shadow-premium flex flex-col">
-          {}
-          <div className="p-6 border-b border-white/10 glass-dark">
-            <div className="flex items-center gap-4">
-              <div className={`w-14 h-14 bg-gradient-to-br ${getRoleColor(selectedConversation.role)} rounded-xl flex items-center justify-center text-white font-semibold text-lg shadow-glow-blue`}>
-                {selectedConversation.avatar}
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl text-slate-100 font-medium">{selectedConversation.participant}</h3>
-                <div className="flex items-center gap-2 mt-1">
-                  {(() => {
-                    const RoleIcon = getRoleIcon(selectedConversation.role);
-                    return <RoleIcon className="w-4 h-4 text-slate-400" />;
-                  })()}
-                  <span className="text-sm text-slate-400 capitalize">{selectedConversation.role}</span>
-                  <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse-glow ml-2" />
-                  <span className="text-sm text-green-400">Online</span>
+          { }
+          {selectedConversation && (
+            <div className="p-6 border-b border-white/10 glass-dark">
+              <div className="flex items-center gap-4">
+                <div className={`w-14 h-14 bg-gradient-to-br ${getRoleColor(selectedConversation.userRole)} rounded-xl flex items-center justify-center text-white font-semibold text-lg shadow-glow-blue`}>
+                  {selectedConversation.userName.substring(0, 2).toUpperCase()}
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            {messages.map((message, index) => (
-              <div
-                key={message.id}
-                className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'} animate-slide-in`}
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <div className={`max-w-[70%] ${message.isOwn ? 'order-2' : 'order-1'}`}>
-                  {!message.isOwn && (
-                    <p className="text-xs text-slate-400 mb-1 ml-1">{message.sender}</p>
-                  )}
-                  <div
-                    className={`p-4 rounded-2xl ${
-                      message.isOwn
-                        ? 'bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-glow-blue'
-                        : 'glass border border-white/10 text-slate-200'
-                    }`}
-                  >
-                    <p className="text-sm leading-relaxed">{message.content}</p>
-                    <p className={`text-xs mt-2 ${message.isOwn ? 'text-blue-100' : 'text-slate-500'}`}>
-                      {message.timestamp}
-                    </p>
+                <div className="flex-1">
+                  <h3 className="text-xl text-slate-100 font-medium">{selectedConversation.userName}</h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    {(() => {
+                      const RoleIcon = getRoleIcon(selectedConversation.userRole);
+                      return <RoleIcon className="w-4 h-4 text-slate-400" />;
+                    })()}
+                    <span className="text-sm text-slate-400 capitalize">{selectedConversation.userRole}</span>
+                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse-glow ml-2" />
+                    <span className="text-sm text-green-400">Online</span>
                   </div>
                 </div>
               </div>
-            ))}
+            </div>
+          )}
+
+          { }
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            {loadingMessages ? (
+              <div className="flex flex-col items-center justify-center h-full space-y-3">
+                <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
+                <p className="text-slate-500 text-sm">Loading messages...</p>
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full space-y-3 text-slate-500">
+                <MessageSquare className="w-12 h-12 opacity-20" />
+                <p>No messages yet. Start a conversation!</p>
+              </div>
+            ) : messages.map((message, index) => {
+              const isOwn = message.senderId._id === user?.id;
+              return (
+                <div
+                  key={message._id}
+                  className={`flex ${isOwn ? 'justify-end' : 'justify-start'} animate-slide-in`}
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <div className={`max-w-[70%] ${isOwn ? 'order-2' : 'order-1'}`}>
+                    {!isOwn && (
+                      <p className="text-xs text-slate-400 mb-1 ml-1">{message.senderId.name}</p>
+                    )}
+                    <div
+                      className={`p-4 rounded-2xl ${isOwn
+                        ? 'bg-gradient-to-br from-blue-500 to-cyan-500 text-white shadow-glow-blue'
+                        : 'glass border border-white/10 text-slate-200'
+                        }`}
+                    >
+                      <p className="text-sm leading-relaxed">{message.message}</p>
+                      <p className={`text-xs mt-2 ${isOwn ? 'text-blue-100' : 'text-slate-500'}`}>
+                        {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          {}
+          { }
           <div className="p-6 border-t border-white/10 glass-dark">
             <div className="flex items-end gap-3">
               <button className="p-3 glass rounded-xl hover:bg-white/10 transition-all duration-300 group">
                 <Paperclip className="w-5 h-5 text-slate-400 group-hover:text-blue-400 transition-colors" />
               </button>
-              
+
               <div className="flex-1 relative group">
                 <textarea
                   value={messageText}
@@ -231,7 +354,7 @@ export function MessagesPage() {
                   className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-100 placeholder-slate-500 resize-none transition-all"
                 />
               </div>
-              
+
               <button
                 onClick={handleSend}
                 disabled={!messageText.trim()}

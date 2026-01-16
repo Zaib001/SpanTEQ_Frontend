@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
     Search, Filter, FileText, User as UserIcon, Briefcase, Calendar, Sparkles,
-    ChevronDown, Eye, X, Globe, DollarSign, Cpu, Trash2, Edit, Users as UsersIcon
+    ChevronDown, Eye, X, Globe, DollarSign, Cpu, Trash2, Edit, Users as UsersIcon,
+    Upload, Download, FileSpreadsheet
 } from 'lucide-react';
 import RecruiterService from '../../services/recruiter.service';
 import type { Submission } from '../../services/submission.service';
@@ -32,7 +33,10 @@ export function RecruiterSubmissions() {
     const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [showFormModal, setShowFormModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [importFile, setImportFile] = useState<File | null>(null);
+    const [exportLoading, setExportLoading] = useState(false);
 
     const [filters, setFilters] = useState({
         client: 'all',
@@ -127,6 +131,50 @@ export function RecruiterSubmissions() {
         }
     };
 
+    const handleImportSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!importFile) return;
+
+        try {
+            setLoading(true);
+            const formData = new FormData();
+            formData.append('file', importFile);
+            const result = await RecruiterService.bulkImportSubmissions(formData);
+            alert(`Import completed! Success: ${result.imported}, Failed: ${result.failed}`);
+            setShowImportModal(false);
+            setImportFile(null);
+            fetchSubmissions();
+        } catch (err) {
+            console.error('Import failed', err);
+            alert('Import failed. Please check the file format.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleExport = async (format: 'csv' | 'pdf') => {
+        try {
+            setExportLoading(true);
+            const blob = format === 'csv'
+                ? await RecruiterService.exportSubmissionsCSV(filters)
+                : await RecruiterService.exportSubmissionsPDF();
+
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `submissions_${Date.now()}.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (err) {
+            console.error('Export failed', err);
+            alert('Export failed');
+        } finally {
+            setExportLoading(false);
+        }
+    };
+
     const openEditModal = (sub: Submission) => {
         setSelectedSubmission(sub);
         setFormData({
@@ -178,13 +226,49 @@ export function RecruiterSubmissions() {
                             <p className="text-slate-400 mt-1 text-sm">Track your candidate submissions across all clients</p>
                         </div>
                     </div>
-                    <button
-                        onClick={openAddModal}
-                        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl font-bold text-white shadow-lg hover:shadow-glow-blue hover:scale-105 transition-all duration-300"
-                    >
-                        <FileText className="w-5 h-5" />
-                        New Submission
-                    </button>
+                    <div className="flex gap-3">
+                        <div className="relative group">
+                            <button
+                                className="flex items-center gap-2 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-300 hover:bg-white/10 hover:text-white transition-all font-bold"
+                            >
+                                <Download className="w-5 h-5 text-blue-400" />
+                                Export
+                                <ChevronDown className="w-4 h-4" />
+                            </button>
+                            <div className="absolute right-0 top-full mt-2 w-48 py-2 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                                <button
+                                    onClick={() => handleExport('csv')}
+                                    disabled={exportLoading}
+                                    className="w-full px-4 py-2 text-left text-sm text-slate-300 hover:bg-white/10 hover:text-white flex items-center gap-2"
+                                >
+                                    <FileSpreadsheet className="w-4 h-4 text-green-400" />
+                                    Export CSV
+                                </button>
+                                <button
+                                    onClick={() => handleExport('pdf')}
+                                    disabled={exportLoading}
+                                    className="w-full px-4 py-2 text-left text-sm text-slate-300 hover:bg-white/10 hover:text-white flex items-center gap-2"
+                                >
+                                    <FileText className="w-4 h-4 text-red-400" />
+                                    Export PDF
+                                </button>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setShowImportModal(true)}
+                            className="flex items-center gap-2 px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-300 hover:bg-white/10 hover:text-white transition-all font-bold"
+                        >
+                            <Upload className="w-5 h-5 text-cyan-400" />
+                            Import Excel
+                        </button>
+                        <button
+                            onClick={openAddModal}
+                            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl font-bold text-white shadow-lg hover:shadow-glow-blue hover:scale-105 transition-all duration-300"
+                        >
+                            <FileText className="w-5 h-5" />
+                            New Submission
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -552,6 +636,63 @@ export function RecruiterSubmissions() {
                                     className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl text-white font-bold shadow-lg hover:shadow-glow-blue transition-all"
                                 >
                                     {isEditing ? 'Save Changes' : 'Create Submission'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {showImportModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
+                    <div className="glass-dark max-w-xl w-full rounded-[40px] p-10 border border-white/20 shadow-2xl relative overflow-hidden animate-scale-in">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500 rounded-full blur-3xl opacity-10 -mr-20 -mt-20" />
+
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-3xl font-black text-gradient-premium">Bulk Import</h2>
+                            <button onClick={() => setShowImportModal(false)} className="p-3 glass rounded-2xl hover:bg-red-500/20 hover:text-red-400 transition-all">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleImportSubmit} className="space-y-8">
+                            <div className="border-2 border-dashed border-white/10 rounded-[32px] p-12 text-center group hover:border-cyan-500/50 transition-all duration-500">
+                                <FileSpreadsheet className="w-16 h-16 text-slate-700 mx-auto mb-4 group-hover:text-cyan-400 group-hover:scale-110 transition-all duration-500" />
+                                <p className="text-slate-400 text-sm mb-6">Upload your Excel or CSV file with submissions</p>
+                                <input
+                                    type="file"
+                                    id="file"
+                                    accept=".xlsx, .xls, .csv"
+                                    onChange={(e) => setImportFile(e.target.files ? e.target.files[0] : null)}
+                                    className="hidden"
+                                />
+                                <label
+                                    htmlFor="file"
+                                    className="inline-flex px-8 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-300 font-bold cursor-pointer hover:bg-white/10 transition-all active:scale-95"
+                                >
+                                    {importFile ? importFile.name : 'Choose File'}
+                                </label>
+                            </div>
+
+                            <div className="flex items-center gap-3 p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl">
+                                <Info className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                                <p className="text-xs text-blue-300">File should include columns: Consultant Name, Client, Vendor Name, Notes, Date, Technology.</p>
+                            </div>
+
+                            <div className="flex gap-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowImportModal(false)}
+                                    className="flex-1 py-4 bg-white/5 border border-white/10 rounded-[28px] text-slate-300 font-black tracking-widest hover:bg-white/10 transition-all uppercase text-xs"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={!importFile || loading}
+                                    className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-[28px] font-black tracking-widest shadow-glow-blue hover:scale-[1.02] transition-all disabled:opacity-50 uppercase text-xs"
+                                >
+                                    {loading ? 'Importing...' : 'Start Import'}
                                 </button>
                             </div>
                         </form>

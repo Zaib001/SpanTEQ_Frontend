@@ -5,7 +5,7 @@ import {
   Search, X, Target, Zap, Award, Loader2, Briefcase as BriefcaseIcon
 } from 'lucide-react';
 import FinanceService from '../../services/finance.service';
-import type { RevenueData } from '../../services/finance.service';
+import type { RevenueLedgerReport } from '../../services/finance.service';
 
 interface RevenueEntry {
   month: string;
@@ -31,7 +31,7 @@ export function RevenueLedger() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<RevenueEntry[]>([]);
-  const [ledgerStats, setLedgerStats] = useState<RevenueData | null>(null);
+  const [ledgerStats, setLedgerStats] = useState<RevenueLedgerReport | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -44,10 +44,10 @@ export function RevenueLedger() {
 
       const [snapshots, report] = await Promise.all([
         FinanceService.getPayrollSnapshots({ fromMonth, toMonth }),
-        FinanceService.getRevenueLedger(fromMonth, toMonth)
+        FinanceService.getRevenueLedgerReport(fromMonth, toMonth)
       ]);
 
-      setLedgerStats(report);
+      setLedgerStats(report as any);
 
       const mappedEntries: RevenueEntry[] = snapshots.map((s: any) => {
         const grossRevenue = s.approvedHours * s.clientBillRate;
@@ -92,9 +92,9 @@ export function RevenueLedger() {
   });
 
   const stats = {
-    totalRevenue: ledgerStats?.totals.totalRevenue || filteredData.reduce((sum, entry) => sum + entry.grossRevenue, 0),
-    totalCost: ledgerStats?.totals.totalPayout || filteredData.reduce((sum, entry) => sum + entry.consultantCost, 0),
-    netProfit: ledgerStats?.totals.totalMargin || filteredData.reduce((sum, entry) => sum + entry.netProfit, 0),
+    totalRevenue: ledgerStats?.summary.totalBilled || filteredData.reduce((sum, entry) => sum + entry.grossRevenue, 0),
+    totalCost: ledgerStats?.summary.totalPaidOut || filteredData.reduce((sum, entry) => sum + entry.consultantCost, 0),
+    netProfit: ledgerStats?.summary.marginSnapshot || filteredData.reduce((sum, entry) => sum + entry.netProfit, 0),
     avgMargin: filteredData.length > 0 ? filteredData.reduce((sum, entry) => sum + entry.margin, 0) / filteredData.length : 0,
     totalHours: filteredData.reduce((sum, entry) => sum + entry.totalHours, 0),
     activeConsultants: new Set(filteredData.map(d => d.consultant)).size,
@@ -147,7 +147,7 @@ export function RevenueLedger() {
 
   return (
     <div className="space-y-6">
-      {}
+      { }
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 p-8 border border-emerald-500/20">
         <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/30 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-green-500/30 rounded-full blur-3xl animate-pulse" />
@@ -193,7 +193,7 @@ export function RevenueLedger() {
         </div>
       </div>
 
-      {}
+      { }
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 border border-white/10 backdrop-blur-xl">
         <div className="relative space-y-4">
           <div className="flex items-center gap-3">
@@ -249,7 +249,7 @@ export function RevenueLedger() {
         </div>
       </div>
 
-      {}
+      { }
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-white/10 backdrop-blur-xl shadow-2xl">
         <div className="relative overflow-x-auto">
           <table className="w-full">

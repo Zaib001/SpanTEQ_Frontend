@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Video, Calendar, Briefcase, Clock,
   CheckCircle, Sparkles, Filter, ChevronDown,
@@ -6,6 +7,14 @@ import {
 } from 'lucide-react';
 import InterviewService, { type Interview } from '../../services/interview.service';
 import SubmissionService, { type Submission } from '../../services/submission.service';
+
+interface InterviewRow extends Interview {
+  submissionId: string;
+  candidateName: string;
+  recruiterName: string;
+  client: string;
+  position: string;
+}
 
 const statusColors: Record<string, { bg: string, text: string, border: string, icon: any }> = {
   SCHEDULED: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30', icon: Calendar },
@@ -21,7 +30,10 @@ const partyColors: Record<string, string> = {
 };
 
 export function InterviewsPage() {
-  const [interviews, setInterviews] = useState<Interview[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const submissionIdParam = searchParams.get('submissionId');
+
+  const [interviews, setInterviews] = useState<InterviewRow[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +42,7 @@ export function InterviewsPage() {
 
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
-  const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
+  const [selectedInterview, setSelectedInterview] = useState<InterviewRow | null>(null);
 
   const [filters, setFilters] = useState({
     status: 'all',
@@ -41,12 +53,45 @@ export function InterviewsPage() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [interviewData, submissionData] = await Promise.all([
-        InterviewService.getAllInterviews(),
-        SubmissionService.getAllSubmissions({ limit: 1000 })
-      ]);
-      setInterviews(interviewData);
+      // Fetch only submissions, as interviews are nested within them
+      const submissionData = await SubmissionService.getAllSubmissions({ limit: 1000 });
       setSubmissions(submissionData.submissions);
+
+      // Flatten interviews from all submissions
+      const flattenedInterviews: InterviewRow[] = [];
+      submissionData.submissions.forEach(sub => {
+        if (sub.interviews && Array.isArray(sub.interviews)) {
+          sub.interviews.forEach(int => {
+            // Safely extract candidate and recruiter names
+            const candidateName = typeof sub.candidate === 'object' ? sub.candidate.name : 'Unknown Candidate';
+            const recruiterName = typeof sub.recruiter === 'object' ? sub.recruiter.name : 'Unknown Recruiter';
+
+            if (int._id) { // Only add if it has an ID
+              flattenedInterviews.push({
+                ...int,
+                _id: int._id, // Ensure we use _id
+                submissionId: sub._id,
+                candidateName,
+                recruiterName,
+                client: sub.client,
+                position: sub.role,
+                // Ensure required types are present or provide defaults if missing from partial data
+                roundNumber: int.roundNumber || 1,
+                party: int.party || 'CLIENT',
+                vendorType: int.vendorType || null,
+                mode: int.mode || 'VIDEO',
+                scheduledAt: int.scheduledAt || new Date().toISOString(),
+                status: int.status || 'SCHEDULED'
+              } as InterviewRow);
+            }
+          });
+        }
+      });
+
+      // Sort by scheduledAt descending (newest first)
+      flattenedInterviews.sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
+
+      setInterviews(flattenedInterviews);
       setError(null);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch data');
@@ -61,6 +106,9 @@ export function InterviewsPage() {
 
   const filteredInterviews = useMemo(() => {
     return interviews.filter(item => {
+      // Deep link filter
+      if (submissionIdParam && item.submissionId !== submissionIdParam) return false;
+
       const matchesSearch =
         item.candidateName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -74,7 +122,7 @@ export function InterviewsPage() {
 
       return matchesSearch && matchesFilters;
     });
-  }, [interviews, searchQuery, filters]);
+  }, [interviews, searchQuery, filters, submissionIdParam]);
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -94,14 +142,16 @@ export function InterviewsPage() {
     if (window.confirm('Are you sure you want to delete this interview round?')) {
       try {
         await InterviewService.deleteInterview(submissionId, interviewId);
-        setInterviews(prev => prev.filter(i => i.id !== interviewId));
+        setInterviews(prev => prev.filter(i => i._id !== interviewId));
+        // Also update local submissions state to reflect removal if needed, or just rely on re-fetch
+        fetchData();
       } catch (err: any) {
         alert(err.message || 'Failed to delete interview');
       }
     }
   };
 
-  const handleOpenModal = (mode: 'create' | 'edit' | 'view', interview: Interview | null = null) => {
+  const handleOpenModal = (mode: 'create' | 'edit' | 'view', interview: InterviewRow | null = null) => {
     setModalMode(mode);
     setSelectedInterview(interview);
     setShowModal(true);
@@ -199,6 +249,29 @@ export function InterviewsPage() {
             </div>
           </div>
 
+          {submissionIdParam && (
+            <div className="flex items-center justify-between p-4 bg-violet-500/10 border border-violet-500/30 rounded-2xl animate-in fade-in slide-in-from-left-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center">
+                  <Filter className="w-5 h-5 text-violet-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-violet-300">Filtering by Submission</p>
+                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Showing interviews for specific candidate record</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  searchParams.delete('submissionId');
+                  setSearchParams(searchParams);
+                }}
+                className="px-4 py-2 bg-violet-500/20 hover:bg-violet-500/30 text-violet-400 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest border border-violet-500/30"
+              >
+                Clear Filter
+              </button>
+            </div>
+          )}
+
           {showFilters && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-slate-900/30 rounded-3xl border border-white/5 animate-in slide-in-from-top duration-300">
               <div className="space-y-2">
@@ -258,7 +331,8 @@ export function InterviewsPage() {
                 const partyClass = partyColors[interview.party] || partyColors.CLIENT;
 
                 return (
-                  <tr key={interview.id} className="group hover:bg-white/[0.01] transition-all">
+
+                  <tr key={interview._id} className="group hover:bg-white/[0.01] transition-all">
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center font-black text-white group-hover:scale-110 group-hover:shadow-glow-purple transition-all border border-white/5">
@@ -276,11 +350,16 @@ export function InterviewsPage() {
                     <td className="px-6 py-5">
                       <div className="space-y-1.5">
                         <p className="font-black text-slate-300 text-sm tracking-wide">{interview.client}</p>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-black border uppercase tracking-tighter ${partyClass}`}>
                             {interview.party}
                           </span>
-                          <span className="text-[10px] font-bold text-slate-500">ROUND {interview.roundNumber}</span>
+                          <span className="text-[10px] font-bold text-slate-500 uppercase">R{interview.roundNumber}</span>
+                          {interview.stageLabel && (
+                            <span className="text-[10px] font-bold text-violet-400 bg-violet-400/10 px-2 py-0.5 rounded border border-violet-400/20 uppercase">
+                              {interview.stageLabel}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -317,7 +396,7 @@ export function InterviewsPage() {
                           <Edit2 className="w-4.5 h-4.5" />
                         </button>
                         <button
-                          onClick={() => handleDelete(interview.submissionId, interview.id)}
+                          onClick={() => handleDelete(interview.submissionId, interview._id)}
                           className="p-2.5 bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-xl transition-all border border-white/5 hover:border-red-500/30"
                         >
                           <Trash2 className="w-4.5 h-4.5" />
@@ -366,7 +445,7 @@ function InterviewModal({
   onSuccess
 }: {
   mode: 'create' | 'edit' | 'view',
-  interview: Interview | null,
+  interview: InterviewRow | null,
   submissions: Submission[],
   onClose: () => void,
   onSuccess: () => void
@@ -375,20 +454,40 @@ function InterviewModal({
   const [formData, setFormData] = useState<Partial<Interview>>({
     roundNumber: 1,
     party: 'CLIENT',
+    vendorType: null,
+    stageLabel: '', // Added stageLabel
     mode: 'VIDEO',
     scheduledAt: new Date().toISOString().slice(0, 16),
+    completedAt: '',
     status: 'SCHEDULED',
     interviewerName: '',
     notes: '',
   });
 
+  const [searchParams] = useSearchParams();
+  const submissionIdParam = searchParams.get('submissionId');
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string>('');
+
+  useEffect(() => {
+    if (mode === 'create' && submissionIdParam) {
+      setSelectedSubmissionId(submissionIdParam);
+    }
+  }, [mode, submissionIdParam]);
 
   useEffect(() => {
     if (interview) {
       setFormData({
-        ...interview,
+        roundNumber: interview.roundNumber,
+        party: interview.party,
+        vendorType: interview.vendorType,
+        stageLabel: interview.stageLabel || '',
+        mode: interview.mode || 'VIDEO',
         scheduledAt: new Date(interview.scheduledAt).toISOString().slice(0, 16),
+        completedAt: interview.completedAt ? new Date(interview.completedAt).toISOString().slice(0, 16) : '',
+        status: interview.status,
+        interviewerName: interview.interviewerName || '',
+        notes: interview.notes || '',
+        // Include other fields if necessary
       });
       setSelectedSubmissionId(interview.submissionId);
     }
@@ -400,12 +499,19 @@ function InterviewModal({
 
     try {
       setLoading(true);
+
+      // Ensure vendorType is null if party is not VENDOR (Frontend validaton matching backend)
+      const submissionData = {
+        ...formData,
+        vendorType: formData.party === 'VENDOR' ? formData.vendorType : null
+      };
+
       if (mode === 'create') {
         if (!selectedSubmissionId) throw new Error('Please select a candidate');
-        await InterviewService.createInterview(selectedSubmissionId, formData);
+        await InterviewService.createInterview(selectedSubmissionId, submissionData);
       } else {
         if (!interview) return;
-        await InterviewService.updateInterview(interview.submissionId, interview.id, formData);
+        await InterviewService.updateInterview(interview.submissionId, interview._id, submissionData);
       }
       onSuccess();
     } catch (err: any) {
@@ -431,7 +537,7 @@ function InterviewModal({
                 <h2 className="text-2xl font-black text-white uppercase tracking-tight">
                   {mode === 'view' ? 'Interview Profile' : mode === 'edit' ? 'Update Round' : 'Schedule Round'}
                 </h2>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Interview Log ID: {interview?.id || 'NEW_ENTRY'}</p>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Interview Log ID: {interview?._id || 'NEW_ENTRY'}</p>
               </div>
             </div>
             <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl transition-colors">
@@ -442,7 +548,7 @@ function InterviewModal({
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {}
+            { }
             <div className="md:col-span-2 space-y-2">
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Candidate Mapping</label>
               {mode === 'create' ? (
@@ -525,6 +631,64 @@ function InterviewModal({
                 <option value="NO_SHOW">No Show</option>
               </select>
             </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Interview Mode</label>
+              <select
+                required
+                disabled={mode === 'view'}
+                value={formData.mode}
+                onChange={(e) => setFormData({ ...formData, mode: e.target.value as any })}
+                className="w-full bg-slate-800/50 border border-white/10 rounded-2xl px-5 py-4 focus:border-violet-500 outline-none text-slate-200 font-bold disabled:opacity-50"
+              >
+                <option value="VIDEO">Video Call</option>
+                <option value="PHONE">Phone Call</option>
+                <option value="IN_PERSON">In-Person</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Stage / Label</label>
+              <input
+                type="text"
+                disabled={mode === 'view'}
+                value={formData.stageLabel}
+                onChange={(e) => setFormData({ ...formData, stageLabel: e.target.value })}
+                placeholder="e.g. Technical Round 1, Leadership, etc."
+                className="w-full bg-slate-800/50 border border-white/10 rounded-2xl px-5 py-4 focus:border-violet-500 outline-none text-slate-200 font-bold disabled:opacity-50"
+              />
+            </div>
+
+            {formData.party === 'VENDOR' && (
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Vendor Type</label>
+                <select
+                  required
+                  disabled={mode === 'view'}
+                  value={formData.vendorType || ''}
+                  onChange={(e) => setFormData({ ...formData, vendorType: e.target.value as any })}
+                  className="w-full bg-slate-800/50 border border-white/10 rounded-2xl px-5 py-4 focus:border-violet-500 outline-none text-slate-200 font-bold disabled:opacity-50"
+                >
+                  <option value="">Select Vendor Type...</option>
+                  <option value="AMERICAN_VENDOR">American Vendor</option>
+                  <option value="NON_AMERICAN_VENDOR">Non-American Vendor</option>
+                </select>
+              </div>
+            )}
+
+            {formData.status === 'COMPLETED' && (
+              <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Completion Date</label>
+                <input
+                  type="datetime-local"
+                  required
+                  disabled={mode === 'view'}
+                  value={formData.completedAt}
+                  onChange={(e) => setFormData({ ...formData, completedAt: e.target.value })}
+                  className="w-full bg-slate-800/50 border border-white/10 rounded-2xl px-5 py-4 focus:border-violet-500 outline-none text-slate-200 font-bold disabled:opacity-50"
+                />
+              </div>
+            )}
 
             <div className="md:col-span-2 space-y-2">
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Interviewer Name</label>

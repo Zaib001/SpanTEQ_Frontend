@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import FinanceService from '../../services/finance.service';
+import { AddInvoiceModal } from './AddInvoiceModal';
 
 type InvoiceStatus = 'DRAFT' | 'SENT' | 'PARTIALLY_PAID' | 'PAID' | 'OVERDUE' | 'VOID';
 
@@ -41,6 +42,7 @@ export function Invoices() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [showAddModal, setShowAddModal] = useState(false);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -51,26 +53,23 @@ export function Invoices() {
     try {
       setLoading(true);
       setError(null);
-      const submissions = await FinanceService.getSubmissions();
-
-      const mapped: Invoice[] = submissions.map((s: any) => {
-        const isPaid = s.status === 'Joined & Paid' || s.status === 'Joined';
-        const status: InvoiceStatus = isPaid ? 'PAID' : (s.status === 'Draft' ? 'DRAFT' : 'SENT');
-        const amount = 5000;
-
-        return {
-          id: s._id,
-          invoiceNumber: `INV-${s._id.slice(-6).toUpperCase()}`,
-          client: s.client || 'Unknown Client',
-          period: new Date(s.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-          total: amount,
-          status: status,
-          dueDate: new Date(new Date(s.createdAt).getTime() + 15 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-          sentAt: s.createdAt,
-          amountReceived: isPaid ? amount : 0,
-          outstanding: isPaid ? 0 : amount
-        };
+      const { invoices: data } = await FinanceService.getInvoices({
+        status: selectedStatus === 'all' ? undefined : selectedStatus,
+        search: searchTerm || undefined
       });
+
+      const mapped: Invoice[] = data.map((inv: any) => ({
+        id: inv._id,
+        invoiceNumber: inv.invoiceNumber,
+        client: inv.clientName || 'Unknown Client',
+        period: inv.invoicePeriod?.month || 'N/A',
+        total: inv.totalBilledAmount,
+        status: inv.status,
+        dueDate: new Date(inv.dueDate).toLocaleDateString(),
+        sentAt: inv.sentAt,
+        amountReceived: inv.amountReceived,
+        outstanding: inv.outstandingAmount
+      }));
 
       setInvoices(mapped);
     } catch (err: any) {
@@ -132,7 +131,7 @@ export function Invoices() {
 
   return (
     <div className="space-y-6">
-      {}
+      { }
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-8 border border-blue-500/20">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/30 rounded-full blur-3xl animate-pulse" />
@@ -149,7 +148,10 @@ export function Invoices() {
               </div>
             </div>
 
-            <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl hover:shadow-xl transition-all font-black">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl hover:shadow-xl transition-all font-black"
+            >
               <Plus className="w-5 h-5 inline mr-2" />
               Create Invoice
             </button>
@@ -263,6 +265,16 @@ export function Invoices() {
             <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 disabled:opacity-50"><ChevronRight className="w-5 h-5 text-white" /></button>
           </div>
         </div>
+      )}
+
+      {showAddModal && (
+        <AddInvoiceModal
+          onClose={() => setShowAddModal(false)}
+          onSuccess={() => {
+            setShowAddModal(false);
+            fetchInvoices();
+          }}
+        />
       )}
     </div>
   );

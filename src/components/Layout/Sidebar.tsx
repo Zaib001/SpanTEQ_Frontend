@@ -22,14 +22,16 @@ interface NavItemData {
 interface NavItemProps {
   item: NavItemData;
   isNested?: boolean;
+  onClose?: () => void;
 }
 
-function NavItem({ item, isNested = false }: NavItemProps) {
+function NavItem({ item, isNested = false, onClose }: NavItemProps) {
   const Icon = item.icon;
 
   return (
     <NavLink
       to={item.path}
+      onClick={onClose}
       className={({ isActive }) => `group relative flex items-center gap-3 transition-all duration-300 ${isNested
         ? 'px-3 py-2.5 rounded-xl ml-2'
         : 'px-4 py-3.5 rounded-2xl'
@@ -88,9 +90,10 @@ function NavItem({ item, isNested = false }: NavItemProps) {
 interface SidebarProps {
   currentPage?: string;
   onNavigate?: (page: string) => void;
+  onClose?: () => void;
 }
 
-export function Sidebar({ currentPage: _currentPage, onNavigate: _onNavigate }: SidebarProps) {
+export function Sidebar({ currentPage: _currentPage, onNavigate: _onNavigate, onClose }: SidebarProps) {
   const location = useLocation();
   const [stats, setStats] = useState<UserStats | null>(null);
   const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({
@@ -100,7 +103,10 @@ export function Sidebar({ currentPage: _currentPage, onNavigate: _onNavigate }: 
     tools: true,
     recruiter_candidates: true,
     recruiter_operations: true,
+    recruiter_self_service: true,
     candidate_main: true,
+    candidate_finance: true,
+    candidate_resources: true,
   });
   const [financeExpanded, setFinanceExpanded] = useState(false);
   const [customBuilderExpanded, setCustomBuilderExpanded] = useState(false);
@@ -300,31 +306,58 @@ export function Sidebar({ currentPage: _currentPage, onNavigate: _onNavigate }: 
       gradient: 'from-purple-500 to-blue-500',
       badge: null
     },
-  ], []);
-
-  const recruiterCandidatesNav = useMemo<NavItemData[]>(() => [
     {
-      id: 'candidates',
-      label: 'My Candidates',
-      icon: Users,
-      path: '/recruiter/candidates',
-      gradient: 'from-blue-500 to-cyan-500',
-      badge: null
-    },
-    {
-      id: 'submissions',
-      label: 'Submissions',
-      icon: FileText,
+      id: 'invites',
+      label: 'My Submissions',
+      icon: Briefcase,
       path: '/recruiter/submissions',
-      gradient: 'from-orange-500 to-amber-500',
+      gradient: 'from-blue-500 to-cyan-500',
       badge: null
     },
   ], []);
 
   const recruiterOperationsNav = useMemo<NavItemData[]>(() => [
     {
+      id: 'interviews',
+      label: 'Interviews',
+      icon: Calendar,
+      path: '/recruiter/interviews',
+      gradient: 'from-violet-500 to-purple-500',
+      badge: null
+    },
+    {
+      id: 'documents',
+      label: 'Document Vault',
+      icon: FolderOpen,
+      path: '/recruiter/documents',
+      gradient: 'from-pink-500 to-rose-500',
+      badge: null
+    },
+  ], []);
+
+  const recruiterCandidatesNav = useMemo<NavItemData[]>(() => [
+    {
+      id: 'my-candidates',
+      label: 'My Candidates',
+      icon: Users,
+      path: '/recruiter/candidates',
+      gradient: 'from-orange-500 to-amber-500',
+      badge: null
+    }
+  ], []);
+
+  const recruiterSelfServiceNav = useMemo<NavItemData[]>(() => [
+    {
+      id: 'performance',
+      label: 'My Performance',
+      icon: Activity,
+      path: '/recruiter/performance',
+      gradient: 'from-emerald-500 to-teal-500',
+      badge: null
+    },
+    {
       id: 'timesheets',
-      label: 'Candidate Timesheets',
+      label: 'My Timesheets',
       icon: Clock,
       path: '/recruiter/timesheets',
       gradient: 'from-cyan-500 to-blue-500',
@@ -332,13 +365,30 @@ export function Sidebar({ currentPage: _currentPage, onNavigate: _onNavigate }: 
     },
     {
       id: 'pto',
-      label: 'PTO Requests',
+      label: 'My PTO',
       icon: Calendar,
       path: '/recruiter/pto',
-      gradient: 'from-sky-500 to-blue-500',
+      gradient: 'from-indigo-500 to-purple-500',
+      badge: null
+    },
+    {
+      id: 'holidays',
+      label: 'Holidays',
+      icon: PartyPopper,
+      path: '/recruiter/holidays',
+      gradient: 'from-yellow-500 to-orange-500',
+      badge: null
+    },
+    {
+      id: 'messages',
+      label: 'Internal Chat',
+      icon: MessageSquare,
+      path: '/recruiter/messages',
+      gradient: 'from-blue-500 to-indigo-500',
       badge: null
     },
   ], []);
+
 
   const candidateMainNav = useMemo<NavItemData[]>(() => [
     {
@@ -361,11 +411,49 @@ export function Sidebar({ currentPage: _currentPage, onNavigate: _onNavigate }: 
       badge: null
     },
     {
+      id: 'interviews',
+      label: 'My Interviews',
+      icon: Video,
+      path: '/candidate/interviews',
+      gradient: 'from-violet-500 to-purple-500',
+      badge: null
+    },
+    {
       id: 'timesheet',
       label: 'Timesheets',
       icon: Clock,
       path: '/candidate/timesheet',
       gradient: 'from-cyan-500 to-blue-500',
+      badge: null
+    },
+  ], []);
+
+  const candidateFinanceNav = useMemo<NavItemData[]>(() => [
+    {
+      id: 'salary',
+      label: 'My Salary',
+      icon: DollarSign,
+      path: '/candidate/salary',
+      gradient: 'from-emerald-500 to-green-500',
+      badge: null
+    },
+  ], []);
+
+  const candidateResourcesNav = useMemo<NavItemData[]>(() => [
+    {
+      id: 'documents',
+      label: 'Documents',
+      icon: FolderOpen,
+      path: '/candidate/documents',
+      gradient: 'from-slate-500 to-gray-500',
+      badge: null
+    },
+    {
+      id: 'messages',
+      label: 'Messages',
+      icon: MessageSquare,
+      path: '/candidate/messages',
+      gradient: 'from-blue-500 to-indigo-500',
       badge: null
     },
   ], []);
@@ -397,7 +485,7 @@ export function Sidebar({ currentPage: _currentPage, onNavigate: _onNavigate }: 
         {expandedSections.people && (
           <div className="space-y-1 animate-slide-in">
             {adminPeopleNav.map(item => (
-              <NavItem key={item.id} item={item} />
+              <NavItem key={item.id} item={item} onClose={onClose} />
             ))}
           </div>
         )}
@@ -415,7 +503,7 @@ export function Sidebar({ currentPage: _currentPage, onNavigate: _onNavigate }: 
         {expandedSections.finance && (
           <div className="space-y-1 animate-slide-in">
             {adminFinanceNav.map(item => (
-              <NavItem key={item.id} item={item} />
+              <NavItem key={item.id} item={item} onClose={onClose} />
             ))}
 
             <button
@@ -452,7 +540,7 @@ export function Sidebar({ currentPage: _currentPage, onNavigate: _onNavigate }: 
         {expandedSections.operations && (
           <div className="space-y-1 animate-slide-in">
             {adminOperationsNav.map(item => (
-              <NavItem key={item.id} item={item} />
+              <NavItem key={item.id} item={item} onClose={onClose} />
             ))}
           </div>
         )}
@@ -470,7 +558,7 @@ export function Sidebar({ currentPage: _currentPage, onNavigate: _onNavigate }: 
         {expandedSections.tools && (
           <div className="space-y-1 animate-slide-in">
             {adminToolsNav.map(item => (
-              <NavItem key={item.id} item={item} />
+              <NavItem key={item.id} item={item} onClose={onClose} />
             ))}
 
             <div className="space-y-1">
@@ -538,6 +626,25 @@ export function Sidebar({ currentPage: _currentPage, onNavigate: _onNavigate }: 
         {expandedSections.recruiter_candidates && (
           <div className="space-y-1 animate-slide-in">
             {recruiterCandidatesNav.map(item => (
+              <NavItem key={item.id} item={item} onClose={onClose} />
+            ))}
+          </div>
+        )}
+      </div>
+
+
+      <div className="space-y-1">
+        <button
+          onClick={() => toggleSection('recruiter_operations')}
+          className="w-full flex items-center gap-2 px-2 py-2 text-[11px] uppercase tracking-[0.15em] text-slate-500 hover:text-slate-400 transition-colors font-black group"
+        >
+          <div className="w-1 h-1 rounded-full bg-gradient-to-r from-violet-500 to-purple-500" />
+          <span className="flex-1 text-left">Recruitment Ops</span>
+          <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${expandedSections.recruiter_operations ? 'rotate-180' : ''}`} />
+        </button>
+        {expandedSections.recruiter_operations && (
+          <div className="space-y-1 animate-slide-in">
+            {recruiterOperationsNav.map(item => (
               <NavItem key={item.id} item={item} />
             ))}
           </div>
@@ -546,17 +653,17 @@ export function Sidebar({ currentPage: _currentPage, onNavigate: _onNavigate }: 
 
       <div className="space-y-1">
         <button
-          onClick={() => toggleSection('recruiter_operations')}
+          onClick={() => toggleSection('recruiter_self_service')}
           className="w-full flex items-center gap-2 px-2 py-2 text-[11px] uppercase tracking-[0.15em] text-slate-500 hover:text-slate-400 transition-colors font-black group"
         >
-          <div className="w-1 h-1 rounded-full bg-gradient-to-r from-sky-500 to-blue-500" />
-          <span className="flex-1 text-left">Operations</span>
-          <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${expandedSections.recruiter_operations ? 'rotate-180' : ''}`} />
+          <div className="w-1 h-1 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" />
+          <span className="flex-1 text-left">Analysis & Tools</span>
+          <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${expandedSections.recruiter_self_service ? 'rotate-180' : ''}`} />
         </button>
-        {expandedSections.recruiter_operations && (
+        {expandedSections.recruiter_self_service && (
           <div className="space-y-1 animate-slide-in">
-            {recruiterOperationsNav.map(item => (
-              <NavItem key={item.id} item={item} />
+            {recruiterSelfServiceNav.map(item => (
+              <NavItem key={item.id} item={item} onClose={onClose} />
             ))}
           </div>
         )}
@@ -584,6 +691,42 @@ export function Sidebar({ currentPage: _currentPage, onNavigate: _onNavigate }: 
         {expandedSections.candidate_main && (
           <div className="space-y-1 animate-slide-in">
             {candidateWorkNav.map(item => (
+              <NavItem key={item.id} item={item} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-1">
+        <button
+          onClick={() => toggleSection('candidate_finance')}
+          className="w-full flex items-center gap-2 px-2 py-2 text-[11px] uppercase tracking-[0.15em] text-slate-500 hover:text-slate-400 transition-colors font-black group"
+        >
+          <div className="w-1 h-1 rounded-full bg-gradient-to-r from-emerald-500 to-green-500" />
+          <span className="flex-1 text-left">Finance</span>
+          <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${expandedSections.candidate_finance ? 'rotate-180' : ''}`} />
+        </button>
+        {expandedSections.candidate_finance && (
+          <div className="space-y-1 animate-slide-in">
+            {candidateFinanceNav.map(item => (
+              <NavItem key={item.id} item={item} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-1">
+        <button
+          onClick={() => toggleSection('candidate_resources')}
+          className="w-full flex items-center gap-2 px-2 py-2 text-[11px] uppercase tracking-[0.15em] text-slate-500 hover:text-slate-400 transition-colors font-black group"
+        >
+          <div className="w-1 h-1 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500" />
+          <span className="flex-1 text-left">Resources</span>
+          <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${expandedSections.candidate_resources ? 'rotate-180' : ''}`} />
+        </button>
+        {expandedSections.candidate_resources && (
+          <div className="space-y-1 animate-slide-in">
+            {candidateResourcesNav.map(item => (
               <NavItem key={item.id} item={item} />
             ))}
           </div>

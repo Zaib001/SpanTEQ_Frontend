@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { 
-  X, Check, DollarSign, Calendar, CreditCard, FileText, 
+import {
+  X, Check, DollarSign, Calendar, CreditCard, FileText,
   AlertCircle, CheckCircle, Building2
 } from 'lucide-react';
+import FinanceService from '../../services/finance.service';
 
 interface RecordPaymentProps {
   invoiceId: string;
@@ -43,15 +44,15 @@ export function RecordPayment({
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!amountReceived || parseFloat(amountReceived) <= 0) {
       newErrors.amountReceived = 'Amount must be greater than 0';
     }
-    
+
     if (parseFloat(amountReceived) > outstanding) {
       newErrors.amountReceived = `Amount cannot exceed outstanding balance of ${formatCurrency(outstanding)}`;
     }
-    
+
     if (!receivedDate) {
       newErrors.receivedDate = 'Received date is required';
     }
@@ -63,11 +64,22 @@ export function RecordPayment({
   const handleSave = async () => {
     if (!validateForm()) return;
 
-    setSaving(true);
-
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setSaving(false);
-    onSuccess();
+    try {
+      setSaving(true);
+      await FinanceService.recordInvoicePayment(invoiceId, {
+        amountReceived: parseFloat(amountReceived),
+        receivedDate,
+        method,
+        referenceNumber,
+        notes
+      });
+      setSaving(false);
+      onSuccess();
+    } catch (err) {
+      console.error('Error recording payment:', err);
+      setSaving(false);
+      alert('Failed to record payment');
+    }
   };
 
   const amount = parseFloat(amountReceived) || 0;
@@ -80,7 +92,7 @@ export function RecordPayment({
       <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 animate-fade-in" onClick={onClose} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-6 overflow-y-auto">
         <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full my-8 animate-slide-in">
-          {}
+          { }
           <div className="p-6 border-b border-slate-200 flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-black text-slate-900">Record Payment</h2>
@@ -94,9 +106,9 @@ export function RecordPayment({
             </button>
           </div>
 
-          {}
+          { }
           <div className="p-6 space-y-6">
-            {}
+            { }
             <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 border border-purple-200 rounded-2xl p-6">
               <div className="flex items-center gap-2 mb-4">
                 <FileText className="w-5 h-5 text-purple-600" strokeWidth={2.5} />
@@ -130,9 +142,9 @@ export function RecordPayment({
               </div>
             </div>
 
-            {}
+            { }
             <div className="space-y-4">
-              {}
+              { }
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                   Amount Received <span className="text-red-500">*</span>
@@ -150,9 +162,8 @@ export function RecordPayment({
                       }
                     }}
                     placeholder="0.00"
-                    className={`w-full pl-12 pr-4 py-3 bg-slate-50 border-2 ${
-                      errors.amountReceived ? 'border-red-300' : 'border-slate-200'
-                    } rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 text-slate-900 font-bold text-lg`}
+                    className={`w-full pl-12 pr-4 py-3 bg-slate-50 border-2 ${errors.amountReceived ? 'border-red-300' : 'border-slate-200'
+                      } rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 text-slate-900 font-bold text-lg`}
                   />
                 </div>
                 {errors.amountReceived && (
@@ -163,7 +174,7 @@ export function RecordPayment({
                 )}
               </div>
 
-              {}
+              { }
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                   Received Date <span className="text-red-500">*</span>
@@ -179,9 +190,8 @@ export function RecordPayment({
                         setErrors({ ...errors, receivedDate: '' });
                       }
                     }}
-                    className={`w-full pl-12 pr-4 py-3 bg-slate-50 border-2 ${
-                      errors.receivedDate ? 'border-red-300' : 'border-slate-200'
-                    } rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 text-slate-900 font-semibold`}
+                    className={`w-full pl-12 pr-4 py-3 bg-slate-50 border-2 ${errors.receivedDate ? 'border-red-300' : 'border-slate-200'
+                      } rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 text-slate-900 font-semibold`}
                   />
                 </div>
                 {errors.receivedDate && (
@@ -192,7 +202,7 @@ export function RecordPayment({
                 )}
               </div>
 
-              {}
+              { }
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                   Payment Method
@@ -212,7 +222,7 @@ export function RecordPayment({
                 </div>
               </div>
 
-              {}
+              { }
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                   Reference Number
@@ -226,7 +236,7 @@ export function RecordPayment({
                 />
               </div>
 
-              {}
+              { }
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
                   Notes
@@ -241,7 +251,7 @@ export function RecordPayment({
               </div>
             </div>
 
-            {}
+            { }
             {amount > 0 && (
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
                 <div className="flex items-start gap-3">
@@ -259,7 +269,7 @@ export function RecordPayment({
             )}
           </div>
 
-          {}
+          { }
           <div className="p-6 border-t border-slate-200 flex items-center justify-end gap-3">
             <button
               onClick={onClose}

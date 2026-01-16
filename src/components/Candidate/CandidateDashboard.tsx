@@ -14,20 +14,23 @@ import type { Timesheet } from '../../services/timesheet.service';
 
 export function CandidateDashboard() {
     const [loading, setLoading] = useState(true);
+    const [dashboardData, setDashboardData] = useState<any>(null);
     const [submissions, setSubmissions] = useState<Submission[]>([]);
     const [timesheets, setTimesheets] = useState<Timesheet[]>([]);
+
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const [subs, sheets] = await Promise.all([
+                const [data, subs, sheets] = await Promise.all([
+                    CandidateService.getDashboard(),
                     CandidateService.getMySubmissions(),
                     CandidateService.getMyTimesheets()
                 ]);
+                setDashboardData(data);
                 setSubmissions(subs || []);
                 setTimesheets(sheets || []);
             } catch (err) {
-                void err;
                 console.error("Failed to fetch dashboard data", err);
             } finally {
                 setLoading(false);
@@ -38,19 +41,16 @@ export function CandidateDashboard() {
     }, []);
 
     const stats = useMemo(() => {
-        const activePlacements = submissions.filter(s => s.status === 'PLACED' || s.status === 'placed').length;
-        const pendingTimesheets = timesheets.filter(t => t.status === 'pending').length;
         const totalEarnings = timesheets.reduce((acc, curr) => acc + (curr.totalPay || 0), 0);
-
         return {
-            totalSubmissions: submissions.length,
-            activePlacements,
-            pendingTimesheets,
+            totalSubmissions: dashboardData?.submissions || 0,
+            approvedTimesheets: dashboardData?.approvedTimesheets || 0,
+            ptoBalance: dashboardData?.ptoBalance || 0,
+            ptoUsed: dashboardData?.ptoUsed || 0,
             totalEarnings,
-            submissionGrowth: 5.4,
-            placementGrowth: 0,
+            submissionGrowth: 5.4, // Placeholder/Demo logic maintained
         };
-    }, [submissions, timesheets]);
+    }, [dashboardData, timesheets]);
 
     const statusDistribution = useMemo(() => {
         const dist: Record<string, number> = {};
@@ -72,7 +72,6 @@ export function CandidateDashboard() {
     }, [submissions]);
 
     const activityData = useMemo(() => {
-
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const currentMonth = new Date().getMonth();
         const last6: { month: string, value: number }[] = [];
@@ -146,13 +145,11 @@ export function CandidateDashboard() {
 
     return (
         <div className="p-8 space-y-8">
-            {}
             <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
                 <div className="absolute top-20 right-20 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" />
                 <div className="absolute bottom-20 left-20 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" style={{ animationDelay: '2s' }} />
             </div>
 
-            {}
             <div className="relative">
                 <div className="relative flex items-center justify-between animate-slide-in">
                     <div>
@@ -164,7 +161,7 @@ export function CandidateDashboard() {
                                 </div>
                             </div>
                             <div>
-                                <h1 className="text-6xl font-bold text-gradient-premium mb-2">Candidate Portal</h1>
+                                <h1 className="text-6xl font-bold text-gradient-premium mb-2">Hello, {dashboardData?.name?.split(' ')[0] || 'Candidate'}</h1>
                                 <p className="text-slate-400 text-base flex items-center gap-3">
                                     <Sparkles className="w-4 h-4 text-blue-400" />
                                     Manage your career journey and timesheets
@@ -178,34 +175,33 @@ export function CandidateDashboard() {
                 </div>
             </div>
 
-            {}
             <div className="grid grid-cols-4 gap-6 animate-slide-in" style={{ animationDelay: '100ms' }}>
                 {[
                     {
-                        label: 'My Submissions',
+                        label: 'Total Submissions',
                         value: stats.totalSubmissions,
                         change: stats.submissionGrowth,
                         gradient: 'from-blue-500 via-cyan-500 to-sky-500',
                         icon: FileText,
-                        subtitle: 'In active pipeline',
+                        subtitle: 'In pipeline',
                         trend: 'up'
                     },
                     {
-                        label: 'Pending Timesheets',
-                        value: stats.pendingTimesheets,
+                        label: 'Approved Timesheets',
+                        value: stats.approvedTimesheets,
                         change: 0,
                         gradient: 'from-orange-500 via-amber-500 to-yellow-500',
                         icon: Clock,
-                        subtitle: 'Awaiting approval',
+                        subtitle: 'Processed',
                         trend: 'neutral'
                     },
                     {
-                        label: 'Active Placements',
-                        value: stats.activePlacements,
-                        change: stats.placementGrowth,
+                        label: 'PTO Balance',
+                        value: `${stats.ptoBalance} Days`,
+                        change: 0,
                         gradient: 'from-emerald-500 via-green-500 to-teal-500',
-                        icon: Award,
-                        subtitle: 'Current roles',
+                        icon: Award, // Could switch to Plane or Calendar if available, but staying consistent
+                        subtitle: `Used: ${stats.ptoUsed}`,
                         trend: 'up'
                     },
                     {
@@ -228,10 +224,6 @@ export function CandidateDashboard() {
                                     <div className={`p-3 bg-gradient-to-br ${stat.gradient} rounded-2xl transform group-hover:scale-110 transition-all duration-500 shadow-premium`}>
                                         <Icon className="w-6 h-6 text-white" />
                                     </div>
-                                    <div className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold ${stat.trend === 'up' ? 'bg-green-500/20 text-green-400' : 'bg-slate-500/20 text-slate-400'}`}>
-                                        <ChangeIcon className="w-3 h-3" />
-                                        {stat.change}%
-                                    </div>
                                 </div>
                                 <div>
                                     <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2">{stat.label}</p>
@@ -247,9 +239,9 @@ export function CandidateDashboard() {
                 })}
             </div>
 
-            {}
+            { }
             <div className="grid grid-cols-3 gap-6">
-                {}
+                { }
                 <div className="col-span-2 glass rounded-3xl p-8 animate-slide-in shadow-premium border border-white/10" style={{ animationDelay: '200ms' }}>
                     <div className="flex items-center justify-between mb-8">
                         <div>
@@ -286,9 +278,9 @@ export function CandidateDashboard() {
                     </ResponsiveContainer>
                 </div>
 
-                {}
+                { }
                 <div className="space-y-6">
-                    {}
+                    { }
                     <div className="glass rounded-3xl p-6 animate-slide-in shadow-premium border border-white/10" style={{ animationDelay: '250ms' }}>
                         <div className="mb-6">
                             <h2 className="text-xl font-bold text-slate-100 mb-2 flex items-center gap-2">
@@ -332,7 +324,7 @@ export function CandidateDashboard() {
                         </div>
                     </div>
 
-                    {}
+                    { }
                     <div className="glass rounded-3xl p-6 animate-slide-in shadow-premium border border-white/10" style={{ animationDelay: '300ms' }}>
                         <h3 className="text-lg font-bold text-slate-100 mb-4 flex items-center gap-2">
                             <Activity className="w-5 h-5 text-yellow-400" />

@@ -36,11 +36,20 @@ import { Payments } from "./components/Finance/Payments";
 import { RecruiterDashboard } from "./components/Recruiter/RecruiterDashboard";
 import { RecruiterCandidates } from "./components/Recruiter/RecruiterCandidates";
 import { RecruiterSubmissions } from "./components/Recruiter/RecruiterSubmissions";
-import { RecruiterTimesheets } from "./components/Recruiter/RecruiterTimesheets";
-import { RecruiterPTO } from "./components/Recruiter/RecruiterPTO";
+import { RecruiterMyTimesheets } from "./components/Recruiter/RecruiterMyTimesheets";
+import { RecruiterMyPTO } from "./components/Recruiter/RecruiterMyPTO";
+import { RecruiterInterviews } from './components/Recruiter/RecruiterInterviews';
+import { RecruiterDocuments } from './components/Recruiter/RecruiterDocuments';
+import { RecruiterPerformance } from './components/Recruiter/RecruiterPerformance';
+import { RecruiterHolidays } from './components/Recruiter/RecruiterHolidays';
+import { RecruiterMessages } from './components/Recruiter/RecruiterMessages';
 import { CandidateDashboard } from "./components/Candidate/CandidateDashboard";
 import { CandidateSubmissions } from "./components/Candidate/CandidateSubmissions";
 import { CandidateTimesheet } from "./components/Candidate/CandidateTimesheet";
+import { CandidateProfile } from './components/Candidate/CandidateProfile';
+import { CandidateDocuments } from './components/Candidate/CandidateDocuments';
+import { CandidateInterviews } from './components/Candidate/CandidateInterviews';
+import { CandidateSalary } from './components/Candidate/CandidateSalary';
 import { ProfilePage } from "./components/Shared/ProfilePage";
 import { SettingsPage } from "./components/Shared/SettingsPage";
 import "./styles/globals.css";
@@ -140,7 +149,7 @@ export default function App() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="settings" element={<SettingsPage />} />
 
-          {}
+          { }
           <Route path="finance" element={<FinanceLayout />}>
             <Route index element={<FinanceDashboard />} />
             <Route
@@ -160,27 +169,33 @@ export default function App() {
           </Route>
         </Route>
 
-        {}
+        { }
         <Route path="/recruiter" element={<AdminLayout />}>
-          <Route index element={<Navigate to="/recruiter/dashboard" replace />} />
           <Route path="dashboard" element={<RecruiterDashboard />} />
           <Route path="candidates" element={<RecruiterCandidates />} />
           <Route path="submissions" element={<RecruiterSubmissions />} />
-          <Route path="timesheets" element={<RecruiterTimesheets />} />
-          <Route path="timesheets" element={<RecruiterTimesheets />} />
-          <Route path="pto" element={<RecruiterPTO />} />
+          <Route path="interviews" element={<RecruiterInterviews />} />
+          <Route path="documents" element={<RecruiterDocuments />} />
+          <Route path="performance" element={<RecruiterPerformance />} />
+          <Route path="holidays" element={<RecruiterHolidays />} />
+          <Route path="messages" element={<RecruiterMessages />} />
+          <Route path="timesheets" element={<RecruiterMyTimesheets />} />
+          <Route path="pto" element={<RecruiterMyPTO />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
 
-        {}
+        { }
         <Route path="/candidate" element={<AdminLayout />}>
           <Route index element={<Navigate to="/candidate/dashboard" replace />} />
           <Route path="dashboard" element={<CandidateDashboard />} />
           <Route path="submissions" element={<CandidateSubmissions />} />
-          <Route path="submissions" element={<CandidateSubmissions />} />
           <Route path="timesheet" element={<CandidateTimesheet />} />
-          <Route path="profile" element={<ProfilePage />} />
+          <Route path="documents" element={<CandidateDocuments />} />
+          <Route path="interviews" element={<CandidateInterviews />} />
+          <Route path="messages" element={<MessagesPage />} />
+          <Route path="salary" element={<CandidateSalary />} />
+          <Route path="profile" element={<CandidateProfile />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>

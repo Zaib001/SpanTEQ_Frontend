@@ -13,13 +13,7 @@ export interface User {
         name: string;
         email: string;
     };
-
-    firstName?: string;
-    lastName?: string;
-    department?: string;
-    location?: string;
-    phone?: string;
-    permissions?: string[];
+    // Backend supported fields
     experience?: string;
     tech?: string;
     dob?: string;
@@ -29,13 +23,48 @@ export interface User {
     joiningDate?: string;
     payCycleChangeMonth?: number;
 
+    // Contract info from backend population
     currentContract?: {
+        _id: string;
         payType: string;
         baseRate: number;
+        bonusRate?: number;
         commissionShare: number;
         currency: string;
         active: boolean;
+        startDate: string;
+        endDate?: string;
     };
+
+    // UI-only or unsupported fields (optional for display if present in legacy data)
+    firstName?: string;
+    lastName?: string;
+    department?: string;
+    location?: string;
+    phone?: string;
+    permissions?: string[];
+}
+
+export interface PayContract {
+    _id: string;
+    user: string;
+    payType: string;
+    currency: string;
+    baseRate: number;
+    commissionShare?: number;
+    active: boolean;
+    startDate: string;
+    endDate?: string;
+    createdAt: string;
+}
+
+export interface CreateContractPayload {
+    payType: string;
+    currency: string;
+    baseRate: number;
+    commissionShare?: number;
+    startDate: string;
+    active?: boolean;
 }
 
 export interface UserStats {
@@ -59,26 +88,33 @@ export interface CreateUserPayload {
     email: string;
     password?: string;
     role: string;
-    department?: string;
-    location?: string;
-    phone?: string;
 
-    annualSalary?: number;
-    vendorBillRate?: number;
-    candidateShare?: number;
+    // Backend supported fields
+    experience?: string;
+    tech?: string;
+    dob?: string;
     currency?: string;
     ptoLimit?: number;
     workingDays?: number;
     joiningDate?: string;
     payCycleChangeMonth?: number;
-    assignedRecruiter?: string;
-    recruiterBonusEnabled?: boolean;
+    assignedRecruiter?: string; // ID
+    permissions?: string[];
 
+    // Salary/Contract fields (Flat structure for adminController)
+    annualSalary?: number;
+    vendorBillRate?: number;
+    candidateShare?: number; // mapped to commissionShare
+
+    // Unsupported fields explicitly allowed in payload for potential future support or ignoring
+    phone?: string;
+    department?: string;
+    location?: string;
+    recruiterBonusEnabled?: boolean;
 }
 
 export interface UpdateUserPayload extends Partial<CreateUserPayload> {
     status?: 'active' | 'inactive';
-    permissions?: string[];
 }
 
 export interface GetUsersParams {
@@ -149,6 +185,42 @@ export const UserService = {
 
     async toggleVerification(id: string): Promise<{ success: boolean; message: string; isVerified: boolean }> {
         const response = await apiClient.patch(`/api/admin/users/${id}/verify`);
+        return response.data;
+    },
+
+    async toggleStatus(id: string): Promise<{ success: boolean; message: string; status: 'active' | 'inactive' }> {
+        const response = await apiClient.patch(`/api/admin/users/${id}/toggle-status`);
+        return response.data;
+    },
+
+    async assignPermissions(id: string, permissions: string[]): Promise<{ success: boolean; message: string; user: User }> {
+        const response = await apiClient.patch(`/api/admin/users/${id}/permissions`, { permissions });
+        return response.data;
+    },
+
+    // Salary Contract APIs
+    async getSalaryHistory(userId: string): Promise<{ success: boolean; contracts: PayContract[] }> {
+        const response = await apiClient.get(`/api/admin/users/${userId}/salary-history`);
+        return response.data;
+    },
+
+    async getCurrentContract(userId: string): Promise<{ success: boolean; contract: PayContract }> {
+        const response = await apiClient.get(`/api/admin/users/${userId}/current-contract`);
+        return response.data;
+    },
+
+    async createSalaryContract(userId: string, data: CreateContractPayload): Promise<{ success: boolean; contract: PayContract }> {
+        const response = await apiClient.post(`/api/admin/users/${userId}/salary-contracts`, data);
+        return response.data;
+    },
+
+    async updateSalaryContract(userId: string, contractId: string, data: Partial<CreateContractPayload>): Promise<{ success: boolean; contract: PayContract }> {
+        const response = await apiClient.put(`/api/admin/users/${userId}/salary-contracts/${contractId}`, data);
+        return response.data;
+    },
+
+    async deleteSalaryContract(userId: string, contractId: string): Promise<{ success: boolean; message: string }> {
+        const response = await apiClient.delete(`/api/admin/users/${userId}/salary-contracts/${contractId}`);
         return response.data;
     },
 

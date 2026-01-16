@@ -73,8 +73,8 @@ export function DocumentRequests() {
     };
 
     const filteredRequests = requests.filter(req => {
-        if (filters.candidate && !req.requestedFrom.name.toLowerCase().includes(filters.candidate.toLowerCase())) return false;
-        if (filters.requestedBy && !req.requestedBy.name.toLowerCase().includes(filters.requestedBy.toLowerCase())) return false;
+        if (filters.candidate && !req.requestedFrom?.name?.toLowerCase().includes(filters.candidate.toLowerCase())) return false;
+        if (filters.requestedBy && !req.requestedBy?.name?.toLowerCase().includes(filters.requestedBy.toLowerCase())) return false;
         if (filters.documentType && req.type !== filters.documentType) return false;
         if (filters.status && req.status !== filters.status) return false;
         return true;
@@ -84,7 +84,7 @@ export function DocumentRequests() {
         switch (status) {
             case 'PENDING': return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
             case 'UPLOADED': return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
-            case 'REVIEWED': return 'bg-green-500/20 text-green-300 border-green-500/30';
+            case 'APPROVED': return 'bg-green-500/20 text-green-300 border-green-500/30';
             case 'REJECTED': return 'bg-red-500/20 text-red-300 border-red-500/30';
             default: return 'bg-slate-500/20 text-slate-300 border-slate-500/30';
         }
@@ -101,7 +101,7 @@ export function DocumentRequests() {
 
     return (
         <div className="p-8 space-y-6">
-            {}
+            { }
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <div className="w-14 h-14 bg-gradient-to-br from-purple-500 via-blue-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-glow-purple">
@@ -128,7 +128,7 @@ export function DocumentRequests() {
                 </div>
             )}
 
-            {}
+            { }
             <div className="glass rounded-2xl p-6 border border-white/10">
                 <div className="flex items-center gap-3 mb-4">
                     <Filter className="w-5 h-5 text-purple-400" />
@@ -169,13 +169,13 @@ export function DocumentRequests() {
                         <option value="">All Statuses</option>
                         <option value="PENDING">Pending</option>
                         <option value="UPLOADED">Uploaded</option>
-                        <option value="REVIEWED">Reviewed</option>
+                        <option value="APPROVED">Approved</option>
                         <option value="REJECTED">Rejected</option>
                     </select>
                 </div>
             </div>
 
-            {}
+            { }
             <div className="glass rounded-2xl border border-white/10 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
@@ -194,12 +194,12 @@ export function DocumentRequests() {
                                 <tr key={request._id} className="hover:bg-white/5 transition-colors">
                                     <td className="px-6 py-4">
                                         <div className="flex flex-col">
-                                            <span className="text-slate-200 font-medium">{request.requestedFrom.name}</span>
-                                            <span className="text-xs text-slate-500">{request.requestedFrom.email}</span>
+                                            <span className="text-slate-200 font-medium">{request.requestedFrom?.name || 'Unknown Candidate'}</span>
+                                            <span className="text-xs text-slate-500">{request.requestedFrom?.email || 'No Email'}</span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="text-slate-400 text-sm">{request.requestedBy.name}</span>
+                                        <span className="text-slate-400 text-sm">{request.requestedBy?.name || 'Unknown User'}</span>
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-lg text-xs font-medium border border-purple-500/30">
@@ -221,7 +221,7 @@ export function DocumentRequests() {
                                             <button className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors">
                                                 <Eye className="w-4 h-4" />
                                             </button>
-                                            {request.status === 'UPLOADED' || request.status === 'REVIEWED' ? (
+                                            {request.status === 'UPLOADED' || request.status === 'APPROVED' ? (
                                                 <button
                                                     onClick={() => DocumentService.downloadFile(request._id)}
                                                     className="p-2 text-green-400 hover:bg-green-500/10 rounded-lg transition-colors"
@@ -238,7 +238,7 @@ export function DocumentRequests() {
                 </div>
             </div>
 
-            {}
+            { }
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
                     <div className="glass rounded-2xl border border-white/10 max-w-lg w-full shadow-premium">

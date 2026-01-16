@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
-import { 
-  ArrowRight, Users, FileText, DollarSign, Clock, Shield, Zap, Sparkles, 
-  CheckCircle, TrendingUp, Award, Briefcase, Calendar, BarChart3, 
-  Play, Layers, ArrowUpRight, Target, Rocket, Brain, HeartHandshake, 
+import {
+  ArrowRight, Users, FileText, DollarSign, Clock, Shield, Zap, Sparkles,
+  CheckCircle, TrendingUp, Award, Briefcase, Calendar, BarChart3,
+  Play, Layers, ArrowUpRight, Target, Rocket, Brain, HeartHandshake,
   Lightbulb, Code2, Workflow, ChevronRight, Building2, Trophy, Activity,
   Gauge, Boxes, Network, Database, Cpu, GitBranch, Infinity
 } from 'lucide-react';
@@ -37,10 +37,10 @@ export function HomePage() {
 
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
-      {}
+      { }
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {}
-        <div 
+        { }
+        <div
           className="absolute w-[1000px] h-[1000px] rounded-full opacity-30 blur-3xl transition-all duration-1000"
           style={{
             background: 'radial-gradient(circle, rgba(168,85,247,0.4) 0%, rgba(59,130,246,0.2) 50%, transparent 70%)',
@@ -49,7 +49,7 @@ export function HomePage() {
             transform: `rotate(${mousePosition.x / 50}deg)`,
           }}
         />
-        <div 
+        <div
           className="absolute w-[800px] h-[800px] rounded-full opacity-25 blur-3xl"
           style={{
             background: 'radial-gradient(circle, rgba(236,72,153,0.4) 0%, rgba(251,146,60,0.2) 50%, transparent 70%)',
@@ -58,8 +58,8 @@ export function HomePage() {
             animation: 'float 25s ease-in-out infinite',
           }}
         />
-        
-        {}
+
+        { }
         <div className="absolute inset-0 opacity-[0.02]">
           <svg width="100%" height="100%">
             <defs>
@@ -75,8 +75,8 @@ export function HomePage() {
           </svg>
         </div>
 
-        {}
-        <div 
+        { }
+        <div
           className="absolute w-[600px] h-[600px] rounded-full opacity-20 blur-3xl"
           style={{
             background: 'radial-gradient(circle, rgba(59,130,246,0.6) 0%, transparent 70%)',
@@ -88,12 +88,12 @@ export function HomePage() {
         />
       </div>
 
-      {}
+      { }
       <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-500">
         <div className="relative">
           <div className="absolute inset-0 bg-white/80 backdrop-blur-2xl rounded-2xl border border-slate-200/50 shadow-2xl shadow-slate-900/10" />
           <div className="relative px-6 py-4 flex items-center gap-8">
-            <div 
+            <div
               className="flex items-center gap-3 cursor-pointer group"
               onClick={() => navigate('/')}
             >
@@ -107,7 +107,7 @@ export function HomePage() {
                 SpanTeq
               </div>
             </div>
-            
+
             <div className="flex items-center gap-1">
               {['Features', 'Solutions', 'About'].map((item) => (
                 <a
@@ -119,7 +119,7 @@ export function HomePage() {
                 </a>
               ))}
             </div>
-            
+
             <button
               onClick={() => navigate('/login')}
               className="group relative px-6 py-2.5 bg-slate-900 text-white rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/25"
@@ -134,13 +134,13 @@ export function HomePage() {
         </div>
       </nav>
 
-      {}
+      { }
       <section ref={heroRef} className="relative pt-48 pb-40">
         <div className="max-w-7xl mx-auto px-8">
           <div className="grid lg:grid-cols-2 gap-24 items-center">
-            {}
+            { }
             <div className="space-y-10 animate-slide-in">
-              {}
+              { }
               <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-50 via-blue-50 to-pink-50 border border-purple-200/50 rounded-full shadow-xl shadow-purple-500/10">
                 <div className="relative flex items-center gap-2">
                   <div className="relative">
@@ -155,7 +155,7 @@ export function HomePage() {
                 <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Next-Gen Platform</span>
               </div>
 
-              {}
+              { }
               <div className="space-y-6">
                 <h1 className="text-7xl lg:text-8xl font-black leading-[0.95] tracking-tighter">
                   <span className="text-slate-900 block" style={{ textShadow: '2px 2px 0px rgba(0,0,0,0.03)' }}>
@@ -166,9 +166,9 @@ export function HomePage() {
                   </span>
                   <span className="relative inline-block mt-2">
                     <span className="absolute inset-0 bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 blur-3xl opacity-40 animate-pulse-glow" />
-                    <span 
+                    <span
                       className="relative bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 bg-clip-text text-transparent"
-                      style={{ 
+                      style={{
                         WebkitTextStroke: '1px transparent',
                         paintOrder: 'stroke fill',
                       }}
@@ -177,14 +177,14 @@ export function HomePage() {
                     </span>
                   </span>
                 </h1>
-                
+
                 <p className="text-2xl text-slate-600 leading-relaxed max-w-xl font-medium">
-                  Transform chaos into clarity. Automate the mundane. 
+                  Transform chaos into clarity. Automate the mundane.
                   <span className="text-slate-900 font-bold"> Amplify what matters.</span>
                 </p>
               </div>
 
-              {}
+              { }
               <div className="flex flex-wrap gap-4">
                 <button
                   onClick={() => navigate('/login')}
@@ -199,7 +199,7 @@ export function HomePage() {
                     <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" strokeWidth={2.5} />
                   </span>
                 </button>
-                
+
                 <button className="group px-10 py-5 bg-white border-2 border-slate-200 text-slate-900 rounded-2xl font-bold hover:border-slate-300 hover:shadow-2xl hover:shadow-slate-900/10 transition-all duration-300 flex items-center gap-3">
                   <div className="w-12 h-12 -ml-2 bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                     <Play className="w-5 h-5 text-purple-600" strokeWidth={2.5} />
@@ -208,7 +208,7 @@ export function HomePage() {
                 </button>
               </div>
 
-              {}
+              { }
               <div className="flex flex-wrap gap-3 pt-4">
                 {[
                   { icon: Zap, label: 'Instant Setup', gradient: 'from-yellow-500 to-orange-500' },
@@ -232,10 +232,10 @@ export function HomePage() {
               </div>
             </div>
 
-            {}
+            { }
             <div className="relative animate-slide-in perspective-1000" style={{ animationDelay: '200ms' }}>
-              {}
-              <div 
+              { }
+              <div
                 className="relative"
                 style={{
                   transform: `rotateX(${scrollY / 100}deg) rotateY(${mousePosition.x / 100 - 5}deg)`,
@@ -243,7 +243,7 @@ export function HomePage() {
                   transition: 'transform 0.1s ease-out',
                 }}
               >
-                {}
+                { }
                 {[...Array(8)].map((_, i) => (
                   <div
                     key={i}
@@ -257,12 +257,12 @@ export function HomePage() {
                   />
                 ))}
 
-                {}
+                { }
                 <div className="relative bg-white border border-slate-200/50 rounded-3xl overflow-hidden shadow-2xl shadow-slate-900/20 transform hover:scale-[1.02] transition-all duration-700">
-                  {}
+                  { }
                   <div className="relative bg-gradient-to-r from-purple-600 via-blue-600 to-pink-600 p-10">
                     <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjAzIiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30" />
-                    
+
                     <div className="relative flex items-center justify-between mb-8">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-white/20 backdrop-blur-2xl rounded-2xl border border-white/30 flex items-center justify-center transform hover:rotate-12 transition-transform duration-300">
@@ -283,7 +283,7 @@ export function HomePage() {
                       </div>
                     </div>
 
-                    {}
+                    { }
                     <div className="relative grid grid-cols-3 gap-4">
                       {[
                         { icon: Users, value: '247', label: 'Active', change: '+12%', color: 'emerald' },
@@ -292,7 +292,7 @@ export function HomePage() {
                       ].map((stat, i) => {
                         const Icon = stat.icon;
                         return (
-                          <div 
+                          <div
                             key={i}
                             className="group relative bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl p-6 hover:bg-white/20 hover:scale-105 transition-all duration-500 cursor-pointer"
                           >
@@ -310,7 +310,7 @@ export function HomePage() {
                     </div>
                   </div>
 
-                  {}
+                  { }
                   <div className="relative p-10 bg-gradient-to-b from-slate-50 via-white to-slate-50">
                     <div className="flex items-center justify-between mb-6">
                       <div>
@@ -322,14 +322,14 @@ export function HomePage() {
                         <span className="text-xs font-black text-emerald-700 uppercase tracking-wider">Live</span>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-end justify-between gap-2.5 h-48">
                       {[55, 70, 60, 85, 65, 95, 75, 88, 70, 92, 80, 100].map((height, i) => (
                         <div
                           key={i}
                           className="group flex-1 relative cursor-pointer"
                         >
-                          <div 
+                          <div
                             className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-purple-600 via-blue-600 to-pink-600 rounded-t-2xl transition-all duration-700 hover:scale-110"
                             style={{
                               height: `${height}%`,
@@ -349,10 +349,10 @@ export function HomePage() {
                   </div>
                 </div>
 
-                {}
-                <div 
+                { }
+                <div
                   className="absolute -top-10 -left-10 z-20 animate-float"
-                  style={{ 
+                  style={{
                     transform: `translateY(${scrollY * 0.05}px) translateZ(50px)`,
                     transformStyle: 'preserve-3d',
                   }}
@@ -370,9 +370,9 @@ export function HomePage() {
                   </div>
                 </div>
 
-                <div 
+                <div
                   className="absolute -bottom-10 -right-10 z-20 animate-float"
-                  style={{ 
+                  style={{
                     animationDelay: '1s',
                     transform: `translateY(${-scrollY * 0.05}px) translateZ(50px)`,
                     transformStyle: 'preserve-3d',
@@ -392,17 +392,17 @@ export function HomePage() {
                 </div>
               </div>
 
-              {}
+              { }
               <div className="absolute -inset-20 bg-gradient-to-br from-purple-500/10 via-blue-500/10 to-pink-500/10 rounded-full blur-3xl -z-10 animate-pulse-glow" />
             </div>
           </div>
         </div>
       </section>
 
-      {}
+      { }
       <section id="features" className="relative py-40 bg-gradient-to-b from-slate-50 to-white">
         <div className="max-w-7xl mx-auto px-8">
-          {}
+          { }
           <div className="text-center mb-24">
             <div className="inline-flex items-center gap-3 px-6 py-3 bg-white border border-slate-200 rounded-full shadow-xl shadow-slate-900/5 mb-8">
               <div className="w-2 h-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full animate-pulse" />
@@ -419,9 +419,9 @@ export function HomePage() {
             </p>
           </div>
 
-          {}
+          { }
           <div className="grid md:grid-cols-12 gap-6">
-            {}
+            { }
             <div className="md:col-span-8 md:row-span-2 group relative bg-slate-900 rounded-3xl p-12 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-600/30 via-blue-600/20 to-pink-600/30 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
               <div className="absolute inset-0 opacity-10">
@@ -430,7 +430,7 @@ export function HomePage() {
                   backgroundSize: '40px 40px',
                 }} />
               </div>
-              
+
               <div className="relative z-10">
                 <div className="flex items-start justify-between mb-10">
                   <div>
@@ -444,7 +444,7 @@ export function HomePage() {
                       Timesheet Engine
                     </h3>
                     <p className="text-xl text-slate-300 max-w-2xl leading-relaxed font-medium">
-                      Automated workflows that transform hours of manual work into seconds of precision. 
+                      Automated workflows that transform hours of manual work into seconds of precision.
                       Built for scale, designed for simplicity.
                     </p>
                   </div>
@@ -462,7 +462,7 @@ export function HomePage() {
                   ].map((metric, i) => {
                     const Icon = metric.icon;
                     return (
-                      <div 
+                      <div
                         key={i}
                         className="group/card relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:bg-white/10 hover:border-white/20 hover:scale-105 transition-all duration-500 cursor-pointer"
                       >
@@ -478,7 +478,7 @@ export function HomePage() {
               </div>
             </div>
 
-            {}
+            { }
             {[
               {
                 icon: FileText,
@@ -520,14 +520,14 @@ export function HomePage() {
                   className="md:col-span-4 group relative bg-white border border-slate-200 rounded-3xl p-8 hover:border-slate-300 hover:shadow-2xl hover:shadow-slate-900/10 hover:-translate-y-1 transition-all duration-500 overflow-hidden"
                 >
                   <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
-                  
+
                   <div className={`w-16 h-16 bg-gradient-to-br ${feature.gradient} rounded-2xl flex items-center justify-center mb-6 shadow-xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-500`}>
                     <Icon className="w-8 h-8 text-white" strokeWidth={2.5} />
                   </div>
-                  
+
                   <h3 className="text-2xl font-black text-slate-900 mb-3">{feature.title}</h3>
                   <p className="text-slate-600 leading-relaxed font-medium mb-6">{feature.description}</p>
-                  
+
                   <div className="flex items-end justify-between pt-4 border-t border-slate-100">
                     <div>
                       <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{feature.metricLabel}</div>
@@ -544,7 +544,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {}
+      { }
       <section className="relative py-40">
         <div className="max-w-7xl mx-auto px-8">
           <div className="text-center mb-20">
@@ -558,7 +558,7 @@ export function HomePage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
-            {}
+            { }
             <div className="group relative bg-slate-900 rounded-3xl p-12 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-blue-600/20 to-pink-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
               <div className="absolute inset-0 opacity-5">
@@ -567,7 +567,7 @@ export function HomePage() {
                   backgroundSize: '30px 30px',
                 }} />
               </div>
-              
+
               <div className="relative z-10">
                 <div className="flex items-center gap-4 mb-8">
                   <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-xl">
@@ -578,7 +578,7 @@ export function HomePage() {
                     <p className="text-sm text-slate-400 font-semibold">From timesheet submission to final payment—fully automated, zero friction.</p>
                   </div>
                 </div>
-                
+
                 <div className="space-y-4">
                   {[
                     { step: 'Submit', desc: 'Timesheet', color: 'purple' },
@@ -592,9 +592,9 @@ export function HomePage() {
                       </div>
                       <div className="flex-1">
                         <div className="h-3 bg-white/10 rounded-full overflow-hidden">
-                          <div 
+                          <div
                             className={`h-full bg-gradient-to-r from-${item.color}-500 via-${item.color}-400 to-${item.color}-300 rounded-full transition-all duration-1000`}
-                            style={{ 
+                            style={{
                               width: activeWorkflow >= i ? '100%' : '0%',
                               transition: 'width 1.5s ease-out'
                             }}
@@ -611,7 +611,7 @@ export function HomePage() {
               </div>
             </div>
 
-            {}
+            { }
             <div className="bg-white border border-slate-200 rounded-3xl p-12 hover:border-slate-300 hover:shadow-2xl hover:shadow-slate-900/10 transition-all duration-500">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-xl">
@@ -622,7 +622,7 @@ export function HomePage() {
                   <p className="text-sm text-slate-600 font-semibold">Live data, instant insights, actionable analytics—always at your fingertips.</p>
                 </div>
               </div>
-              
+
               <div className="space-y-6">
                 {[
                   { label: 'Processing Speed', value: '<1min', gradientText: 'from-violet-600 to-purple-700', gradientBar: 'from-violet-500 to-purple-600', bgBar: 'bg-violet-100', progress: 95 },
@@ -638,7 +638,7 @@ export function HomePage() {
                       </span>
                     </div>
                     <div className={`h-3 ${metric.bgBar} rounded-full overflow-hidden`}>
-                      <div 
+                      <div
                         className={`h-full bg-gradient-to-r ${metric.gradientBar} rounded-full transition-all duration-1000 shadow-lg`}
                         style={{ width: `${metric.progress}%` }}
                       />
@@ -651,7 +651,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {}
+      { }
       <section id="about" className="relative py-40 bg-gradient-to-b from-white via-slate-50 to-white overflow-hidden">
         <div className="absolute inset-0 opacity-30">
           <div className="absolute inset-0" style={{
@@ -661,7 +661,7 @@ export function HomePage() {
         </div>
 
         <div className="relative max-w-7xl mx-auto px-8">
-          {}
+          { }
           <div className="text-center mb-24">
             <div className="inline-flex items-center gap-3 px-6 py-3 bg-white border border-slate-200 rounded-full shadow-xl shadow-slate-900/5 mb-8">
               <HeartHandshake className="w-4 h-4 text-purple-600" strokeWidth={2.5} />
@@ -675,11 +675,11 @@ export function HomePage() {
             </h2>
           </div>
 
-          {}
+          { }
           <div className="relative grid lg:grid-cols-3 gap-8 mb-24">
-            {}
+            { }
             <div className="hidden lg:block absolute top-20 left-[16.66%] right-[16.66%] h-1 bg-gradient-to-r from-amber-300 via-blue-300 to-purple-300 opacity-20" />
-            
+
             {[
               {
                 icon: Lightbulb,
@@ -713,7 +713,7 @@ export function HomePage() {
                   className="group relative bg-white border border-slate-200 rounded-3xl p-10 hover:border-slate-300 hover:shadow-2xl hover:shadow-slate-900/10 hover:-translate-y-2 transition-all duration-500"
                 >
                   <div className={`absolute inset-0 bg-gradient-to-br ${story.accent} opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl`} />
-                  
+
                   <div className="relative">
                     <div className="flex items-start justify-between mb-8">
                       <div className={`w-20 h-20 bg-gradient-to-br ${story.gradient} rounded-3xl flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-500`}>
@@ -731,13 +731,13 @@ export function HomePage() {
             })}
           </div>
 
-          {}
+          { }
           <div className="relative bg-slate-900 rounded-3xl p-20 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-blue-600/20 to-pink-600/20" />
             <div className="absolute inset-0" style={{
               backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(139,92,246,0.2), transparent 50%), radial-gradient(circle at 80% 80%, rgba(59,130,246,0.2), transparent 50%)',
             }} />
-            
+
             <div className="relative z-10 max-w-4xl mx-auto text-center">
               <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl flex items-center justify-center mx-auto mb-10 shadow-2xl">
                 <Target className="w-10 h-10 text-white" strokeWidth={2.5} />
@@ -748,7 +748,7 @@ export function HomePage() {
                 Empower recruitment excellence.
               </h3>
               <p className="text-2xl text-slate-300 leading-relaxed font-medium">
-                We believe the future of recruitment operations is <span className="text-white font-bold">automated</span>, 
+                We believe the future of recruitment operations is <span className="text-white font-bold">automated</span>,
                 <span className="text-white font-bold"> intelligent</span>, and <span className="text-white font-bold">beautifully simple</span>.
               </p>
             </div>
@@ -756,10 +756,10 @@ export function HomePage() {
         </div>
       </section>
 
-      {}
+      { }
       <section id="solutions" className="relative py-40">
         <div className="max-w-7xl mx-auto px-8">
-          {}
+          { }
           <div className="text-center mb-24">
             <div className="inline-flex items-center gap-3 px-6 py-3 bg-white border border-slate-200 rounded-full shadow-xl shadow-slate-900/5 mb-8">
               <Building2 className="w-4 h-4 text-purple-600" strokeWidth={2.5} />
@@ -773,7 +773,7 @@ export function HomePage() {
             </h2>
           </div>
 
-          {}
+          { }
           <div className="grid lg:grid-cols-3 gap-8">
             {[
               {
@@ -825,7 +825,7 @@ export function HomePage() {
                   key={i}
                   className="group bg-white border border-slate-200 rounded-3xl overflow-hidden hover:border-slate-300 hover:shadow-2xl hover:shadow-slate-900/10 hover:-translate-y-2 transition-all duration-500"
                 >
-                  {}
+                  { }
                   <div className={`relative bg-gradient-to-br ${solution.bgGradient} p-10 border-b border-slate-200`}>
                     <div className={`w-20 h-20 bg-gradient-to-br ${solution.gradient} rounded-3xl flex items-center justify-center shadow-2xl mb-8 group-hover:scale-110 group-hover:rotate-12 transition-all duration-500`}>
                       <Icon className="w-10 h-10 text-white" strokeWidth={2.5} />
@@ -835,7 +835,7 @@ export function HomePage() {
                     <p className="text-slate-600 leading-relaxed font-medium text-lg">{solution.description}</p>
                   </div>
 
-                  {}
+                  { }
                   <div className="p-10">
                     <div className="space-y-4 mb-8">
                       {solution.features.map((feature, j) => (
@@ -859,7 +859,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {}
+      { }
       <section className="relative py-40">
         <div className="max-w-6xl mx-auto px-8">
           <div className="relative bg-slate-900 rounded-3xl p-24 overflow-hidden">
@@ -867,7 +867,7 @@ export function HomePage() {
             <div className="absolute inset-0" style={{
               backgroundImage: 'radial-gradient(circle at 30% 20%, rgba(139,92,246,0.3), transparent 40%), radial-gradient(circle at 70% 60%, rgba(59,130,246,0.3), transparent 40%), radial-gradient(circle at 50% 80%, rgba(236,72,153,0.3), transparent 40%)',
             }} />
-            
+
             <div className="relative z-10 text-center space-y-12">
               <div className="inline-block">
                 <div className="relative">
@@ -875,7 +875,7 @@ export function HomePage() {
                   <Rocket className="relative w-24 h-24 text-white mx-auto" strokeWidth={2} />
                 </div>
               </div>
-              
+
               <div>
                 <h2 className="text-6xl lg:text-7xl font-black text-white mb-8 leading-tight tracking-tighter">
                   Ready to transform
@@ -886,7 +886,7 @@ export function HomePage() {
                   Join the future of recruitment operations management
                 </p>
               </div>
-              
+
               <div className="flex flex-wrap justify-center gap-6">
                 <button
                   onClick={() => navigate('/login')}
@@ -924,11 +924,11 @@ export function HomePage() {
         </div>
       </section>
 
-      {}
+      { }
       <footer className="relative border-t border-slate-200 bg-white py-24">
         <div className="max-w-7xl mx-auto px-8">
           <div className="grid md:grid-cols-4 gap-16 mb-20">
-            {}
+            { }
             <div className="md:col-span-2">
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-600 via-blue-600 to-pink-600 rounded-2xl flex items-center justify-center shadow-xl">
@@ -947,8 +947,8 @@ export function HomePage() {
                 <span className="text-sm font-black text-emerald-900">SOC 2 Type II Certified</span>
               </div>
             </div>
-            
-            {}
+
+            { }
             {[
               { title: 'Product', links: ['Features', 'Solutions', 'Security', 'Integrations'] },
               { title: 'Company', links: ['About', 'Careers', 'Contact', 'Blog'] },
@@ -968,7 +968,7 @@ export function HomePage() {
               </div>
             ))}
           </div>
-          
+
           <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-slate-500 font-bold">
               &copy; 2025 SpanTeq. All rights reserved.

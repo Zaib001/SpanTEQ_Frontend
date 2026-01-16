@@ -8,7 +8,6 @@ export function RecruiterDashboard() {
     const [stats, setStats] = useState({
         activeCandidates: 0,
         totalSubmissions: 0,
-        pendingTimesheets: 0,
         activePlacements: 0,
         interviewing: 0,
         submissionGrowth: 12.5,
@@ -24,22 +23,50 @@ export function RecruiterDashboard() {
         const fetchData = async () => {
             try {
                 setLoading(true);
+                // Fetch core dashboard data
                 const data = await RecruiterService.getDashboardStats();
+                console.log(data);
 
-                setStats(prev => ({
-                    ...prev,
-                    activeCandidates: data.stats.activeCandidates,
-                    totalSubmissions: data.stats.totalSubmissions,
-                    pendingTimesheets: data.stats.pendingApprovals,
-                    activePlacements: data.stats.placements,
+                // Fetch detailed stats (for changes/growth)
+                const detailedStats = await RecruiterService.getDashboardStatsDetails();
 
-                }));
+                // Fetch chart data
+                const chartData = await RecruiterService.getDashboardCharts();
 
-                if (data.recentSubmissions) {
-                    const activity = data.recentSubmissions.map((s: any) => ({
-                        id: s.id,
+                // Fetch actual submissions to ensure consistent counting (Ownership-aware)
+                const submissionsList = await RecruiterService.getSubmissions();
+
+                if (data?.stats) {
+                    setStats(prev => ({
+                        ...prev,
+                        activeCandidates: data.stats.activeCandidates || 0,
+                        totalSubmissions: submissionsList.length, // Use actual count from list
+                        activePlacements: data.stats.placements || 0,
+                        interviewing: data.stats.clientInterviews || 0,
+                    }));
+                }
+
+                // If detailed stats provide growth data, update it
+                if (detailedStats?.stats) {
+                    // Update growth percentages if provided by backend
+                }
+
+                if (submissionsList.length > 0) {
+                    const activity = submissionsList.slice(0, 5).map((s: any) => ({
+                        id: s._id,
                         type: 'submission',
-                        text: `Submitted ${s.candidate?.name || 'Candidate'} to ${s.client || 'Client'}`,
+                        text: `Submitted ${typeof s.candidate === 'object' ? s.candidate.name : s.candidate || 'Candidate'} to ${s.client || 'Client'}`,
+                        time: new Date(s.submissionDate || s.date || s.createdAt || Date.now()).toLocaleDateString(),
+                        icon: FileText,
+                        color: 'from-blue-500 to-cyan-500',
+                        status: s.status
+                    }));
+                    setRecentActivity(activity);
+                } else if (data?.recentSubmissions) {
+                    const activity = data.recentSubmissions.map((s: any) => ({
+                        id: s.id || s._id,
+                        type: 'submission',
+                        text: `Submitted ${s.candidate?.name || s.candidate || 'Candidate'} to ${s.client || 'Client'}`,
                         time: new Date(s.date || s.createdAt || Date.now()).toLocaleDateString(),
                         icon: FileText,
                         color: 'from-blue-500 to-cyan-500',
@@ -48,7 +75,31 @@ export function RecruiterDashboard() {
                     setRecentActivity(activity);
                 }
 
-                if (data.statusDistribution) {
+                // Calculate status distribution from the actual submissions list
+                if (submissionsList.length > 0) {
+                    const distribution: Record<string, number> = {};
+                    submissionsList.forEach((s: any) => {
+                        const status = s.status || 'SUBMITTED';
+                        distribution[status] = (distribution[status] || 0) + 1;
+                    });
+
+                    const pieData = Object.entries(distribution).map(([status, count]) => {
+                        const key = status.toLowerCase();
+                        let color = '#94a3b8';
+                        if (key.includes('submitted')) color = '#3b82f6';
+                        if (key.includes('interview')) color = '#a855f7';
+                        if (key.includes('placed')) color = '#10b981';
+                        if (key.includes('rejected')) color = '#ef4444';
+                        if (key.includes('offered')) color = '#06b6d4';
+
+                        return {
+                            name: status.charAt(0).toUpperCase() + status.slice(1).toLowerCase(),
+                            value: count,
+                            color
+                        };
+                    });
+                    setSubmissionStatusData(pieData);
+                } else if (data?.statusDistribution) {
                     const pieData = data.statusDistribution.map((item: any) => {
                         const key = item.status.toLowerCase();
                         let color = '#94a3b8';
@@ -67,14 +118,19 @@ export function RecruiterDashboard() {
                     setSubmissionStatusData(pieData);
                 }
 
-                setRevenueData([
-                    { month: 'Jan', value: 4000 },
-                    { month: 'Feb', value: 3000 },
-                    { month: 'Mar', value: 5000 },
-                    { month: 'Apr', value: 4500 },
-                    { month: 'May', value: 6000 },
-                    { month: 'Jun', value: 7500 },
-                ]);
+                if (chartData?.revenueData) {
+                    setRevenueData(chartData.revenueData);
+                } else {
+                    // Fallback to mock data if backend doesn't provide it yet
+                    setRevenueData([
+                        { month: 'Jan', value: 4000 },
+                        { month: 'Feb', value: 3000 },
+                        { month: 'Mar', value: 5000 },
+                        { month: 'Apr', value: 4500 },
+                        { month: 'May', value: 6000 },
+                        { month: 'Jun', value: 7500 },
+                    ]);
+                }
 
             } catch (err) {
                 console.error("Failed to fetch dashboard data", err);
@@ -88,13 +144,13 @@ export function RecruiterDashboard() {
 
     return (
         <div className="p-8 space-y-8">
-            {}
+            { }
             <div className="fixed inset-0 pointer-events-none overflow-hidden">
                 <div className="absolute top-20 right-20 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" />
                 <div className="absolute bottom-20 left-20 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-float" style={{ animationDelay: '2s' }} />
             </div>
 
-            {}
+            { }
             <div className="relative">
                 <div className="relative flex items-center justify-between animate-slide-in">
                     <div>
@@ -120,7 +176,7 @@ export function RecruiterDashboard() {
                 </div>
             </div>
 
-            {}
+            { }
             <div className="grid grid-cols-4 gap-6 animate-slide-in" style={{ animationDelay: '100ms' }}>
                 {[
                     {
@@ -149,15 +205,6 @@ export function RecruiterDashboard() {
                         icon: Award,
                         subtitle: 'Successful hires',
                         trend: 'up'
-                    },
-                    {
-                        label: 'Pending Approvals',
-                        value: stats.pendingTimesheets,
-                        change: 0,
-                        gradient: 'from-orange-500 via-amber-500 to-yellow-500',
-                        icon: Clock,
-                        subtitle: 'Timesheets to review',
-                        trend: 'neutral'
                     },
                 ].map((stat, index) => {
                     const Icon = stat.icon;
@@ -189,9 +236,9 @@ export function RecruiterDashboard() {
                 })}
             </div>
 
-            {}
+            { }
             <div className="grid grid-cols-3 gap-6">
-                {}
+                { }
                 <div className="col-span-2 glass rounded-3xl p-8 animate-slide-in shadow-premium border border-white/10" style={{ animationDelay: '200ms' }}>
                     <div className="flex items-center justify-between mb-8">
                         <div>
@@ -228,9 +275,9 @@ export function RecruiterDashboard() {
                     </ResponsiveContainer>
                 </div>
 
-                {}
+                { }
                 <div className="space-y-6">
-                    {}
+                    { }
                     <div className="glass rounded-3xl p-6 animate-slide-in shadow-premium border border-white/10" style={{ animationDelay: '250ms' }}>
                         <div className="mb-6">
                             <h2 className="text-xl font-bold text-slate-100 mb-2 flex items-center gap-2">
@@ -274,7 +321,7 @@ export function RecruiterDashboard() {
                         </div>
                     </div>
 
-                    {}
+                    { }
                     <div className="glass rounded-3xl p-6 animate-slide-in shadow-premium border border-white/10" style={{ animationDelay: '300ms' }}>
                         <h3 className="text-lg font-bold text-slate-100 mb-4 flex items-center gap-2">
                             <Activity className="w-5 h-5 text-yellow-400" />

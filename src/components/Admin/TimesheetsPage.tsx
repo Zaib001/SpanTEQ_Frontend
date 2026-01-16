@@ -155,7 +155,7 @@ export function TimesheetsPage() {
 
   const handleApprove = async (id: string) => {
     try {
-      await TimesheetService.updateTimesheet(id, { status: 'approved' });
+      await TimesheetService.approveTimesheet(id);
       setTimesheets(prev => prev.map(ts =>
         ts.id === id ? { ...ts, status: 'approved' as const } : ts
       ));
@@ -166,7 +166,7 @@ export function TimesheetsPage() {
 
   const handleReject = async (id: string) => {
     try {
-      await TimesheetService.updateTimesheet(id, { status: 'rejected' });
+      await TimesheetService.rejectTimesheet(id);
       setTimesheets(prev => prev.map(ts =>
         ts.id === id ? { ...ts, status: 'rejected' as const } : ts
       ));
@@ -184,7 +184,7 @@ export function TimesheetsPage() {
 
     try {
       await Promise.all(pendingTs.map(ts =>
-        TimesheetService.updateTimesheet(ts.id, { status: 'approved' })
+        TimesheetService.approveTimesheet(ts.id)
       ));
 
       setTimesheets(prev => prev.map(ts =>
@@ -212,22 +212,26 @@ export function TimesheetsPage() {
     }).format(value);
   };
 
-  const handleExportPDF = async (timesheet?: TimesheetData) => {
+  const handleExportReport = async () => {
     try {
-      const target = timesheet || timesheets[0];
-      if (!target) {
-        alert('No timesheets available to export.');
-        return;
-      }
-      if (!target.userId) {
+      await TimesheetService.exportReport(filters);
+    } catch (err) {
+      console.error("Export failed", err);
+      alert("Failed to export report");
+    }
+  };
+
+  const handleExportPDF = async (timesheet: TimesheetData) => {
+    try {
+      if (!timesheet.userId) {
         alert('User ID missing for export.');
         return;
       }
 
-      const date = new Date(target.weekEnding);
+      const date = new Date(timesheet.weekEnding);
       const monthStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
-      await TimesheetService.generatePDF(target.userId, monthStr);
+      await TimesheetService.generatePDF(timesheet.userId, monthStr);
     } catch (err) {
       console.error("Export failed", err);
       alert("Failed to export PDF");
@@ -308,7 +312,7 @@ export function TimesheetsPage() {
             </div>
 
             <button
-              onClick={() => handleExportPDF()}
+              onClick={handleExportReport}
               className="group relative px-6 py-4 glass rounded-2xl hover:bg-white/10 transition-all duration-300 flex items-center gap-3 overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-rose-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

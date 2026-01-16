@@ -21,6 +21,8 @@ export interface Timesheet {
     } | null;
     approvedAt?: string;
     calculatedAmount?: number;
+    clientBillRate?: number;
+    clientBillAmount?: number;
     createdAt: string;
     updatedAt: string;
 
@@ -67,9 +69,32 @@ export const TimesheetService = {
         return response.data;
     },
 
+    async approveTimesheet(id: string): Promise<any> {
+        return this.updateTimesheet(id, { status: 'approved' });
+    },
+
+    async rejectTimesheet(id: string): Promise<any> {
+        return this.updateTimesheet(id, { status: 'rejected' });
+    },
+
     async deleteTimesheet(id: string): Promise<any> {
         const response = await apiClient.delete(`/api/admin/timesheets/${id}`);
         return response.data;
+    },
+
+    async exportReport(params: any = {}): Promise<void> {
+        const response = await apiClient.get('/api/admin/timesheets/export', {
+            params,
+            responseType: 'blob'
+        });
+
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `Timesheet_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode?.removeChild(link);
     },
 
     async generatePDF(userId: string, month: string): Promise<void> {
