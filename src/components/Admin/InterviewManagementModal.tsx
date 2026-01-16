@@ -51,7 +51,7 @@ export default function InterviewManagementModal({ submissionId, candidateName, 
         e.preventDefault();
         try {
             if (editingInterview) {
-                await InterviewService.updateInterview(submissionId, editingInterview.id || (editingInterview as any)._id, formData);
+                await InterviewService.updateInterview(submissionId, editingInterview._id || (editingInterview as any).id, formData);
             } else {
                 await InterviewService.createInterview(submissionId, formData);
             }
@@ -144,7 +144,7 @@ export default function InterviewManagementModal({ submissionId, candidateName, 
                             </div>
                         ) : (
                             interviews.map((int, idx) => (
-                                <div key={int.id || (int as any)._id} className="group glass rounded-2xl p-4 md:p-5 border border-white/5 hover:border-blue-500/30 transition-all hover:bg-white/5 relative overflow-hidden shrink-0">
+                                <div key={int._id || (int as any).id} className="group glass rounded-2xl p-4 md:p-5 border border-white/5 hover:border-blue-500/30 transition-all hover:bg-white/5 relative overflow-hidden shrink-0">
                                     <div className={`absolute left-0 top-0 bottom-0 w-1 ${int.status === 'COMPLETED' ? 'bg-green-500' :
                                         int.status === 'CANCELLED' ? 'bg-red-500' : 'bg-blue-500'
                                         }`} />
@@ -157,7 +157,7 @@ export default function InterviewManagementModal({ submissionId, candidateName, 
                                         </div>
                                         <div className="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button onClick={() => openEdit(int)} className="p-1.5 hover:bg-blue-500/20 text-blue-400 rounded-lg"><Edit2 className="w-4 h-4" /></button>
-                                            <button onClick={() => handleDelete(int.id || (int as any)._id)} className="p-1.5 hover:bg-red-500/20 text-red-400 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                                            <button onClick={() => handleDelete(int._id || (int as any).id)} className="p-1.5 hover:bg-red-500/20 text-red-400 rounded-lg"><Trash2 className="w-4 h-4" /></button>
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-y-3 gap-x-4 ml-11">

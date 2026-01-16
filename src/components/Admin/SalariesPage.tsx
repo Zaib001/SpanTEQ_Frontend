@@ -70,8 +70,8 @@ export function SalariesPage() {
       if (data && data.length > 0) {
         mappedData = data.map((s: Salary) => ({
           id: s._id,
-          employee: s.userId?.name || 'Unknown',
-          role: (s.role?.toLowerCase() || 'candidate') as any,
+          employee: (typeof s.userId === 'object' && s.userId?.name) ? s.userId.name : 'Unknown',
+          role: ((typeof s.userId === 'object' ? s.userId?.role : 'Candidate') || 'candidate') as any,
           department: (s as any).department || 'Operations',
           baseSalary: s.baseSalary || s.base || 0,
           bonus: (s as any).details?.incentiveTotal || (s as any).bonus || 0,
